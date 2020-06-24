@@ -22,10 +22,74 @@ Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/test_temp.cpp")
 
 re_turns <- matrix(rnorm(1e3), nc=1)
 lagg <- 3
+re_turns <- na.omit(rutils::etf_env$re_turns[, c("VTI", "IEF")])
+re_turns <- na.omit(rutils::etf_env$re_turns$VTI)
 
+foo <- lag_it(re_turns, lagg=3, pad_zeros=FALSE)
+bar <- lag_vec(re_turns, lagg=3, pad_zeros=FALSE)
+all.equal(drop(foo), drop(bar), check.attributes=FALSE)
+
+
+look_back <- 22
+stu_b <- 21
 calc_var(re_turns)
-calc_var(re_turns, lagg)
+calc_var(re_turns, ste_p=look_back)
 
+# Calculate rolling sums at each point
+c_sum <- roll_sum(re_turns, look_back=look_back)
+r_sum <- rutils::roll_sum(re_turns, look_back=look_back)
+all.equal(c_sum, coredata(r_sum), check.attributes=FALSE)
+r_sum <- apply(zoo::coredata(re_turns), 2, cumsum)
+lag_sum <- rbind(matrix(numeric(2*look_back), nc=2), r_sum[1:(NROW(r_sum) - look_back), ])
+r_sum <- (r_sum - lag_sum)
+all.equal(c_sum, r_sum, check.attributes=FALSE)
+
+# Calculate rolling sums at end points
+c_sum <- roll_sum(re_turns, look_back=look_back, stu_b=stu_b)
+end_p <- (stu_b + look_back*(0:(NROW(re_turns) %/% look_back)))
+end_p <- end_p[end_p < NROW(re_turns)]
+r_sum <- apply(zoo::coredata(re_turns), 2, cumsum)
+r_sum <- r_sum[end_p+1, ]
+# r_sum <- diff_it(r_sum)
+lag_sum <- rbind(numeric(2), r_sum[1:(NROW(r_sum) - 1), ])
+r_sum <- (r_sum - lag_sum)
+all.equal(c_sum, r_sum, check.attributes=FALSE)
+
+# Calculate rolling sums at end points - pass in end_points
+c_sum <- roll_sum(re_turns, end_points=end_p)
+all.equal(c_sum, r_sum, check.attributes=FALSE)
+
+
+# Create exponentially decaying weights
+weight_s <- exp(-0.2*(1:11))
+weight_s <- matrix(weight_s/sum(weight_s), nc=1)
+# Calculate rolling weighted sum
+# weight_ed <- HighFreq::roll_conv(re_turns, weight_s)
+c_sum <- roll_sum(re_turns, weight_s=weight_s)
+# Calculate rolling weighted sum using filter()
+filter_ed <- filter(x=re_turns, filter=weight_s, method="convolution", sides=1)
+# Compare both methods
+all.equal(c_sum[-(1:11), ], filter_ed[-(1:11), ], check.attributes=FALSE)
+
+# Calculate rolling weighted sums at end points
+c_sum <- roll_sum(re_turns, end_points=end_p, weight_s=weight_s)
+all.equal(c_sum, filter_ed[end_p+1, ], check.attributes=FALSE)
+
+
+library(microbenchmark)
+summary(microbenchmark(
+  rcpp=roll_sum(re_turns, look_back=look_back),
+  rcode=HighFreq::roll_sum(re_turns, look_back=look_back),
+  times=10))[, c(1, 4, 5)]  # end microbenchmark summary
+summary(microbenchmark(
+  rcpp=roll_sum(re_turns, look_back=22, stu_b=21),
+  rcode=HighFreq::roll_sum(re_turns, look_back=look_back),
+  times=10))[, c(1, 4, 5)]  # end microbenchmark summary
+
+# Loop over stu_b
+foo <- lapply(0:21, roll_rets, re_turns=re_turns, look_back=22)
+bar <- sapply(foo, sd)
+hist(bar)
 
 
 # Compare HighFreq::diff_vec() with rutils::diff_it()

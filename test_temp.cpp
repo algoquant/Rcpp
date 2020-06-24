@@ -16,48 +16,103 @@ using namespace std;
 
 //' @export
 // [[Rcpp::export]]
-arma::vec lag_vec(arma::vec& vec_tor, int lagg=1, bool pad_zeros=true) {
+arma::vec lag_vec(arma::vec& vec_tor, 
+                  arma::sword lagg = 1, 
+                  bool pad_zeros = true) {
   
-  int len_gth = (vec_tor.n_elem-1);
+  arma::uword num_rows = (vec_tor.n_elem-1);
   
   if (lagg > 0) {
     if (pad_zeros) {
       // Pad front with zeros
       return arma::join_cols(arma::zeros(lagg), 
-                             vec_tor.subvec(0, len_gth-lagg));
+                             vec_tor.subvec(0, num_rows-lagg));
     } else {
       // Pad front with first element of vec_tor
       return arma::join_cols(arma::repelem(vec_tor.subvec(0, 0), lagg, 1), 
-                             vec_tor.subvec(0, len_gth-lagg));
+                             vec_tor.subvec(0, num_rows-lagg));
     }  // end if
   } else {
     if (pad_zeros) {
       // Pad back with zeros
-      return arma::join_cols(vec_tor.subvec(-lagg, len_gth), 
+      return arma::join_cols(vec_tor.subvec(-lagg, num_rows), 
                              arma::zeros(-lagg));
     } else {
       // Pad back with last element of vec_tor
-      return arma::join_cols(vec_tor.subvec(-lagg, len_gth), 
-                             arma::repelem(vec_tor.subvec(len_gth, len_gth), -lagg, 1));
+      return arma::join_cols(vec_tor.subvec(-lagg, num_rows), 
+                             arma::repelem(vec_tor.subvec(num_rows, num_rows), -lagg, 1));
     }  // end if
   }  // end if
   
 }  // end lag_vec
 
 
+
 //' @export
 // [[Rcpp::export]]
-arma::mat lag_it(arma::mat& t_series, int lagg=1) {
-  int num_rows = (t_series.n_rows-1);
+arma::mat lag_it(arma::mat& t_series, 
+                 arma::sword lagg = 1, 
+                 bool pad_zeros = true) {
   
-  if (lagg > 0)
-    return arma::join_cols(arma::repelem(t_series.row(0), lagg, 1), 
-                           t_series.rows(0, num_rows-lagg));
-  else
-    return arma::join_cols(t_series.rows(-lagg, num_rows), 
-                           arma::repelem(t_series.row(num_rows), -lagg, 1));
+  arma::uword num_rows = (t_series.n_rows-1);
+  arma::uword num_cols = t_series.n_cols;
+  
+  if (lagg > 0) {
+    // Positive lag
+    if (pad_zeros) {
+      // Pad front with zeros
+      return arma::join_cols(arma::zeros(lagg, num_cols), 
+                             t_series.rows(0, num_rows-lagg));
+    } else {
+      // Pad front with first element of t_series
+      return arma::join_cols(arma::repmat(t_series.rows(0, 0), lagg, 1), 
+                             t_series.rows(0, num_rows-lagg));
+    }  // end if
+  } else {
+    // Negative lag
+    if (pad_zeros) {
+      // Pad back with zeros
+      return arma::join_cols(t_series.rows(-lagg, num_rows), 
+                             arma::zeros(-lagg, num_cols));
+    } else {
+      // Pad back with last element of t_series
+      return arma::join_cols(t_series.rows(-lagg, num_rows), 
+                             arma::repmat(t_series.rows(num_rows, num_rows), -lagg, 1));
+    }  // end if
+  }  // end if
+  
+  // Old code below
+  // if (lagg > 0)
+  //   // Positive lag
+  //   return arma::join_cols(arma::repelem(t_series.row(0), lagg, 1), 
+  //                          t_series.rows(0, num_rows-lagg));
+  // else
+  //   // Negative lag
+  //   return arma::join_cols(t_series.rows(-lagg, num_rows), 
+  //                          arma::repelem(t_series.row(num_rows), -lagg, 1));
   
 }  // end lag_it
+
+
+
+//' @export
+// [[Rcpp::export]]
+arma::mat diff_it(arma::mat& t_series, 
+                  arma::uword lagg = 1, 
+                  bool padd = true) {
+  
+  arma::uword num_rows = (t_series.n_rows-1);
+  // Matrix difference without padding
+  arma::mat diff_mat = (t_series.rows(lagg, num_rows) - t_series.rows(0, num_rows - lagg));
+  
+  if (padd)
+    // Pad diff_mat with warmup period at the beginning
+    return arma::join_cols(t_series.rows(0, lagg - 1), diff_mat);
+  else
+    // Don't pad the output
+    return diff_mat;
+  
+}  // end diff_it
 
 
 
@@ -130,34 +185,15 @@ arma::uvec calc_startpoints(arma::uvec end_points, arma::uword look_back) {
 
 //' @export
 // [[Rcpp::export]]
-arma::uvec calc_endpoints_stub(arma::uword len_gth, arma::uword ste_p, arma::uword stub = 0) {
+arma::uvec calc_endpoints_stub(arma::uword len_gth, arma::uword ste_p, arma::uword stu_b = 0) {
   
   // Calculate number of intervals that fit over len_gth
   // arma::uword num_points = len_gth/ste_p;
-  arma::uvec endp = arma::regspace<uvec>(stub, ste_p, len_gth + ste_p);
+  arma::uvec endp = arma::regspace<uvec>(stu_b, ste_p, len_gth + ste_p);
   
   return endp.elem(find(endp <= len_gth));
   
 }  // end calc_endpoints_stub
-
-
-
-//' @export
-// [[Rcpp::export]]
-arma::mat diff_it(arma::mat& mat_rix, int lagg=1, bool padd=true) {
-  
-  int num_rows = (mat_rix.n_rows-1);
-  // Matrix difference without padding
-  arma::mat diff_mat = (mat_rix.rows(lagg, num_rows) - mat_rix.rows(0, num_rows - lagg));
-  
-  if (padd)
-    // Pad diff_mat with zeros at the beginning
-    return arma::join_cols(arma::zeros(lagg, mat_rix.n_cols), diff_mat);
-  else
-    // Don't pad the output
-    return diff_mat;
-  
-}  // end diff_it
 
 
 
@@ -222,7 +258,7 @@ arma::mat diff_it(arma::mat& mat_rix, int lagg=1, bool padd=true) {
 arma::rowvec calc_var(arma::mat& re_turns, 
                       arma::uword ste_p = 1) {
   
-  // int num_cols = re_turns.n_cols;
+  // arma::uword num_cols = re_turns.n_cols;
   
   if (ste_p == 1)
     // Calculate the variance without aggregations
@@ -239,11 +275,11 @@ arma::rowvec calc_var(arma::mat& re_turns,
     arma::mat aggs;
     arma::uvec end_p;
     arma::mat var_s(ste_p, re_turns.n_cols);
-    for (arma::uword stub=1; stub <= ste_p; stub++) {
-      end_p = arma::regspace<uvec>(stub, ste_p, num_rows + ste_p);
-      end_p = end_p.elem(find(end_p <= num_rows));
-      aggs = cum_sum.rows(end_p-1);
-      var_s.row(stub-1) = arma::var(diff_it(aggs, 1, false));
+    for (arma::uword stu_b = 0; stu_b < ste_p; stu_b++) {
+      end_p = arma::regspace<uvec>(stu_b, ste_p, num_rows + ste_p);
+      end_p = end_p.elem(find(end_p < num_rows));
+      aggs = cum_sum.rows(end_p);
+      var_s.row(stu_b) = arma::var(diff_it(aggs, 1, false));
     }  // end for
     return mean(var_s);
   }  // end if
@@ -252,292 +288,265 @@ arma::rowvec calc_var(arma::mat& re_turns,
 
 
 
+
+////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////
+//' Calculate the rolling weighted sum over a \emph{time series} or a
+//' \emph{matrix} using \emph{Rcpp}.
+//' 
+//' @param \code{t_series} A \emph{time series} or a \emph{matrix}.
+//' 
+//' @param \code{look_back} The length of the look-back interval, equal to the
+//'   number of data points included in calculating the rolling sum (the default
+//'   is \code{look_back = 1}).
+//'   
+//' @param \code{stu_b} An \emph{integer} value equal to the first stub interval
+//'   for calculating the end points.
+//' 
+//' @param \code{end_points} An \emph{unsigned integer} vector of end
+//' points.
+//'   
+//' @param \code{weight_s} A column \emph{vector} of weights.
+//'
+//' @return A \emph{matrix} with the same dimensions as the input
+//'   argument \code{t_series}.
+//'
+//' @details The function \code{roll_sum()} calculates the rolling sums over the
+//'   columns of the \code{t_series} data.  
+//'   The sums are calculated over a number of data points equal to
+//'   \code{look_back}.
+//'   
+//'   The function \code{roll_sum()} returns a \emph{matrix} with the same
+//'   dimensions as the input argument \code{t_series}.
+//' 
+//'   The arguments \code{stu_b}, \code{end_points}, and \code{weight_s} are
+//'   optional.
+//'   
+//'   If either the arguments \code{stu_b} or \code{end_points} are supplied,
+//'   then the rolling sums are calculated at the end points. 
+//'   
+//'   If only the argument \code{stu_b} is supplied, then the end points are
+//'   calculated from the \code{stu_b} and \code{look_back} arguments. The first
+//'   end point is equal to \code{stu_b} and the end points are spaced
+//'   \code{look_back} periods apart.
+//'   
+//'   If the argument \code{weight_s} is supplied, then weighted sums are
+//'   calculated.
+//'   Then the function \code{roll_sum()} calculates the rolling weighted sums
+//'   of the past values.
+//'   
+//'   The function \code{roll_sum()} calculates the rolling weighted sums as
+//'   convolutions of the \code{t_series} columns with the \emph{vector} of
+//'   weights using the \code{RcppArmadillo} function \code{arma::conv2()}.
+//'   It performs a similar calculation to the standard \code{R} function
+//'   \code{stats::filter(x=t_series, filter=weight_s, method="convolution",
+//'   sides=1)}, but it's over \code{6} times faster, and it doesn't produce any
+//'   leading \code{NA} values. using fast \emph{RcppArmadillo} \code{C++} code.
+//'   The function \code{roll_sum()} is several times faster than
+//'   \code{rutils::roll_sum()} which uses vectorized \code{R} code.
+//'   
+//' @examples
+//' \dontrun{
+//' # First example
+//' # Create series of historical returns
+//' re_turns <- na.omit(rutils::etf_env$re_turns[, c("VTI", "IEF")])
+//' # Define parameters
+//' look_back <- 22
+//' stu_b <- 21
+//' # Calculate rolling sums at each point
+//' c_sum <- HighFreq::roll_sum(re_turns, look_back=look_back)
+//' r_sum <- rutils::roll_sum(re_turns, look_back=look_back)
+//' all.equal(c_sum, coredata(r_sum), check.attributes=FALSE)
+//' r_sum <- apply(zoo::coredata(re_turns), 2, cumsum)
+//' lag_sum <- rbind(matrix(numeric(2*look_back), nc=2), r_sum[1:(NROW(r_sum) - look_back), ])
+//' r_sum <- (r_sum - lag_sum)
+//' all.equal(c_sum, r_sum, check.attributes=FALSE)
+//' 
+//' # Calculate rolling sums at end points
+//' c_sum <- HighFreq::roll_sum(re_turns, look_back=look_back, stu_b=stu_b)
+//' end_p <- (stu_b + look_back*(0:(NROW(re_turns) %/% look_back)))
+//' end_p <- end_p[end_p < NROW(re_turns)]
+//' r_sum <- apply(zoo::coredata(re_turns), 2, cumsum)
+//' r_sum <- r_sum[end_p+1, ]
+//' lag_sum <- rbind(numeric(2), r_sum[1:(NROW(r_sum) - 1), ])
+//' r_sum <- (r_sum - lag_sum)
+//' all.equal(c_sum, r_sum, check.attributes=FALSE)
+//' 
+//' # Calculate rolling sums at end points - pass in end_points
+//' c_sum <- HighFreq::roll_sum(re_turns, end_points=end_p)
+//' all.equal(c_sum, r_sum, check.attributes=FALSE)
+//' 
+//' # Create exponentially decaying weights
+//' weight_s <- exp(-0.2*(1:11))
+//' weight_s <- matrix(weight_s/sum(weight_s), nc=1)
+//' # Calculate rolling weighted sum
+//' c_sum <- HighFreq::roll_sum(re_turns, weight_s=weight_s)
+//' # Calculate rolling weighted sum using filter()
+//' filter_ed <- filter(x=re_turns, filter=weight_s, method="convolution", sides=1)
+//' all.equal(c_sum[-(1:11), ], filter_ed[-(1:11), ], check.attributes=FALSE)
+//' 
+//' # Calculate rolling weighted sums at end points
+//' c_sum <- HighFreq::roll_sum(re_turns, end_points=end_p, weight_s=weight_s)
+//' all.equal(c_sum, filter_ed[end_p+1, ], check.attributes=FALSE)
+//' 
+//' # Create simple weights equal to a 1 value plus zeros
+//' weight_s <- matrix(c(1, rep(0, 10)), nc=1)
+//' # Calculate rolling weighted sum
+//' weight_ed <- HighFreq::roll_sum(re_turns, weight_s)
+//' # Compare with original
+//' all.equal(coredata(re_turns), weight_ed, check.attributes=FALSE)
+//' }
+//' 
 //' @export
 // [[Rcpp::export]]
-arma::mat roll_var(arma::mat& t_series, arma::uword look_back = 1, arma::uword ste_p = 1) {
+arma::mat roll_sum(arma::mat& t_series,
+                   arma::uword look_back = 1,
+                   Rcpp::Nullable<int> stu_b = R_NilValue, 
+                   Rcpp::Nullable<Rcpp::IntegerVector> end_points = R_NilValue, 
+                   Rcpp::Nullable<Rcpp::NumericVector> weight_s = R_NilValue) {
   
-  // Calculate end points
   arma::uword num_rows = t_series.n_rows;
-  arma::uvec end_p = calc_endpoints(num_rows, ste_p);
-  // Allocate variance matrix
-  arma::uword num_points = end_p.n_elem;
-  arma::mat vari_ance = arma::zeros(num_points, t_series.n_cols);
-  // Number of time periods in lookback interval
-  // arma::uword num_steps = look_back*ste_p;
-  // Calculate start points equal to end points lagged by num_steps
-  // arma::uvec start_p = end_p - num_steps + 1;
-  // Another better way:
-  // arma::uvec start_p = arma::join_cols(arma::zeros<uvec>(look_back), 
-  //                                      end_p.subvec(0, num_points - look_back - 1) + 1);
-  arma::uvec start_p = calc_startpoints(end_p, look_back);
-  // Make start points zero if less than zero - start_p is unsigned integer!
-  // start_p.elem(find(start_p > num_rows)).zeros();
+  arma::mat cum_sum;
 
-  // Perform loop over the end_points
-  for (arma::uword it = 0; it < num_points; it++) {
-    // Calculate variance
-    vari_ance.row(it) = arma::var(t_series.rows(start_p(it), end_p(it)));
-  }  // end for
-  
-  return vari_ance;
-
-}  // end roll_var
-
-
-//' @export
-// [[Rcpp::export]]
-double calc_var_ohlc(arma::mat& oh_lc, 
-                     const std::string& calc_method="yang_zhang", 
-                     arma::colvec lag_close=0, 
-                     arma::colvec in_dex=0, 
-                     const bool& scal_e=true) {
-  
-  int num_rows = oh_lc.n_rows;
-  double co_eff = 0.34/(1.34 + (num_rows+1)/(num_rows-1));
-  
-  if (!scal_e || (in_dex.n_rows == 1)) {
-    in_dex = arma::ones(num_rows);
-    // cout << "oh_lc.n_rows = " << num_rows << endl;
-    // cout << "in_dex.n_rows = " << in_dex.n_rows << endl;
-  }  // end if
-  
-  // Calculate all the different intra-day and day-over-day returns 
-  // (differences of OHLC prices)
-  arma::colvec clo_se = oh_lc.col(3);
-  arma::colvec open_close(clo_se.n_rows);
-  if (lag_close.n_rows == 1) {
-    open_close = arma::join_cols(clo_se.subvec(0, 0), clo_se.subvec(0, clo_se.n_elem-2));
-    open_close = (oh_lc.col(0) - open_close)/in_dex;
+  if (weight_s.isNotNull()) {
+    // Copy weight_s
+    arma::vec weights_vec = Rcpp::as<vec>(weight_s);
+    arma::uword num_weights = weights_vec.n_elem;
+    // Calculate the weighted averages as convolutions
+    cum_sum = arma::conv2(t_series, weights_vec, "full");
+    // Copy the warmup period
+    // cout << "num_weights = " << num_weights << endl;
+    cum_sum.rows(0, num_weights-2) = t_series.rows(0, num_weights-2);
+    cum_sum = cum_sum.rows(0, num_rows-1);
+    // cout << "cum_sum.n_rows = " << cum_sum.n_rows << endl;
   } else {
-    open_close = (oh_lc.col(0) - lag_close)/in_dex;
-  }  // end if
-  arma::colvec close_open = (clo_se - oh_lc.col(0))/in_dex;
-  arma::colvec close_high = (clo_se - oh_lc.col(1))/in_dex;
-  arma::colvec close_low = (clo_se - oh_lc.col(2))/in_dex;
-  arma::colvec high_low = (oh_lc.col(1) - oh_lc.col(2))/in_dex;
-  arma::colvec high_open = (oh_lc.col(1) - oh_lc.col(0))/in_dex;
-  arma::colvec low_open = (oh_lc.col(2) - oh_lc.col(0))/in_dex;
-  
-  if (calc_method == "close") {
-    // cout << "Calc method is Close" << endl;
-    return arma::var(arma::diff(clo_se));
-  } else if (calc_method == "rogers_satchell") {
-    // cout << "Calc method is Rogers-Satchell" << endl;
-    return -(arma::dot(close_high, high_open) +
-             arma::dot(close_low, low_open))/num_rows;
-  } else if (calc_method == "garman_klass") {
-    // cout << "Calc method is Garman-Klass" << endl;
-    return (0.5*arma::dot(high_low, high_low) -
-            (2*log(2)-1)*arma::dot(close_open, close_open))/num_rows;
-  } else if (calc_method == "garman_klass_yz") {
-    // cout << "Calc method is Garman-Klass-YZ" << endl;
-    return (0.5*arma::dot(high_low, high_low) -
-            (2*log(2)-1)*arma::dot(close_open, close_open))/num_rows + 
-            arma::var(open_close);
-  } else if (calc_method == "yang_zhang") {
-    // cout << "Calc method is Yang-Zhang" << endl;
-    return arma::var(open_close) + co_eff*arma::var(close_open) +
-      (co_eff-1)*(arma::dot(close_high, high_open) + 
-      arma::dot(close_low, low_open))/num_rows;
-  } else {
-    cout << "Wrong calc method!" << endl;
-    return 1;
+    // Calculate cumulative returns
+    cum_sum = arma::cumsum(t_series, 0);
   }  // end if
   
-  // cout << "Calc method is " << calc_method << endl;
   
-}  // end calc_var_ohlc
+  // Declare empty end points
+  arma::uvec end_p;
+  // Update end points
+  if (end_points.isNotNull()) {
+    // Copy end_points
+    end_p = Rcpp::as<uvec>(end_points);
+  } else if (stu_b.isNotNull()) {
+    // Calculate end points with stu_b
+    end_p = arma::regspace<uvec>(Rcpp::as<uword>(stu_b), look_back, num_rows + look_back);
+    end_p = end_p.elem(find(end_p < num_rows));
+  }  // end if
+  
+  
+  // Calculate the rolling sums
+  if (end_p.is_empty() && weight_s.isNotNull()) {
+    // Do nothing
+    // Return the weighted averages (convolutions) at each point
+    // return cum_sum;
+  } else if (end_p.is_empty() && !weight_s.isNotNull()) {
+    // Return rolling sums at each point
+    cum_sum = diff_it(cum_sum, look_back, true);
+  } else if (!end_p.is_empty() && weight_s.isNotNull()) {
+    // Return the weighted averages (convolutions) at end points
+    cum_sum = cum_sum.rows(end_p);
+  } else if (!end_p.is_empty() && !weight_s.isNotNull()) {
+    // Return the rolling sums at end points
+    cum_sum = cum_sum.rows(end_p);
+    cum_sum = diff_it(cum_sum, 1, true);
+  }  // end if
+  
+  return cum_sum;
+  
+}  // end roll_sum
+
+
+
+////////////////////////////////////////////////
+// Old versions
+
+//' @export
+// [[Rcpp::export]]
+bool test_empty(arma::mat& re_turns,
+                   arma::uword ste_p = 1,
+                   Rcpp::Nullable<int> stu_b = R_NilValue, 
+                   Rcpp::Nullable<Rcpp::IntegerVector> end_points = R_NilValue) {
+  
+  arma::uword num_rows = re_turns.n_rows;
+  // Calculate cumulative returns
+  // arma::mat cum_sum = arma::cumsum(re_turns, 0);
+  arma::uvec end_p;
+  // arma::uvec end_p = arma::ones<uvec>(1);
+  // end_p.reset();
+  
+  // bool is_empty;
+  
+  if (end_points.isNotNull()) {
+    // Calculate rolling sums at end_points
+    end_p = Rcpp::as<uvec>(end_points);
+  } else if (stu_b.isNotNull()) {
+    // Calculate rolling sums at end points with stu_b
+    end_p = arma::regspace<uvec>(Rcpp::as<uword>(stu_b), ste_p, num_rows + ste_p);
+    end_p = end_p.elem(find(end_p < num_rows));
+  }  // end if
+  
+  if (end_p.is_empty())
+    return true;
+  else  
+    return false;
+    
+}  // end test_empty
+
+
+////////////////////////////////////////////////
+
+//' @export
+// [[Rcpp::export]]
+arma::mat roll_sumo(arma::mat re_turns, 
+                    arma::uword look_back) {
+  
+  // cout << "end_p = " << end_p << endl;
+  
+  // Calculate cumulative returns at end points
+  arma::mat cum_sum = arma::cumsum(re_turns, 0);
+  
+  // Return the aggregated returns
+  return diff_it(cum_sum, look_back, true);
+  
+}  // end roll_sumo
 
 
 
 //' @export
 // [[Rcpp::export]]
-arma::vec roll_var_ohlc(arma::mat& oh_lc, 
-                        arma::uword ste_p = 1, 
-                        arma::uword look_back = 1, 
-                        const std::string& calc_method = "yang_zhang", 
-                        arma::colvec in_dex = 0, 
-                        const bool& scal_e = true) {
-  
+arma::mat roll_retso(arma::mat& re_turns, 
+                   arma::uword ste_p = 1,
+                   arma::uword stu_b = 0) {
+
+  // cout << "stu_b = " << stu_b << endl;
   // Calculate end points
-  arma::uword num_rows = oh_lc.n_rows;
-  arma::uvec end_p = calc_endpoints(num_rows, ste_p);
-  // Start points equal to end points lagged by look_back
-  arma::uvec start_p = calc_startpoints(end_p, look_back);
-  // Allocate variance matrix
-  arma::uword num_points = end_p.n_elem;
-  arma::vec vari_ance = arma::zeros(num_points);
+  arma::uword num_rows = re_turns.n_rows;
+  arma::uvec end_p = arma::regspace<uvec>(stu_b, ste_p, num_rows + ste_p);
+  end_p = end_p.elem(find(end_p < num_rows));
+  // cout << "end_p = " << end_p << endl;
   
-  // Extract OHLC close prices
-  arma::colvec clo_se = oh_lc.col(3);
-  arma::colvec lag_close = lag_it(clo_se);
-  
-  if (!scal_e || (in_dex.n_rows == 1)) {
-    in_dex = arma::ones(num_rows);
-  }  // end if
-  
-  // Define data subsets
-  arma::mat sub_ohlc;
-  arma::colvec sub_close;
-  arma::colvec sub_index;
-  
-  // cout << "Before subset start_p(0) = " << start_p(0) << endl;
-  // cout << "Before subset end_p(0) = " << end_p(0) << endl;
-  // sub_ohlc = oh_lc.rows(start_p(it), end_p(it));
-  // sub_close = lag_close.rows(start_p(it), end_p(it));
-  // sub_index = in_dex.rows(start_p(it), end_p(it));
-  
-  // cout << "Before loop num_rows = " << num_rows << endl;
-  // Perform loop over the end_points
-  for (arma::uword it = 0; it < num_points; it++) {
-    if (end_p(it) > start_p(it)) {
-      // cout << "Inside loop it = " << it << endl;
-      sub_ohlc = oh_lc.rows(start_p(it), end_p(it));
-      sub_close = lag_close.rows(start_p(it), end_p(it));
-      sub_index = in_dex.rows(start_p(it), end_p(it));
-      // Calculate variance
-      vari_ance(it) = calc_var_ohlc(sub_ohlc, calc_method, sub_close, sub_index, scal_e);
-    }  // end if
-  }  // end for
-  
-  // Old code below
-  
-  // Warmup period
-  // for (arma::uword it = 1; it < look_back; it++) {
-  //   arma::mat sub_ohlc = oh_lc.rows(0, it);
-  //   arma::colvec sub_close = lag_close.rows(0, it);
-  //   arma::colvec sub_index = in_dex.subvec(0, it);
-  //   vari_ance(it, 1) = calc_var_ohlc(sub_ohlc, calc_method, sub_close, sub_index, scal_e);
-  // }  // end for
-  
-  // Remaining period
-  // for (arma::uword it = look_back; it < num_rows; it++) {
-  //   arma::mat sub_ohlc = oh_lc.rows(it-look_back+1, it);
-  //   arma::colvec sub_close = lag_close.rows(it-look_back+1, it);
-  //   arma::colvec sub_index = in_dex.subvec(it-look_back+1, it);
-  //   vari_ance(it, 1) = calc_var_ohlc(sub_ohlc, calc_method, sub_close, sub_index, scal_e);
-  // }  // end for
-  
-  return vari_ance;
-  
-}  // end roll_var_ohlc
+  // Calculate cumulative returns at end points
+  arma::mat cum_sum = arma::cumsum(re_turns, 0);
+  cum_sum = cum_sum.rows(end_p);
 
-
-////////////////////////////////////////
-
-//' @export
-// [[Rcpp::export]]
-arma::mat roll_var_ohlcp(arma::mat& oh_lc, 
-                        const std::string& calc_method="yang_zhang", 
-                        arma::colvec in_dex=0, 
-                        const bool& scal_e=true, 
-                        arma::uword look_back=11) {
+  // Return the aggregated returns
+  return diff_it(cum_sum, 1, true);
   
-  arma::uword num_rows = oh_lc.n_rows;
-  arma::mat var_vec = arma::zeros(num_rows, 2);
-  arma::colvec clo_se = oh_lc.col(3);
-  arma::colvec lag_close = lag_it(clo_se);
+  //// Attempt at alternative code
+  // Attempt to add to argument list: default value is empty vector - doesn't work 
+  // arma::uvec end_points = arma::ones<uvec>(0), 
+  // if (end_points.is_empty())
+  // Calculate the variance without aggregations
+  // end_points = calc_endpoints(re_turns.n_rows, ste_p);
+  // This R code works with is_empty() but it requires assigning integer(0):
+  // foo <- roll_retso(re_turns, end_points=integer(0), ste_p=22)
+  //// End alternative code
   
-  if (!scal_e || (in_dex.n_rows == 1)) {
-    in_dex = arma::ones(num_rows);
-  }  // end if
-  
-  // Warmup period
-  for (arma::uword it=1; it < look_back; it++) {
-    arma::mat sub_ohlc = oh_lc.rows(0, it);
-    arma::colvec sub_close = lag_close.rows(0, it);
-    arma::colvec sub_index = in_dex.subvec(0, it);
-    var_vec(it, 0) = calc_var_ohlc(sub_ohlc, calc_method, sub_close, sub_index, scal_e);
-  }  // end for
-  
-  // Remaining period
-  for (arma::uword it=look_back; it < num_rows; it++) {
-    arma::mat sub_ohlc = oh_lc.rows(it-look_back+1, it);
-    arma::colvec sub_close = lag_close.rows(it-look_back+1, it);
-    arma::colvec sub_index = in_dex.subvec(it-look_back+1, it);
-    var_vec(it, 0) = calc_var_ohlc(sub_ohlc, calc_method, sub_close, sub_index, scal_e);
-  }  // end for
-
-  // New code
-  arma::uvec end_p = calc_endpoints(num_rows, 1);
-  arma::uvec start_p = calc_startpoints(end_p, look_back);
-  arma::uword num_points = end_p.n_elem;
-  arma::mat sub_ohlc;
-  arma::colvec sub_close;
-  arma::colvec sub_index;
-  for (arma::uword it = 0; it < num_points; it++) {
-    if (end_p(it) > start_p(it)) {
-      // cout << "Inside loop it = " << it << endl;
-      sub_ohlc = oh_lc.rows(start_p(it), end_p(it));
-      sub_close = lag_close.rows(start_p(it), end_p(it));
-      sub_index = in_dex.rows(start_p(it), end_p(it));
-      // Calculate variance
-      var_vec(it, 1) = calc_var_ohlc(sub_ohlc, calc_method, sub_close, sub_index, scal_e);
-    }
-  }  // end for
-  
-  return var_vec;
-  
-}  // end roll_var_ohlcp
-
-////////////////////////////////////////
-
-
-//' @export
-// [[Rcpp::export]]
-arma::mat roll_points(arma::mat& oh_lc, 
-                        arma::uword ste_p = 1, 
-                        arma::uword look_back = 1, 
-                        const std::string& calc_method = "yang_zhang", 
-                        arma::colvec in_dex = 0, 
-                        const bool& scal_e = true) {
-  
-  // Calculate end points
-  arma::uword num_rows = oh_lc.n_rows;
-  arma::uvec end_p = calc_endpoints(num_rows, ste_p);
-  // Start points equal to end points lagged by look_back
-  arma::uvec start_p = calc_startpoints(end_p, look_back);
-  // Allocate variance matrix
-  arma::uword num_points = end_p.n_elem;
-  arma::mat vari_ance = arma::zeros(num_points, 2);
-  
-  // cout << "Before subset start_p(0) = " << start_p(0) << endl;
-  // cout << "Before subset end_p(0) = " << end_p(0) << endl;
-  // sub_ohlc = oh_lc.rows(start_p(it), end_p(it));
-  // sub_close = lag_close.rows(start_p(it), end_p(it));
-  // sub_index = in_dex.rows(start_p(it), end_p(it));
-  
-  // cout << "Before loop num_rows = " << num_rows << endl;
-  // Perform loop over the end_points
-  for (arma::uword it = 0; it < num_points; it++) {
-    if (end_p(it) > start_p(it)) {
-      // cout << "Inside loop it = " << it << endl;
-      // Calculate variance
-      // vari_ance(it, 0) = start_p(it);
-      // vari_ance(it, 1) = end_p(it);
-      vari_ance(it, 0) = mean(mean(oh_lc.rows(start_p(it), end_p(it))));
-    }
-  }  // end for
-  
-  // Old code below
-  
-  // Warmup period
-  for (arma::uword it = 1; it < look_back; it++) {
-    // vari_ance(it, 2) = 0;
-    // vari_ance(it, 3) = it;
-    vari_ance(it, 1) = mean(mean(oh_lc.rows(0, it)));
-  }  // end for
-  
-  // Remaining period
-  for (arma::uword it = look_back; it < num_rows; it++) {
-    // vari_ance(it, 2) = it-look_back+1;
-    // vari_ance(it, 3) = it;
-    vari_ance(it, 1) = mean(mean(oh_lc.rows(it-look_back+1, it)));
-  }  // end for
-  
-  return vari_ance;
-  
-}  // end roll_points
-
-
+}  // end roll_retso
 
