@@ -200,65 +200,6 @@ arma::mat roll_maxmin(const arma::vec& vec_tor,
 
 
 
-
-//' Count the number of consecutive TRUE elements in a Boolean vector, and reset
-//' the count to zero after every FALSE element.
-//' 
-//' @param vec_tor A numeric \emph{vector} of data.
-//'
-//' @return A numeric \emph{vector} of the same length as the argument
-//'   \code{vec_tor}.
-//'
-//' @details The function \code{roll_count()} calculates the rolling weighted sum
-//'   of a vector over its past values (a convolution with the \emph{vector} of 
-//'   weights), using \emph{RcppArmadillo}. It performs a similar calculation as
-//'   the standard \emph{R} function \code{filter(x=vec_tor, filter=wei_ghts, 
-//'   method="convolution", sides=1)}, but it's about \emph{6} times faster, and it 
-//'   doesn't produce any \emph{NA} values.
-//'   
-//' @examples
-//' \dontrun{
-//' # First example
-//' # create vector from historical prices
-//' vec_tor <- as.numeric(rutils::env_etf$VTI[, 6])
-//' # create simple weights
-//' wei_ghts <- c(1, rep(0, 10))
-//' # calculate rolling weighted sum
-//' weight_ed <- HighFreq::roll_count(vec_tor=vec_tor, wei_ghts=rev(wei_ghts))
-//' # compare with original
-//' all.equal(vec_tor, as.numeric(weight_ed))
-//' # Second example
-//' # create exponentially decaying weights
-//' wei_ghts <- exp(-0.2*1:11)
-//' wei_ghts <- wei_ghts/sum(wei_ghts)
-//' # calculate rolling weighted sum
-//' weight_ed <- HighFreq::roll_count(vec_tor=vec_tor, wei_ghts=rev(wei_ghts))
-//' # calculate rolling weighted sum using filter()
-//' filter_ed <- filter(x=vec_tor, filter=wei_ghts, method="convolution", sides=1)
-//' # compare both methods
-//' all.equal(as.numeric(filter_ed[-(1:11)]), as.numeric(weight_ed[-(1:11)]))
-//' }
-//' @export
-// [[Rcpp::export]]
-arma::vec roll_count(const arma::vec& vec_tor) {
-  uword len_gth = vec_tor.n_elem;
-  arma::vec count_true(len_gth);
-
-  // startup period
-  count_true[0] = vec_tor[0];
-  // remaining periods
-  for (uword it = 1; it < len_gth; it++) {
-    if (vec_tor[it])
-      count_true[it] = count_true[it-1] + vec_tor[it];
-    else
-      count_true[it] = vec_tor[it];
-  }  // end for
-  
-  return count_true;
-}  // end roll_count
-
-
-
 //' Cumulate the values of a numeric vector, and reset
 //' the count to zero after every FALSE element.
 //' 
