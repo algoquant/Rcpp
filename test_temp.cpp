@@ -18,54 +18,6 @@ using namespace std;
 // Tests misc
 
 
-// Switch statement in calc_skew() uses C++ enum type.
-// This is needed because Rcpp can't map C++ enum type to R variable SEXP.
-enum skew_type {Pearson, Quantile, Nonparametric};
-// Map string to C++ enum type for switch statement.
-skew_type get_type(const std::string& typ_e) {
-  if (typ_e == "Pearson" || typ_e == "pearson" || typ_e == "p") 
-    return skew_type::Pearson;
-  else if (typ_e == "Quantile" || typ_e == "quantile" || typ_e == "q")
-    return skew_type::Quantile;
-  else if (typ_e == "Nonparametric" || typ_e == "nonparametric" || typ_e == "n")
-    return skew_type::Nonparametric;
-  else 
-    return skew_type::Pearson;
-}  // end get_type
-
-//' @export
-// [[Rcpp::export]]
-arma::mat calc_skew(arma::mat t_series,
-                    const std::string& typ_e = "pearson", 
-                    double al_pha = 0.25) {
-  
-  // switch statement for all the different types of skew
-  switch(get_type(typ_e)) {
-  case skew_type::Pearson: {  // Pearson
-    double num_rows = t_series.n_rows;
-    arma::mat mean_s = arma::mean(t_series);
-    arma::mat var_s = arma::var(t_series);
-    // De-mean the columns of t_series
-    t_series.each_row() -= mean_s;
-    return (num_rows/(num_rows-1)/(num_rows-2))*arma::sum(arma::pow(t_series, 3))/arma::pow(var_s, 1.5);
-  }  // end pearson
-  case skew_type::Quantile: {  // Quantile
-    arma::vec prob_s = {al_pha, 0.5, 1.0 - al_pha};
-    arma::mat quantile_s = quantile(t_series, prob_s);
-    return (quantile_s.row(2) + quantile_s.row(0) - 2*quantile_s.row(1))/(quantile_s.row(2) - quantile_s.row(0));
-  }  // end quantile
-  case skew_type::Nonparametric: {  // Nonparametric
-    return (arma::mean(t_series) - arma::median(t_series))/arma::stddev(t_series);
-  }  // end nonparametric
-  default : {
-    cout << "Invalid typ_e" << endl;
-    return 0;
-  }  // end default
-  }  // end switch
-  
-}  // end calc_skew
-
-
 
 
 ////////////////////////////////////////////////
@@ -153,26 +105,26 @@ arma::mat diff_it(arma::mat& t_series,
 //'
 //' @export
 // [[Rcpp::export]]
-arma::rowvec calc_var(arma::mat& re_turns, 
+arma::rowvec calc_var(arma::mat& se_ries, 
                       arma::uword ste_p = 1) {
   
-  // arma::uword num_cols = re_turns.n_cols;
+  // arma::uword num_cols = se_ries.n_cols;
   
   if (ste_p == 1)
     // Calculate the variance without aggregations
-    return arma::var(re_turns);
+    return arma::var(se_ries);
   else {
-    arma::mat cum_sum = arma::cumsum(re_turns, 0);
+    arma::mat cum_sum = arma::cumsum(se_ries, 0);
     // Calculate the variance of aggregated returns
-    // arma::uvec end_p = calc_endpoints(re_turns.n_rows, ste_p);
+    // arma::uvec end_p = calc_endpoints(se_ries.n_rows, ste_p);
     // cum_sum = cum_sum.rows(end_p);
     // return arma::var(diff_it(cum_sum, 1, false));
     
     // Perform loop over the stubs
-    arma::uword num_rows = re_turns.n_rows;
+    arma::uword num_rows = se_ries.n_rows;
     arma::mat aggs;
     arma::uvec end_p;
-    arma::mat var_s(ste_p, re_turns.n_cols);
+    arma::mat var_s(ste_p, se_ries.n_cols);
     for (arma::uword stu_b = 0; stu_b < ste_p; stu_b++) {
       end_p = arma::regspace<uvec>(stu_b, ste_p, num_rows + ste_p);
       end_p = end_p.elem(find(end_p < num_rows));
@@ -185,9 +137,11 @@ arma::rowvec calc_var(arma::mat& re_turns,
 }  // end calc_var
 
 
+
 ////////////////////////////////////////////////
 // Old versions
 
+//' Calculate the end points with a stub interval passed in as an argument.
 //' @export
 // [[Rcpp::export]]
 arma::uvec calc_endpoints_stub(arma::uword len_gth, arma::uword ste_p, arma::uword stu_b = 0) {
@@ -201,87 +155,65 @@ arma::uvec calc_endpoints_stub(arma::uword len_gth, arma::uword ste_p, arma::uwo
 }  // end calc_endpoints_stub
 
 
+// Demonstration of using default NULL arguments in Rcpp code.
+// calc_endpoints_null() implements default NULL arguments in Rcpp code.
+// Calculate the end points with a stub interval.
 //' @export
 // [[Rcpp::export]]
-bool test_empty(arma::mat& re_turns,
-                   arma::uword ste_p = 1,
-                   Rcpp::Nullable<int> stu_b = R_NilValue, 
-                   Rcpp::Nullable<Rcpp::IntegerVector> end_points = R_NilValue) {
+bool calc_endpoints_null(arma::mat& se_ries,
+                         arma::uword ste_p = 1,
+                         Rcpp::Nullable<int> stu_b = R_NilValue, 
+                         Rcpp::Nullable<Rcpp::IntegerVector> end_points = R_NilValue) {
   
-  arma::uword num_rows = re_turns.n_rows;
-  // Calculate cumulative returns
-  // arma::mat cum_sum = arma::cumsum(re_turns, 0);
+  arma::uword num_rows = se_ries.n_rows;
   arma::uvec end_p;
   // arma::uvec end_p = arma::ones<uvec>(1);
   // end_p.reset();
-  
   // bool is_empty;
   
   if (end_points.isNotNull()) {
-    // Calculate rolling sums at end_points
+    // Simply copy end_points
     end_p = Rcpp::as<uvec>(end_points);
   } else if (stu_b.isNotNull()) {
-    // Calculate rolling sums at end points with stu_b
+    // Calculate end points with stu_b
     end_p = arma::regspace<uvec>(Rcpp::as<uword>(stu_b), ste_p, num_rows + ste_p);
     end_p = end_p.elem(find(end_p < num_rows));
   }  // end if
-  
+
+  // Return Boolean
   if (end_p.is_empty())
+    // end_p is empty if arguments end_points and stu_b are both NULL
     return true;
   else  
     return false;
     
-}  // end test_empty
+}  // end calc_endpoints_null
 
 
 ////////////////////////////////////////////////
 
+
+
+// Calculate the cumulative returns (rolling sums) at end points.
 //' @export
 // [[Rcpp::export]]
-arma::mat roll_sumo(arma::mat re_turns, 
-                    arma::uword look_back) {
-  
-  // cout << "end_p = " << end_p << endl;
-  
-  // Calculate cumulative returns at end points
-  arma::mat cum_sum = arma::cumsum(re_turns, 0);
-  
-  // Return the aggregated returns
-  return diff_it(cum_sum, look_back, true);
-  
-}  // end roll_sumo
-
-
-
-//' @export
-// [[Rcpp::export]]
-arma::mat roll_retso(arma::mat& re_turns, 
+arma::mat roll_rets(arma::mat& se_ries, 
                    arma::uword ste_p = 1,
                    arma::uword stu_b = 0) {
 
   // cout << "stu_b = " << stu_b << endl;
   // Calculate end points
-  arma::uword num_rows = re_turns.n_rows;
+  arma::uword num_rows = se_ries.n_rows;
   arma::uvec end_p = arma::regspace<uvec>(stu_b, ste_p, num_rows + ste_p);
   end_p = end_p.elem(find(end_p < num_rows));
   // cout << "end_p = " << end_p << endl;
   
-  // Calculate cumulative returns at end points
-  arma::mat cum_sum = arma::cumsum(re_turns, 0);
+  // Calculate cumulative returns at end points.
+  arma::mat cum_sum = arma::cumsum(se_ries, 0);
   cum_sum = cum_sum.rows(end_p);
 
-  // Return the aggregated returns
+  // Return the differences of the cumulative returns
   return diff_it(cum_sum, 1, true);
   
-  //// Attempt at alternative code
-  // Attempt to add to argument list: default value is empty vector - doesn't work 
-  // arma::uvec end_points = arma::ones<uvec>(0), 
-  // if (end_points.is_empty())
-  // Calculate the variance without aggregations
-  // end_points = calc_endpoints(re_turns.n_rows, ste_p);
-  // This R code works with is_empty() but it requires assigning integer(0):
-  // foo <- roll_retso(re_turns, end_points=integer(0), ste_p=22)
-  //// End alternative code
-  
-}  // end roll_retso
+}  // end roll_rets
 

@@ -62,7 +62,7 @@ arma::mat roll_reg(const arma::vec& res_ponse,
                    const arma::uword& look_back) {
   arma::uword num_rows = de_sign.n_rows;
   arma::uword num_cols = de_sign.n_cols;
-  arma::mat reg_stats(num_rows, (de_sign.n_cols + 1));
+  arma::mat reg_stats(num_rows, (num_cols + 1));
   arma::vec sub_response;
   arma::mat sub_design;
   // Rcpp::List lm_list;
