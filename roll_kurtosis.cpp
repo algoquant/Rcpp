@@ -17,12 +17,12 @@ using namespace arma;
 // This is needed because Rcpp can't map C++ enum type to R variable SEXP.
 enum kurtosis_type {Pearson, Quantile, Nonparametric};
 // Map string to C++ enum type for switch statement.
-kurtosis_type calc_kurtosis_type(const std::string& typ_e) {
-  if (typ_e == "Pearson" || typ_e == "pearson" || typ_e == "p") 
+kurtosis_type calc_kurtosis_type(const std::string& method) {
+  if (method == "Pearson" || method == "pearson" || method == "p") 
     return kurtosis_type::Pearson;
-  else if (typ_e == "Quantile" || typ_e == "quantile" || typ_e == "q")
+  else if (method == "Quantile" || method == "quantile" || method == "q")
     return kurtosis_type::Quantile;
-  else if (typ_e == "Nonparametric" || typ_e == "nonparametric" || typ_e == "n")
+  else if (method == "Nonparametric" || method == "nonparametric" || method == "n")
     return kurtosis_type::Nonparametric;
   else 
     return kurtosis_type::Pearson;
@@ -34,30 +34,34 @@ kurtosis_type calc_kurtosis_type(const std::string& typ_e) {
 //' Calculate the kurtosis of the columns of a \emph{time series} or a
 //' \emph{matrix} using \code{RcppArmadillo}.
 //'
-//' @param \code{t_series} A \emph{time series} or a \emph{matrix} of data.
+//' @param \code{se_ries} A \emph{time series} or a \emph{matrix} of data.
 //'
-//' @param \code{typ_e} A \emph{string} specifying the type of kurtosis (see
-//'   Details). (The default is the \code{typ_e = "pearson"}.)
+//' @param \code{method} A \emph{string} specifying the type of kurtosis (see
+//'   Details). (The default is the \code{method = "pearson"}.)
 //'
 //' @param \code{al_pha} The confidence level for calculating the quantiles.
 //'   (the default is \code{al_pha = 0.25}).
 //'
 //' @return A single-row matrix with the kurtosis of the columns of
-//'   \code{t_series}.
+//'   \code{se_ries}.
 //'
-//' @details The function \code{calc_kurtosis()} calculates the kurtosis of the
-//'   columns of a \emph{time series} or a \emph{matrix} of data using
-//'   \code{RcppArmadillo} \code{C++} code.
+//' @details 
+//'   The function \code{calc_kurtosis()} calculates the kurtosis of the columns of
+//'   a \emph{time series} or a \emph{matrix} of data using \code{RcppArmadillo}
+//'   \code{C++} code.
 //'
-//'   If \code{typ_e = "pearson"} (the default) then \code{calc_kurtosis()}
+//'   If \code{method = "pearson"} (the default) then \code{calc_kurtosis()}
 //'   calculates the Pearson kurtosis using the third moment of the data.
 //'
-//'   If \code{typ_e = "quantile"} then it calculates the kurtosis using the
+//'   If \code{method = "quantile"} then it calculates the kurtosis using the
 //'   differences between the quantiles of the data.
 //'
-//'   If \code{typ_e = "nonparametric"} then it calculates the kurtosis as the
+//'   If \code{method = "nonparametric"} then it calculates the kurtosis as the
 //'   difference between the mean of the data minus its median, divided by the
 //'   standard deviation.
+//'   
+//'   If the number of rows of \code{se_ries} is less than \code{3} then it
+//'   returns zeros.
 //'   
 //'   The code examples below compare the function \code{calc_kurtosis()} with the
 //'   kurtosis calculated using \code{R} code.
@@ -65,7 +69,7 @@ kurtosis_type calc_kurtosis_type(const std::string& typ_e) {
 //' @examples
 //' \dontrun{
 //' # Calculate VTI returns
-//' re_turns <- na.omit(rutils::etf_env$re_turns[ ,"VTI", drop=FALSE])
+//' re_turns <- na.omit(rutils::etf_env$re_turns$VTI)
 //' # Calculate the Pearson kurtosis
 //' HighFreq::calc_kurtosis(re_turns)
 //' # Compare HighFreq::calc_kurtosis() with Pearson kurtosis
@@ -82,96 +86,168 @@ kurtosis_type calc_kurtosis_type(const std::string& typ_e) {
 //'   Rcode=calc_kurtosisr(re_turns),
 //'   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 //' # Calculate the quantile kurtosis
-//' HighFreq::calc_kurtosis(re_turns, typ_e = "quantile", al_pha = 0.1)
+//' HighFreq::calc_kurtosis(re_turns, method = "quantile", al_pha = 0.1)
 //' # Compare HighFreq::calc_kurtosis() with quantile kurtosis
 //' calc_kurtosisq <- function(x) {
 //'   	quantile_s <- quantile(x, c(0.25, 0.5, 0.75), type=5)
 //'   	(quantile_s[3] + quantile_s[1] - 2*quantile_s[2])/(quantile_s[3] - quantile_s[1])
 //' }  # end calc_kurtosisq
-//' all.equal(drop(HighFreq::calc_kurtosis(re_turns, typ_e = "quantile")), 
+//' all.equal(drop(HighFreq::calc_kurtosis(re_turns, method = "quantile")), 
 //'   calc_kurtosisq(re_turns), check.attributes=FALSE)
 //' # Compare the speed of RcppArmadillo with R code
 //' summary(microbenchmark(
-//'   Rcpp=HighFreq::calc_kurtosis(re_turns, typ_e = "quantile"),
+//'   Rcpp=HighFreq::calc_kurtosis(re_turns, method = "quantile"),
 //'   Rcode=calc_kurtosisq(re_turns),
 //'   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 //' # Calculate the nonparametric kurtosis
-//' HighFreq::calc_kurtosis(re_turns, typ_e = "nonparametric")
+//' HighFreq::calc_kurtosis(re_turns, method = "nonparametric")
 //' # Compare HighFreq::calc_kurtosis() with R nonparametric kurtosis
-//' all.equal(drop(HighFreq::calc_kurtosis(re_turns, typ_e = "nonparametric")), 
+//' all.equal(drop(HighFreq::calc_kurtosis(re_turns, method = "nonparametric")), 
 //'   (mean(re_turns)-median(re_turns))/sd(re_turns), 
 //'   check.attributes=FALSE)
 //' # Compare the speed of RcppArmadillo with R code
 //' summary(microbenchmark(
-//'   Rcpp=HighFreq::calc_kurtosis(re_turns, typ_e = "nonparametric"),
+//'   Rcpp=HighFreq::calc_kurtosis(re_turns, method = "nonparametric"),
 //'   Rcode=(mean(re_turns)-median(re_turns))/sd(re_turns),
 //'   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 //' }
 //' 
 //' @export
 // [[Rcpp::export]]
-arma::mat calc_kurtosis(arma::mat t_series,
-                    const std::string& typ_e = "pearson", 
-                    double al_pha = 0.25) {
+arma::mat calc_kurtosis(arma::mat se_ries,
+                        std::string method = "pearson", 
+                        double al_pha = 0.25) {
+  // Return zeros if not enough data
+  if (se_ries.n_rows < 3) {
+    return arma::zeros<rowvec>(se_ries.n_cols);
+  }  // end if
   
-  // switch statement for all the different types of kurtosis
-  switch(calc_kurtosis_type(typ_e)) {
-  case kurtosis_type::Pearson: {  // Pearson
-    double num_rows = t_series.n_rows;
-    arma::mat mean_s = arma::mean(t_series);
-    arma::mat var_s = arma::var(t_series);
-    // De-mean the columns of t_series
-    t_series.each_row() -= mean_s;
-    return arma::sum(arma::pow(t_series, 4))/arma::pow(var_s, 2)/num_rows;
+  // Switch statement for all the different methods of skew
+  switch(calc_kurtosis_type(method)) {
+  case skew_type::Pearson: {  // Pearson
+    double num_rows = se_ries.n_rows;
+    arma::mat mean_s = arma::mean(se_ries);
+    arma::mat var_s = arma::var(se_ries);
+    // De-mean the columns of se_ries
+    se_ries.each_row() -= mean_s;
+    return (num_rows/(num_rows-1)/(num_rows-2))*arma::sum(arma::pow(se_ries, 3))/arma::pow(var_s, 1.5);
   }  // end pearson
-  case kurtosis_type::Quantile: {  // Quantile
+  case skew_type::Quantile: {  // Quantile
     arma::vec prob_s = {al_pha, 0.5, 1.0 - al_pha};
-    arma::mat quantile_s = quantile(t_series, prob_s);
+    arma::mat quantile_s = quantile(se_ries, prob_s);
     return (quantile_s.row(2) + quantile_s.row(0) - 2*quantile_s.row(1))/(quantile_s.row(2) - quantile_s.row(0));
   }  // end quantile
-  case kurtosis_type::Nonparametric: {  // Nonparametric
-    return (arma::mean(t_series) - arma::median(t_series))/arma::stddev(t_series);
+  case skew_type::Nonparametric: {  // Nonparametric
+    return (arma::mean(se_ries) - arma::median(se_ries))/arma::stddev(se_ries);
   }  // end nonparametric
   default : {
-    cout << "Invalid typ_e" << endl;
-    return 0;
+    cout << "Invalid method" << endl;
+    return arma::zeros<rowvec>(se_ries.n_cols);
   }  // end default
   }  // end switch
   
 }  // end calc_kurtosis
 
 
-
+////////////////////////////////////////////////////////////
+//' Calculate a \emph{matrix} of kurtosis estimates over a rolling look-back
+//' interval attached at the end points of a \emph{time series} or a
+//' \emph{matrix}.
+//'
+//' @param \code{se_ries} A \emph{time series} or a \emph{matrix} of data.
+//'    
+//' @param \code{ste_p} The number of time periods between the end points.
+//'
+//' @param \code{look_back} The number of end points in the look-back interval.
+//'
+//' @param \code{method} A \emph{string} specifying the type of kurtosis.  (The
+//'   default is the \code{method = "pearson"}.)
+//'
+//' @param \code{al_pha} The confidence level for calculating the quantiles.
+//'   (the default is \code{al_pha = 0.25}).
+//'
+//' @return A \emph{matrix} with the same number of columns as the input time
+//'   series \code{se_ries}, and the number of rows equal to the number of end
+//'   points.
+//'   
+//' @details 
+//'   The function \code{roll_kurtosis()} calculates a \emph{matrix} of kurtosis
+//'   estimates over rolling look-back intervals attached at the end points of
+//'   the \emph{time series} \code{se_ries}.
+//'   
+//'   It first calculates a vector of end points separated by \code{ste_p} time
+//'   periods. It calculates the end points along the rows of \code{se_ries}
+//'   using the function \code{calc_endpoints()}, with the number of time
+//'   periods between the end points equal to \code{ste_p} time periods.
+//'   
+//'   It then performs a loop over the end points, and at each end point it
+//'   subsets the time series \code{se_ries} over a look-back interval equal
+//'   to \code{look_back} number of end points.
+//'   
+//'   It passes the subset time series to the function \code{calc_kurtosis()}, which
+//'   calculates the kurtosis.
+//'   See the function \code{calc_kurtosis()} for a description of the kurtosis
+//'   methods.
+//'   
+//'   For example, the rolling kurtosis at \code{25} day end points, with a
+//'   \code{75} day look-back, can be calculated using the parameters
+//'   \code{ste_p = 25} and \code{look_back = 3}.
+//'
+//'   The function \code{roll_kurtosis()} is implemented in \code{RcppArmadillo}
+//'   \code{C++} code, so it's many times faster than the equivalent \code{R}
+//'   code.
+//'
+//' @examples
+//' \dontrun{
+//' # Define time series of returns using package rutils
+//' re_turns <- na.omit(rutils::etf_env$re_turns$VTI)
+//' # Define end points and start points
+//' end_p <- 1 + HighFreq::calc_endpoints(NROW(re_turns), ste_p)
+//' start_p <- HighFreq::calc_startpoints(end_p, 3)
+//' # Calculate the rolling kurtosis at 25 day end points, with a 75 day look-back
+//' kurto_sis <- HighFreq::roll_kurtosis(re_turns, ste_p=25, look_back=3)
+//' # Calculate the rolling kurtosis using R code
+//' kurto_r <- sapply(1:NROW(end_p), function(it) {
+//'   HighFreq::calc_kurtosis(re_turns[start_p[it]:end_p[it], ])
+//' })  # end sapply
+//' # Compare the kurtosis estimates
+//' all.equal(drop(kurto_sis), kurto_r, check.attributes=FALSE)
+//' # Compare the speed of RcppArmadillo with R code
+//' library(microbenchmark)
+//' summary(microbenchmark(
+//'   Rcpp=HighFreq::roll_kurtosis(re_turns, ste_p=25, look_back=3),
+//'   Rcode=sapply(1:NROW(end_p), function(it) {
+//'     HighFreq::calc_kurtosis(re_turns[start_p[it]:end_p[it], ])
+//'   }),
+//'   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
+//' }
 //' @export
 // [[Rcpp::export]]
-arma::mat roll_kurtosis(const arma::mat& t_series,
-                    const std::string& typ_e = "pearson", 
-                    double al_pha = 0.25, 
-                    const arma::uword& look_back = 11) {
+arma::mat roll_kurtosis(arma::mat se_ries, 
+                        arma::uword ste_p = 1, 
+                        arma::uword look_back = 11, 
+                        std::string method = "pearson", 
+                        double al_pha = 0.25) {
   
-  arma::uword num_rows = t_series.n_rows;
-  arma::uword num_cols = t_series.n_cols;
-  arma::mat rolling_kurtosis(num_rows, num_cols);
-  arma::mat sub_series;
-  // Rcpp::List lm_list;
+  // Calculate end points
+  arma::uword num_rows = se_ries.n_rows;
+  arma::uvec end_p = calc_endpoints(num_rows, ste_p);
+  // Start points equal to end points lagged by look_back
+  arma::uvec start_p = calc_startpoints(end_p, look_back);
+  // Allocate kurtosis matrix
+  arma::uword num_points = end_p.n_elem;
+  arma::mat kurto_sis = arma::zeros<mat>(num_points, se_ries.n_cols);
   
-  // Warmup period
-  // rolling_kurtosis.rows(0, num_cols+1) = arma::zeros(num_cols+2, (num_cols + 1));
-  
-  for (arma::uword it = 1; it < look_back; it++) {
-    sub_series = t_series.rows(0, it);
-    arma::mat kurtosis_ness = calc_kurtosis(sub_series, typ_e, al_pha);
-    rolling_kurtosis.row(it) = conv_to< rowvec >::from(kurtosis_ness);
+  // Perform loop over the end_p
+  for (arma::uword ep = 0; ep < num_points; ep++) {
+    // Calculate kurtosis
+    if (end_p(ep) > start_p(ep)) {
+      kurto_sis.row(ep) = calc_kurtosis(se_ries.rows(start_p(ep), end_p(ep)), method);
+    }  // end if
   }  // end for
   
-  // Remaining periods
-  for (arma::uword it = look_back; it < num_rows; it++) {
-    sub_series = t_series.rows(it-look_back+1, it);
-    arma::mat kurtosis_ness = calc_kurtosis(sub_series, typ_e, al_pha);
-    rolling_kurtosis.row(it) = conv_to< rowvec >::from(kurtosis_ness);
-  }  // end for
+  return kurto_sis;
   
-  return rolling_kurtosis;
 }  // end roll_kurtosis
 
 

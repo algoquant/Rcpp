@@ -190,6 +190,44 @@ bool calc_endpoints_null(arma::mat& se_ries,
 }  // end calc_endpoints_null
 
 
+
+////////////////////////////////////////////////
+// New version with stub argument
+//' @param \code{stu_b} An \emph{integer} value equal to the first stub interval
+//'   for calculating the end points.
+//' @export
+// [[Rcpp::export]]
+arma::uvec calc_endpoints(arma::uword length, arma::uword step = 1, arma::uword stub = 0) {
+  
+  arma::uword extra = length % step;
+  arma::uvec end_p;
+  
+  if ((stub == 0) & (extra == 0)) {
+    // No stub interval
+    end_p = arma::regspace<uvec>(step, step, length);
+  } else if ((stub == 0) & (extra > 0)) {
+    // Add stub interval at end
+    end_p = arma::regspace<uvec>(step, step, length + step);
+    end_p.back() = length;
+  } else if ((stub > 0) & (extra == 0)) {
+    // Add initial stub interval equal to stub
+    end_p = arma::regspace<uvec>(stub, step, length + step);
+    end_p.back() = length;
+  } else if ((stub > 0) & (extra > 0) & (stub == extra)) {
+    // Add initial stub interval equal to stub without stub at end
+    end_p = arma::regspace<uvec>(stub, step, length);
+  } else {
+    // Add initial stub interval equal to stub and with extra stub at end
+    end_p = arma::regspace<uvec>(stub, step, length + step);
+    end_p.back() = length;
+  }  // end if
+  
+  // Subtract 1 from end_p because C++ indexing starts at 0
+  end_p = end_p - 1;
+  return end_p;
+  
+}  // end calc_endpoints
+
 ////////////////////////////////////////////////
 
 
