@@ -22,7 +22,7 @@ using namespace std;
 
 
 // The function sum_it() sums up the elements of a vector using an STL iterator.
-// In practcie it's better to simply use std::accumulate().
+// It may be simpler to use std::accumulate().
 // [[Rcpp::export]]
 int sum_it(std::vector<int> vec_tor) {
   

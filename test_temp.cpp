@@ -255,3 +255,205 @@ arma::mat roll_rets(arma::mat& se_ries,
   
 }  // end roll_rets
 
+
+
+// Calculate the rolling average of streaming data using a lambda decay factor
+//' @export
+// [[Rcpp::export]]
+arma::mat run_mean(arma::mat tseries, double lambda) {
+  
+  arma::uword num_rows = tseries.n_rows;
+  arma::mat means = tseries;
+  double lambda1 = 1-lambda;
+  
+  // Perform loop over rows
+  for (arma::uword it = 1; it < num_rows; it++) {
+    // Calculate the mean as a weighted sum
+    means.row(it) = lambda1*means.row(it) + lambda*means.row(it-1);
+  }  // end for
+  
+  return means;
+  
+}  // end run_mean
+
+
+// Calculate the rolling variance of streaming data using a lambda decay factor
+//' @export
+// [[Rcpp::export]]
+arma::mat run_var(arma::mat tseries, double lambda) {
+  
+  arma::uword num_rows = tseries.size();
+  arma::mat vars = arma::square(tseries);
+  double lambda1 = 1-lambda;
+  
+  // Perform loop over rows
+  for (arma::uword it = 1; it < num_rows; it++) {
+    // Calculate the variance as a weighted sum of squared returns
+    vars[it] = lambda1*vars[it] + lambda*vars[it-1];
+  }  // end for
+  
+  return vars;
+  
+}  // end run_var
+
+
+// Calculate the rolling covariance of streaming data using a lambda decay factor
+//' @export
+// [[Rcpp::export]]
+arma::mat run_covar(arma::mat tseries1, arma::mat tseries2, double lambda) {
+  
+  arma::uword num_rows = tseries1.size();
+  arma::mat var1 = arma::square(tseries1);
+  arma::mat var2 = arma::square(tseries2);
+  arma::mat covar = tseries1 % tseries2;
+  double lambda1 = 1-lambda;
+  
+  // Perform loop over rows
+  for (arma::uword it = 1; it < num_rows; it++) {
+    // Calculate the covariance as a weighted sum of squared returns
+    var1[it] = lambda1*var1[it] + lambda*var1[it-1];
+    var2[it] = lambda1*var2[it] + lambda*var2[it-1];
+    covar[it] = lambda1*covar[it] + lambda*covar[it-1];
+  }  // end for
+  
+  return arma::join_rows(covar, var1, var2);
+
+}  // end run_covar
+
+
+// Calculate the rolling z-score of streaming data using a lambda decay factor
+//' @export
+// [[Rcpp::export]]
+arma::mat run_zscore(arma::mat tseries1, arma::mat tseries2, double lambda) {
+  
+  arma::uword num_rows = tseries1.size();
+  arma::mat var1 = arma::square(tseries1);
+  arma::mat var2 = arma::square(tseries2);
+  arma::mat covar = tseries1 % tseries2;
+  arma::mat beta = arma::zeros<mat>(num_rows, 1);
+  arma::mat zscore = arma::zeros<mat>(num_rows, 1);
+  double lambda1 = 1-lambda;
+  
+  // Perform loop over rows
+  for (arma::uword it = 1; it < num_rows; it++) {
+    // Calculate the covariance as a weighted sum of squared returns
+    var1[it] = lambda1*var1[it] + lambda*var1[it-1];
+    var2[it] = lambda1*var2[it] + lambda*var2[it-1];
+    covar[it] = lambda1*covar[it] + lambda*covar[it-1];
+    beta[it] = lambda1*covar[it]/var2[it] + lambda*beta[it-1];
+    zscore[it] = lambda1*(tseries1[it] - beta[it]*tseries2[it]) + lambda*zscore[it-1];
+    // zscore[it] = lambda1*(tseries1[it]/std::sqrt(var1[it]) - beta[it]*tseries2[it]/std::sqrt(var2[it])) + lambda*zscore[it-1];
+  }  // end for
+  
+  return arma::join_rows(zscore, beta, var1, var2);
+  
+}  // end run_zscore
+
+
+// Calculate the rolling maximum or minimum of streaming data using a lambda decay factor
+//' @export
+// [[Rcpp::export]]
+arma::mat run_maxmin(arma::mat tseries, double lambda, bool calc_max = true) {
+  
+  arma::uword num_rows = tseries.n_rows;
+  arma::mat maxmin = tseries;
+  arma::mat means = tseries;
+  double lambda1 = 1-lambda;
+  
+  if (calc_max) {
+    // Perform loop over rows
+    for (arma::uword it = 1; it < num_rows; it++) {
+      // Calculate the mean as a weighted sum
+      means.row(it) = lambda1*means.row(it) + lambda*means.row(it-1);
+      // Calculate the max from a weighted sum
+      maxmin.row(it) = arma::max(maxmin.row(it), means.row(it-1) + lambda*(maxmin.row(it-1) - means.row(it-1)));
+    }  // end for
+  } else {
+    // Perform loop over rows
+    for (arma::uword it = 1; it < num_rows; it++) {
+      // Calculate the mean as a weighted sum
+      means.row(it) = lambda1*means.row(it) + lambda*means.row(it-1);
+      // Calculate the max from a weighted sum
+      maxmin.row(it) = arma::min(maxmin.row(it), means.row(it-1) + lambda*(maxmin.row(it-1) - means.row(it-1)));
+    }  // end for
+  }  // end if
+  
+  return maxmin;
+  
+}  // end run_maxmin
+
+
+// Calculate the rolling maximum of streaming data using a lambda decay factor
+//' @export
+// [[Rcpp::export]]
+arma::mat run_max(arma::mat tseries, double lambda) {
+  
+  arma::uword num_rows = tseries.n_rows;
+  arma::mat maxs = tseries;
+  arma::mat means = tseries;
+  double lambda1 = 1-lambda;
+  
+  // Perform loop over rows
+  for (arma::uword it = 1; it < num_rows; it++) {
+    // Calculate the mean as a weighted sum
+    means.row(it) = lambda1*means.row(it) + lambda*means.row(it-1);
+    // Calculate the max from a weighted sum
+    maxs.row(it) = arma::max(maxs.row(it), means.row(it-1) + lambda*(maxs.row(it-1) - means.row(it-1)));
+  }  // end for
+  
+  return maxs;
+  
+}  // end run_max
+
+
+// Calculate the rolling minimum of streaming data using a lambda decay factor
+//' @export
+// [[Rcpp::export]]
+arma::mat run_min(arma::mat tseries, double lambda) {
+  
+  arma::uword num_rows = tseries.n_rows;
+  arma::mat mins = tseries;
+  arma::mat means = tseries;
+  double lambda1 = 1-lambda;
+  
+  // Perform loop over rows
+  for (arma::uword it = 1; it < num_rows; it++) {
+    // Calculate the mean as a weighted sum
+    means.row(it) = lambda1*means.row(it) + lambda*means.row(it-1);
+    // Calculate the max from a weighted sum
+    mins.row(it) = arma::min(mins.row(it), means.row(it-1) + lambda*(mins.row(it-1) - means.row(it-1)));
+  }  // end for
+  
+  return mins;
+  
+}  // end run_min
+
+
+// Calculate the rolling maximum of streaming data using a lambda decay factor
+//' @export
+// [[Rcpp::export]]
+arma::colvec armax(arma::colvec tseries, arma::colvec tseries2) {
+  
+  arma::uword num_rows = tseries.n_rows;
+  arma::colvec maxs = tseries;
+
+  // Perform loop over rows
+  for (arma::uword it = 0; it < num_rows; it++) {
+    // Calculate the mean as a weighted sum
+    // means.row(it) = lambda1*means.row(it) + lambda*means.row(it-1);
+    // Calculate the max from a weighted sum
+    // maxs.row(it) = arma::max(maxs.row(it), means.row(it-1) + lambda*(maxs.row(it-1) - means.row(it-1)));
+    maxs.row(it) = arma::max(tseries.row(it), tseries2.row(it));
+  }  // end for
+  
+  return maxs;
+  
+}  // end armax
+
+// double armax(double lambda1, double lambda2) {
+//   
+//   return std::max(lambda1, lambda2);
+//   
+// }  // end armax
+
+
