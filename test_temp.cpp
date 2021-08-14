@@ -23,22 +23,127 @@ using namespace std;
 ////////////////////////////////////////////////
 // Included to facilitate Tests - remove later - don't migrate
 
-arma::mat diff_it(arma::mat& t_series, 
-                  arma::uword lagg = 1, 
-                  bool padd = true) {
+////////////////////////////////////////////////////////////
+// Define C++ enum type for the different methods for regularization,
+// calculating variance, skewness, kurtosis, covariance, regression, 
+// and matrix inverse.
+enum meth_od {moment, least_squares, quantile, nonparametric, regular, rank_sharpe, 
+              max_sharpe, max_sharpe_median, min_var, min_varpca, rank, rankrob};
+
+// Map string to C++ enum type for switch statement.
+// This is needed because Rcpp can't map C++ enum type to R variable SEXP.
+meth_od calc_method(std::string method) {
+  if (method == "moment" || method == "m") 
+    return meth_od::moment;
+  else if (method == "least_squares" || method == "l")
+    return meth_od::least_squares;
+  else if (method == "quantile" || method == "q")
+    return meth_od::quantile;
+  else if (method == "nonparametric" || method == "n")
+    return meth_od::nonparametric;
+  else if (method == "regular")
+    return meth_od::regular;
+  else if (method == "rank_sharpe")
+    return meth_od::rank_sharpe;
+  else if (method == "max_sharpe")
+    return meth_od::max_sharpe;
+  else if (method == "max_sharpe_median")
+    return meth_od::max_sharpe_median;
+  else if (method == "min_var")
+    return meth_od::min_var;
+  else if (method == "min_varpca")
+    return meth_od::min_varpca;
+  else if (method == "rank")
+    return meth_od::rank;
+  else if (method == "rankrob")
+    return meth_od::rankrob;
+  else 
+    return meth_od::moment;
+}  // end calc_method
+
+
+
+arma::uvec calc_endpoints(arma::uword length, arma::uword step = 1, arma::uword stub = 0) {
   
-  arma::uword num_rows = (t_series.n_rows-1);
-  // Matrix difference without padding
-  arma::mat diff_mat = (t_series.rows(lagg, num_rows) - t_series.rows(0, num_rows - lagg));
+  arma::uword remainder = length % step;
+  arma::uvec endp;
   
-  if (padd)
-    // Pad diff_mat with warmup period at the beginning
-    return arma::join_cols(t_series.rows(0, lagg - 1), diff_mat);
-  else
-    // Don't pad the output
-    return diff_mat;
+  if ((stub == 0) & (remainder == 0)) {
+    // No stub interval
+    endp = arma::regspace<uvec>(step, step, length);
+  } else if ((stub == 0) & (remainder > 0)) {
+    // Add stub interval at end
+    endp = arma::regspace<uvec>(step, step, length + step);
+    endp.back() = length;
+  } else if ((stub > 0) & (remainder == 0)) {
+    // Add initial stub interval equal to stub
+    endp = arma::regspace<uvec>(stub, step, length + step);
+    endp.back() = length;
+  } else if ((stub > 0) & (remainder > 0) & (stub == remainder)) {
+    // Add initial stub interval equal to stub without stub at end
+    endp = arma::regspace<uvec>(stub, step, length);
+  } else {
+    // Add initial stub interval equal to stub and with extra stub at end
+    endp = arma::regspace<uvec>(stub, step, length + step);
+    endp.back() = length;
+  }  // end if
+  
+  // Subtract 1 from endp because C++ indexing starts at 0
+  endp = endp - 1;
+  return endp;
+  
+}  // end calc_endpoints
+
+
+
+arma::uvec calc_startpoints(arma::uvec endp, arma::uword look_back) {
+  
+  arma::uword num_pts = endp.n_elem;
+  arma::uvec startp = arma::join_cols(arma::zeros<uvec>(look_back), 
+                                      endp.subvec(0, num_pts - look_back - 1) + 1);
+  
+  return startp;
+  
+}  // end calc_startpoints
+
+
+
+//' @export
+// [[Rcpp::export]]
+arma::mat diff_it(const arma::mat& tseries, 
+                  arma::sword lagg = 1, 
+                  bool pad_zeros = true) {
+  
+  arma::uword num_rows = (tseries.n_rows-1);
+  arma::uword num_cols = tseries.n_cols;
+  
+  if (lagg > 0) {
+    // Positive lag
+    // Matrix difference without padding
+    arma::mat diff_mat = (tseries.rows(lagg, num_rows) - tseries.rows(0, num_rows - lagg));
+    if (pad_zeros) {
+      // Pad diff_mat with zeros at the front
+      return arma::join_cols(arma::zeros<mat>(lagg, num_cols), diff_mat);
+    } else {
+      // Don't pad the output
+      return diff_mat;
+    }  // end if pad_zeros
+  } else {
+    // Negative lag
+    // Matrix difference without padding
+    arma::mat diff_mat = (tseries.rows(0, num_rows + lagg) - tseries.rows(-lagg, num_rows));
+    if (pad_zeros) {
+      // Pad diff_mat with zeros at the back
+      return arma::join_cols(diff_mat, arma::zeros<mat>(-lagg, num_cols));
+    } else {
+      // Don't pad the output
+      return diff_mat;
+    }  // end if pad_zeros
+  }  // end if lagg
   
 }  // end diff_it
+
+
 
 
 
@@ -46,309 +151,10 @@ arma::mat diff_it(arma::mat& t_series,
 // Test versions to be migrated to package HighFreq
 
 
-////////////////////////////////////////////////////////////
-//' Calculate the variance for overlapping aggregated returns: the variance of
-//' returns aggregated over k time periods. a vector of end points that divides
-//' a vector into equal intervals.
-//'
-//' @param \code{len_gth} An \emph{integer} equal to the length of the vector to
-//'   be divide into equal intervals.
-//'   
-//' @param \code{ste_p} The number of elements in each interval.
-//' 
-//' @param \code{front} \emph{Boolean} argument: if \code{TRUE} then add a stub
-//'   interval at the beginning, else add a stub interval at the end.  (default
-//'   is \code{TRUE})
-//'
-//' @return An \emph{integer} vector of equally spaced end points (vector of
-//'   integers).
-//'
-//' @details The end points are a vector of integers which divide the vector of
-//'   length equal to \code{len_gth} into equally spaced intervals.
-//'   If a whole number of intervals doesn't fit over the vector, then
-//'   \code{calc_endpoints()} adds a stub interval either at the beginning (the
-//'   default) or at the end.
-//'   The end points are shifted by \code{-1} because indexing starts at
-//'   \code{0} in \code{C++} code.
-//'
-//'   The function \code{calc_endpoints()} is similar to the function
-//'   \code{rutils::calc_endpoints()} from package
-//'   \href{https://github.com/algoquant/rutils}{rutils}.
-//'   
-//'   The end points produced by \code{calc_endpoints()} don't include the first
-//'   placeholder end point, which is usually equal to zero.
-//'   For example, consider the end points for a vector of length \code{20}
-//'   divided into intervals of length \code{5}: \code{0, 5, 10, 15, 20}.
-//'   In order for all the differences between neighboring end points to be
-//'   equal to \code{5}, the first end point must be equal to \code{0}.
-//'   The first end point is a placeholder and doesn't correspond to any vector
-//'   element.
-//'   
-//'   This works in \code{R} code because the vector element corresponding to
-//'   index \code{0} is empty.  For example, the \code{R} code: \code{(4:1)[c(0,
-//'   1)]} produces \code{4}.  So in \code{R} we can select vector elements
-//'   using the end points starting at zero.
-//'   
-//'   In \code{C++} the end points must be shifted by \code{-1} because indexing
-//'   starts at \code{0}: \code{-1, 4, 9, 14, 19}.  But there is no vector
-//'   element corresponding to index \code{-1}. So in \code{C++} we cannot
-//'   select vector elements using the end points starting at \code{-1}. The
-//'   solution is to drop the first placeholder end point.
-//'   
-//' @examples
-//' # Calculate end points without a stub interval
-//' HighFreq::calc_endpoints(25, 5)
-//' # Calculate end points with initial stub interval
-//' HighFreq::calc_endpoints(23, 5)
-//' # Calculate end points with a stub interval at the end
-//' HighFreq::calc_endpoints(23, 5, FALSE)
-//'
-//' @export
-// [[Rcpp::export]]
-arma::rowvec calc_var(arma::mat& se_ries, 
-                      arma::uword ste_p = 1) {
-  
-  // arma::uword num_cols = se_ries.n_cols;
-  
-  if (ste_p == 1)
-    // Calculate the variance without aggregations
-    return arma::var(se_ries);
-  else {
-    arma::mat cum_sum = arma::cumsum(se_ries, 0);
-    // Calculate the variance of aggregated returns
-    // arma::uvec end_p = calc_endpoints(se_ries.n_rows, ste_p);
-    // cum_sum = cum_sum.rows(end_p);
-    // return arma::var(diff_it(cum_sum, 1, false));
-    
-    // Perform loop over the stubs
-    arma::uword num_rows = se_ries.n_rows;
-    arma::mat aggs;
-    arma::uvec end_p;
-    arma::mat var_s(ste_p, se_ries.n_cols);
-    for (arma::uword stu_b = 0; stu_b < ste_p; stu_b++) {
-      end_p = arma::regspace<uvec>(stu_b, ste_p, num_rows + ste_p);
-      end_p = end_p.elem(find(end_p < num_rows));
-      aggs = cum_sum.rows(end_p);
-      var_s.row(stu_b) = arma::var(diff_it(aggs, 1, false));
-    }  // end for
-    return mean(var_s);
-  }  // end if
-  
-}  // end calc_var
-
 
 
 ////////////////////////////////////////////////
-// Old versions
-
-//' Calculate the end points with a stub interval passed in as an argument.
-//' @export
-// [[Rcpp::export]]
-arma::uvec calc_endpoints_stub(arma::uword len_gth, arma::uword ste_p, arma::uword stu_b = 0) {
-  
-  // Calculate number of intervals that fit over len_gth
-  // arma::uword num_points = len_gth/ste_p;
-  arma::uvec endp = arma::regspace<uvec>(stu_b, ste_p, len_gth + ste_p);
-  
-  return endp.elem(find(endp <= len_gth));
-  
-}  // end calc_endpoints_stub
-
-
-// Demonstration of using default NULL arguments in Rcpp code.
-// calc_endpoints_null() implements default NULL arguments in Rcpp code.
-// Calculate the end points with a stub interval.
-//' @export
-// [[Rcpp::export]]
-bool calc_endpoints_null(arma::mat& se_ries,
-                         arma::uword ste_p = 1,
-                         Rcpp::Nullable<int> stu_b = R_NilValue, 
-                         Rcpp::Nullable<Rcpp::IntegerVector> end_points = R_NilValue) {
-  
-  arma::uword num_rows = se_ries.n_rows;
-  arma::uvec end_p;
-  // arma::uvec end_p = arma::ones<uvec>(1);
-  // end_p.reset();
-  // bool is_empty;
-  
-  if (end_points.isNotNull()) {
-    // Simply copy end_points
-    end_p = Rcpp::as<uvec>(end_points);
-  } else if (stu_b.isNotNull()) {
-    // Calculate end points with stu_b
-    end_p = arma::regspace<uvec>(Rcpp::as<uword>(stu_b), ste_p, num_rows + ste_p);
-    end_p = end_p.elem(find(end_p < num_rows));
-  }  // end if
-
-  // Return Boolean
-  if (end_p.is_empty())
-    // end_p is empty if arguments end_points and stu_b are both NULL
-    return true;
-  else  
-    return false;
-    
-}  // end calc_endpoints_null
-
-
-
-////////////////////////////////////////////////
-// New version with stub argument
-//' @param \code{stu_b} An \emph{integer} value equal to the first stub interval
-//'   for calculating the end points.
-//' @export
-// [[Rcpp::export]]
-arma::uvec calc_endpoints(arma::uword length, arma::uword step = 1, arma::uword stub = 0) {
-  
-  arma::uword extra = length % step;
-  arma::uvec end_p;
-  
-  if ((stub == 0) & (extra == 0)) {
-    // No stub interval
-    end_p = arma::regspace<uvec>(step, step, length);
-  } else if ((stub == 0) & (extra > 0)) {
-    // Add stub interval at end
-    end_p = arma::regspace<uvec>(step, step, length + step);
-    end_p.back() = length;
-  } else if ((stub > 0) & (extra == 0)) {
-    // Add initial stub interval equal to stub
-    end_p = arma::regspace<uvec>(stub, step, length + step);
-    end_p.back() = length;
-  } else if ((stub > 0) & (extra > 0) & (stub == extra)) {
-    // Add initial stub interval equal to stub without stub at end
-    end_p = arma::regspace<uvec>(stub, step, length);
-  } else {
-    // Add initial stub interval equal to stub and with extra stub at end
-    end_p = arma::regspace<uvec>(stub, step, length + step);
-    end_p.back() = length;
-  }  // end if
-  
-  // Subtract 1 from end_p because C++ indexing starts at 0
-  end_p = end_p - 1;
-  return end_p;
-  
-}  // end calc_endpoints
-
-////////////////////////////////////////////////
-
-
-
-// Calculate the cumulative returns (rolling sums) at end points.
-//' @export
-// [[Rcpp::export]]
-arma::mat roll_rets(arma::mat& se_ries, 
-                   arma::uword ste_p = 1,
-                   arma::uword stu_b = 0) {
-
-  // cout << "stu_b = " << stu_b << endl;
-  // Calculate end points
-  arma::uword num_rows = se_ries.n_rows;
-  arma::uvec end_p = arma::regspace<uvec>(stu_b, ste_p, num_rows + ste_p);
-  end_p = end_p.elem(find(end_p < num_rows));
-  // cout << "end_p = " << end_p << endl;
-  
-  // Calculate cumulative returns at end points.
-  arma::mat cum_sum = arma::cumsum(se_ries, 0);
-  cum_sum = cum_sum.rows(end_p);
-
-  // Return the differences of the cumulative returns
-  return diff_it(cum_sum, 1, true);
-  
-}  // end roll_rets
-
-
-
-// Calculate the rolling average of streaming data using a lambda decay factor
-//' @export
-// [[Rcpp::export]]
-arma::mat run_mean(arma::mat tseries, double lambda) {
-  
-  arma::uword num_rows = tseries.n_rows;
-  arma::mat means = tseries;
-  double lambda1 = 1-lambda;
-  
-  // Perform loop over rows
-  for (arma::uword it = 1; it < num_rows; it++) {
-    // Calculate the mean as a weighted sum
-    means.row(it) = lambda1*means.row(it) + lambda*means.row(it-1);
-  }  // end for
-  
-  return means;
-  
-}  // end run_mean
-
-
-// Calculate the rolling variance of streaming data using a lambda decay factor
-//' @export
-// [[Rcpp::export]]
-arma::mat run_var(arma::mat tseries, double lambda) {
-  
-  arma::uword num_rows = tseries.size();
-  arma::mat vars = arma::square(tseries);
-  double lambda1 = 1-lambda;
-  
-  // Perform loop over rows
-  for (arma::uword it = 1; it < num_rows; it++) {
-    // Calculate the variance as a weighted sum of squared returns
-    vars[it] = lambda1*vars[it] + lambda*vars[it-1];
-  }  // end for
-  
-  return vars;
-  
-}  // end run_var
-
-
-// Calculate the rolling covariance of streaming data using a lambda decay factor
-//' @export
-// [[Rcpp::export]]
-arma::mat run_covar(arma::mat tseries1, arma::mat tseries2, double lambda) {
-  
-  arma::uword num_rows = tseries1.size();
-  arma::mat var1 = arma::square(tseries1);
-  arma::mat var2 = arma::square(tseries2);
-  arma::mat covar = tseries1 % tseries2;
-  double lambda1 = 1-lambda;
-  
-  // Perform loop over rows
-  for (arma::uword it = 1; it < num_rows; it++) {
-    // Calculate the covariance as a weighted sum of squared returns
-    var1[it] = lambda1*var1[it] + lambda*var1[it-1];
-    var2[it] = lambda1*var2[it] + lambda*var2[it-1];
-    covar[it] = lambda1*covar[it] + lambda*covar[it-1];
-  }  // end for
-  
-  return arma::join_rows(covar, var1, var2);
-
-}  // end run_covar
-
-
-// Calculate the rolling z-score of streaming data using a lambda decay factor
-//' @export
-// [[Rcpp::export]]
-arma::mat run_zscore(arma::mat tseries1, arma::mat tseries2, double lambda) {
-  
-  arma::uword num_rows = tseries1.size();
-  arma::mat var1 = arma::square(tseries1);
-  arma::mat var2 = arma::square(tseries2);
-  arma::mat covar = tseries1 % tseries2;
-  arma::mat beta = arma::zeros<mat>(num_rows, 1);
-  arma::mat zscore = arma::zeros<mat>(num_rows, 1);
-  double lambda1 = 1-lambda;
-  
-  // Perform loop over rows
-  for (arma::uword it = 1; it < num_rows; it++) {
-    // Calculate the covariance as a weighted sum of squared returns
-    var1[it] = lambda1*var1[it] + lambda*var1[it-1];
-    var2[it] = lambda1*var2[it] + lambda*var2[it-1];
-    covar[it] = lambda1*covar[it] + lambda*covar[it-1];
-    beta[it] = lambda1*covar[it]/var2[it] + lambda*beta[it-1];
-    zscore[it] = lambda1*(tseries1[it] - beta[it]*tseries2[it]) + lambda*zscore[it-1];
-    // zscore[it] = lambda1*(tseries1[it]/std::sqrt(var1[it]) - beta[it]*tseries2[it]/std::sqrt(var2[it])) + lambda*zscore[it-1];
-  }  // end for
-  
-  return arma::join_rows(zscore, beta, var1, var2);
-  
-}  // end run_zscore
-
+// Old stuff - can be deleted later
 
 // Calculate the rolling maximum or minimum of streaming data using a lambda decay factor
 //' @export
@@ -386,57 +192,11 @@ arma::mat run_maxmin(arma::mat tseries, double lambda, bool calc_max = true) {
 // Calculate the rolling maximum of streaming data using a lambda decay factor
 //' @export
 // [[Rcpp::export]]
-arma::mat run_max(arma::mat tseries, double lambda) {
-  
-  arma::uword num_rows = tseries.n_rows;
-  arma::mat maxs = tseries;
-  arma::mat means = tseries;
-  double lambda1 = 1-lambda;
-  
-  // Perform loop over rows
-  for (arma::uword it = 1; it < num_rows; it++) {
-    // Calculate the mean as a weighted sum
-    means.row(it) = lambda1*means.row(it) + lambda*means.row(it-1);
-    // Calculate the max from a weighted sum
-    maxs.row(it) = arma::max(maxs.row(it), means.row(it-1) + lambda*(maxs.row(it-1) - means.row(it-1)));
-  }  // end for
-  
-  return maxs;
-  
-}  // end run_max
-
-
-// Calculate the rolling minimum of streaming data using a lambda decay factor
-//' @export
-// [[Rcpp::export]]
-arma::mat run_min(arma::mat tseries, double lambda) {
-  
-  arma::uword num_rows = tseries.n_rows;
-  arma::mat mins = tseries;
-  arma::mat means = tseries;
-  double lambda1 = 1-lambda;
-  
-  // Perform loop over rows
-  for (arma::uword it = 1; it < num_rows; it++) {
-    // Calculate the mean as a weighted sum
-    means.row(it) = lambda1*means.row(it) + lambda*means.row(it-1);
-    // Calculate the max from a weighted sum
-    mins.row(it) = arma::min(mins.row(it), means.row(it-1) + lambda*(mins.row(it-1) - means.row(it-1)));
-  }  // end for
-  
-  return mins;
-  
-}  // end run_min
-
-
-// Calculate the rolling maximum of streaming data using a lambda decay factor
-//' @export
-// [[Rcpp::export]]
 arma::colvec armax(arma::colvec tseries, arma::colvec tseries2) {
   
   arma::uword num_rows = tseries.n_rows;
   arma::colvec maxs = tseries;
-
+  
   // Perform loop over rows
   for (arma::uword it = 0; it < num_rows; it++) {
     // Calculate the mean as a weighted sum
@@ -450,10 +210,125 @@ arma::colvec armax(arma::colvec tseries, arma::colvec tseries2) {
   
 }  // end armax
 
+
+
+// Demonstration of using default NULL arguments in Rcpp code.
+// calc_endpoints_null() implements default NULL arguments in Rcpp code.
+// Calculate the end points with a stub interval.
+bool calc_endpoints_null(arma::mat& se_ries,
+                         arma::uword ste_p = 1,
+                         Rcpp::Nullable<int> stu_b = R_NilValue, 
+                         Rcpp::Nullable<Rcpp::IntegerVector> end_points = R_NilValue) {
+  
+  arma::uword num_rows = se_ries.n_rows;
+  arma::uvec end_p;
+  // arma::uvec end_p = arma::ones<uvec>(1);
+  // end_p.reset();
+  // bool is_empty;
+  
+  if (end_points.isNotNull()) {
+    // Simply copy end_points
+    end_p = Rcpp::as<uvec>(end_points);
+  } else if (stu_b.isNotNull()) {
+    // Calculate end points with stu_b
+    end_p = arma::regspace<uvec>(Rcpp::as<uword>(stu_b), ste_p, num_rows + ste_p);
+    end_p = end_p.elem(find(end_p < num_rows));
+  }  // end if
+  
+  // Return Boolean
+  if (end_p.is_empty())
+    // end_p is empty if arguments end_points and stu_b are both NULL
+    return true;
+  else  
+    return false;
+  
+}  // end calc_endpoints_null
+
+
+
+////////////////////////////////////////////////
+// Experimental functions.
+
+
+////////////////////////////////////////////////////////////
+//' Calculate by reference the rolling convolutions (weighted sums) of a
+//' \emph{time series} with a \emph{column vector} of weights.
+//' 
+//' @param \code{tseries} A \emph{time series} or a \emph{matrix} of data.
+//' 
+//' @param \code{weights} A \emph{column vector} of weights.
+//'
+//' @return A \emph{matrix} with the same dimensions as the input
+//'   argument \code{tseries}.
+//'
+//' @details 
+//'   The function \code{roll_conv_ref()} is experimental and doesn't quite work yet.
+//'   
+//'   The function \code{roll_conv_ref()} calculates the convolutions of the
+//'   \emph{matrix} columns with a \emph{column vector} of weights.  It performs a loop
+//'   down over the \emph{matrix} rows and multiplies the past (higher) values
+//'   by the weights.  It calculates the rolling weighted sums of the past
+//'   values.
+//'   
+//'   The function \code{roll_conv_ref()} accepts a \emph{pointer} to the argument
+//'   \code{tseries}, and replaces the old \emph{matrix} values with the
+//'   weighted sums.
+//'   It performs the calculation in place, without copying the \emph{matrix} in
+//'   memory (which greatly increases the computation speed).
+//'   
+//'   The function \code{roll_conv_ref()} uses the \code{RcppArmadillo} function
+//'   \code{arma::conv2()}. It performs a similar calculation to the standard
+//'   \code{R} function \code{filter(x=re_turns, filter=weight_s,
+//'   method="convolution", sides=1)}, but it's over \code{6} times faster, and
+//'   it doesn't produce any leading \code{NA} values.
+//'   
+//' @examples
+//' \dontrun{
+//' # First example
+//' # Calculate a time series of prices
+//' re_turns <- na.omit(rutils::etf_env$re_turns[, c("IEF", "VTI")])
+//' # Create simple weights equal to a 1 value plus zeros
+//' weight_s <- matrix(c(1, rep(0, 10)), nc=1)
+//' # Calculate rolling weighted sums
+//' weight_ed <- HighFreq::roll_conv_ref(re_turns, weight_s)
+//' # Compare with original
+//' all.equal(coredata(re_turns), weight_ed, check.attributes=FALSE)
+//' # Second example
+//' # Create exponentially decaying weights
+//' weight_s <- exp(-0.2*(1:11))
+//' weight_s <- matrix(weight_s/sum(weight_s), nc=1)
+//' # Calculate rolling weighted sums
+//' weight_ed <- HighFreq::roll_conv_ref(re_turns, weight_s)
+//' # Calculate rolling weighted sums using filter()
+//' filter_ed <- filter(x=re_turns, filter=weight_s, method="convolution", sides=1)
+//' # Compare both methods
+//' all.equal(filter_ed[-(1:11), ], weight_ed[-(1:11), ], check.attributes=FALSE)
+//' }
+//' 
+//' @export
+// [[Rcpp::export]]
+arma::mat roll_conv_ref(arma::mat& tseries, const arma::mat& weights) {
+  
+  arma::uword look_back = weights.n_rows-1;
+  arma::uword num_rows = tseries.n_rows-1;
+  
+  // Calculate the convolutions
+  arma::mat convmat = arma::conv2(tseries, weights, "full");
+  // Copy the convolutions
+  tseries.rows(look_back, num_rows) = convmat.rows(look_back, num_rows);
+  // tseries = arma::conv2(tseries, weights, "same");
+  
+  return weights;
+  
+}  // end roll_conv_ref
+
+
+
+
+
 // double armax(double lambda1, double lambda2) {
 //   
 //   return std::max(lambda1, lambda2);
 //   
 // }  // end armax
-
 
