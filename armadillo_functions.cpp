@@ -640,35 +640,35 @@ int demean_mat(arma::mat& mat_rix) {
 }  // end demean_mat
 
 
-// The function inner_arma() calculates the inner (dot) product of two vectors.
+// The function inner_vec() calculates the inner (dot) product of two vectors.
 // It accepts pointers to the two vectors and returns a double.
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-double vec_prod(const arma::vec& vec1, const arma::vec& vec2) {
+double inner_vec(const arma::vec& vec1, const arma::vec& vec2) {
   return arma::dot(vec1, vec2);
-}  // end vec_prod
+}  // end inner_vec
 
 
-// The function mat_vec_prod() calculates the product of a matrix times a vector.
+// The function mat_inner_vec() calculates the product of a matrix times a vector.
 // It accepts pointers to the matrix and vector, and returns a vector.
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::vec mat_vec_prod(const arma::vec& vec_tor, const arma::mat& mat_rix) {
+arma::vec mat_inner_vec(const arma::vec& vec_tor, const arma::mat& mat_rix) {
   return mat_rix * vec_tor;
-}  // end mat_vec_prod
+}  // end mat_inner_vec
 
 
-// The function mat_2vec_prod() calculates the inner (dot) product of a matrix
+// The function inner_mat() calculates the inner (dot) product of a matrix
 // with two vectors.
 // It accepts pointers to the matrix and vectors, and returns a double.
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-double mat_2vec_prod(const arma::vec& vec_tor2, const arma::mat& mat_rix, const arma::vec& vec_tor1) {
+double inner_mat(const arma::vec& vec_tor2, const arma::mat& mat_rix, const arma::vec& vec_tor1) {
   return arma::as_scalar(trans(vec_tor2) * (mat_rix * vec_tor1));
-}  // end mat_2vec_prod
+}  // end inner_mat
 
 
 ////////////////////////////////////////////////////////////
