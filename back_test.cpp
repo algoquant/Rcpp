@@ -1,10 +1,11 @@
 ////////////////////////////
-// Copies of functions HighFreq::calc_weights() and HighFreq::back_test() for testing.
+// Copies of functions HighFreq::calc_weights() and 
+// HighFreq::back_test() for testing.
 // 
 ////////////////////////////
 
 // Compile this file in R by running this command:
-// Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/back_test.cpp")
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/back_test.cpp")
 
 #include <RcppArmadillo.h>
 using namespace Rcpp;

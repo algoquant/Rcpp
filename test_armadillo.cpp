@@ -28,6 +28,217 @@ arma::mat floor_it(arma::mat& data, double minval) {
 }  // end floor_it
 
 
+// [[Rcpp::export]]
+arma::mat lag_it(const arma::mat& tseries, 
+                 arma::sword lagg = 1, 
+                 bool pad_zeros = true) {
+  
+  arma::uword num_rows = (tseries.n_rows-1);
+  arma::uword num_cols = tseries.n_cols;
+  
+  if (lagg > 0) {
+    // Positive lag
+    if (pad_zeros) {
+      // Pad front with zeros
+      return arma::join_cols(arma::zeros<mat>(lagg, num_cols), 
+                             tseries.rows(0, num_rows-lagg));
+    } else {
+      // Pad front with first element of tseries
+      return arma::join_cols(arma::repmat(tseries.rows(0, 0), lagg, 1), 
+                             tseries.rows(0, num_rows-lagg));
+    }  // end if
+  } else {
+    // Negative lag
+    if (pad_zeros) {
+      // Pad back with zeros
+      return arma::join_cols(tseries.rows(-lagg, num_rows), 
+                             arma::zeros<mat>(-lagg, num_cols));
+    } else {
+      // Pad back with last element of tseries
+      return arma::join_cols(tseries.rows(-lagg, num_rows), 
+                             arma::repmat(tseries.rows(num_rows, num_rows), -lagg, 1));
+    }  // end if
+  }  // end if
+  
+  // Old code below
+  // if (lagg > 0)
+  //   // Positive lag
+  //   return arma::join_cols(arma::repelem(tseries.row(0), lagg, 1), 
+  //                          tseries.rows(0, num_rows-lagg));
+  // else
+  //   // Negative lag
+  //   return arma::join_cols(tseries.rows(-lagg, num_rows), 
+  //                          arma::repelem(tseries.row(num_rows), -lagg, 1));
+  
+}  // end lag_it
+
+
+// [[Rcpp::export]]
+arma::mat run_mean(const arma::mat& tseries, double lambda) {
+  
+  arma::uword num_rows = tseries.n_rows;
+  arma::mat means = arma::zeros<mat>(num_rows, 1);
+  double lambda1 = 1-lambda;
+  
+  // Perform loop over rows
+  means(0) = tseries(0);
+  for (arma::uword it = 1; it < num_rows; it++) {
+    // Calculate the mean as the weighted sum
+    means(it) = lambda1*tseries(it) + lambda*means(it-1);
+  }  // end for
+  
+  return means;
+  
+}  // end run_mean
+
+
+
+// [[Rcpp::export]]
+arma::mat run_var(const arma::mat& tseries, double lambda) {
+  
+  arma::uword num_rows = tseries.n_rows;
+  arma::mat vars = arma::square(tseries);
+  arma::mat means = arma::zeros<mat>(num_rows, tseries.n_cols);
+  double lambda1 = 1-lambda;
+  
+  // Perform loop over rows
+  means.row(0) = tseries.row(0);
+  for (arma::uword it = 1; it < num_rows; it++) {
+    // Calculate the mean as the weighted sum
+    means.row(it) = lambda1*tseries.row(it) + lambda*means.row(it-1);
+    // Calculate the variance as the weighted sum of squared returns minus the squared means
+    vars.row(it) = lambda1*(vars.row(it) - arma::square(means.row(it))) + lambda*vars.row(it-1);
+  }  // end for
+  
+  return vars;
+  
+}  // end run_var
+
+
+
+// [[Rcpp::export]]
+arma::mat run_covar(const arma::mat& tseries, double lambda) {
+  
+  arma::uword num_rows = tseries.n_rows;
+  arma::mat vars = arma::square(tseries);
+  arma::mat covar = arma::zeros<mat>(num_rows, 1);
+  arma::mat means = arma::zeros<mat>(num_rows, tseries.n_cols);
+  double lambda1 = 1-lambda;
+  
+  // Perform loop over rows
+  means.row(0) = tseries.row(0);
+  covar(0) = tseries(0, 0)*tseries(0, 1);
+  for (arma::uword it = 1; it < num_rows; it++) {
+    // Calculate the mean as the weighted sum
+    means.row(it) = lambda1*tseries.row(it) + lambda*means.row(it-1);
+    // Calculate the covariance as the weighted sum of products of returns
+    vars.row(it) = lambda1*(vars.row(it) - arma::square(means.row(it))) + lambda*vars.row(it-1);
+    covar.row(it) = lambda1*((tseries(it, 0)-means(it, 0))*(tseries(it, 1)-means(it, 1))) + lambda*covar.row(it-1);
+  }  // end for
+  
+  return arma::join_rows(covar, vars);
+  
+}  // end run_covar
+
+
+
+////////////////////////////////////////////////////////////
+//' Calculate the running variance of streaming \emph{OHLC} price data.
+//' 
+//' @param \code{ohlc} A \emph{time series} or a \emph{matrix} with \emph{OHLC}
+//'   price data.
+//'   
+//' @param \code{lambda} A \emph{numeric} decay factor to multiply past
+//'   estimates.
+//'
+//' @return A single-column \emph{matrix} of variance estimates, with the same
+//'   number of rows as the input \code{ohlc} price data.
+//'
+//' @details
+//'   The function \code{run_var_ohlc()} calculates a single-column
+//'   \emph{matrix} of variance estimates of streaming \emph{OHLC} price data.
+//'   
+//'   The function \code{run_var_ohlc()} calculates the variance from the
+//'   differences between the \emph{Open}, \emph{High}, \emph{Low}, and
+//'   \emph{Close} prices, using the \emph{Yang-Zhang} range volatility
+//'   estimator:
+//'   \deqn{
+//'     \sigma^2_t = (1-\lambda) ((O_t - C_{t-1})^2 + 0.134 (C_t - O_t)^2 + 
+//'     0.866 ((H_i - O_i) (H_i - C_i) + (L_i - O_i) (L_i - C_i))) + 
+//'     \lambda \sigma^2_{t-1}
+//'   }
+//'   It recursively weighs the current variance estimate with the past
+//'   estimates \eqn{\sigma^2_{t-1}}, using the decay factor \eqn{\lambda}.
+//'
+//'   The function \code{run_var_ohlc()} does not calculate the logarithm of
+//'   the prices.
+//'   So if the argument \code{ohlc} contains dollar prices then
+//'   \code{run_var_ohlc()} calculates the dollar variance.
+//'   If the argument \code{ohlc} contains the log prices then
+//'   \code{run_var_ohlc()} calculates the percentage variance.
+//'   
+//'   The function \code{run_var_ohlc()} is implemented in \code{RcppArmadillo}
+//'   \code{C++} code, so it's many times faster than the equivalent \code{R}
+//'   code.
+//'
+//' @examples
+//' \dontrun{
+//' # Extract the log OHLC prices of VTI
+//' oh_lc <- log(rutils::etf_env$VTI)
+//' # Calculate the running variance
+//' var_running <- HighFreq::run_var_ohlc(oh_lc, lambda=0.8)
+//' # Calculate the rolling variance
+//' var_rolling <- HighFreq::roll_var_ohlc(oh_lc, look_back=5, method="yang_zhang", scale=FALSE)
+//' da_ta <- cbind(var_running, var_rolling)
+//' colnames(da_ta) <- c("running", "rolling")
+//' col_names <- colnames(da_ta)
+//' da_ta <- xts::xts(da_ta, index(oh_lc))
+//' # dygraph plot of VTI running versus rolling volatility
+//' dygraphs::dygraph(sqrt(da_ta[-(1:111), ]), main="Running and Rolling Volatility of VTI") %>%
+//'   dyOptions(colors=c("red", "blue"), strokeWidth=1) %>%
+//'   dyLegend(show="always", width=500)
+//' # Compare the speed of running versus rolling volatility
+//' library(microbenchmark)
+//' summary(microbenchmark(
+//'   running=HighFreq::run_var_ohlc(oh_lc, lambda=0.8),
+//'   rolling=HighFreq::roll_var_ohlc(oh_lc, look_back=5, method="yang_zhang", scale=FALSE),
+//'   times=10))[, c(1, 4, 5)]
+//' }
+//' @export
+// [[Rcpp::export]]
+arma::mat run_var_ohlc(const arma::mat& ohlc, 
+                       double lambda) {
+  
+  // Allocate variance matrix
+  arma::uword num_rows = ohlc.n_rows;
+  arma::mat vars = arma::zeros<mat>(num_rows, 1);
+  double lambda1 = 1-lambda;
+  double coeff = 0.134;
+  
+  // Calculate all the different intra-day and day-over-day returns 
+  // (differences of OHLC prices)
+  arma::mat clo_se = ohlc.col(3);
+  arma::mat open_close(clo_se.n_rows, 1);
+  open_close = (ohlc.col(0) - lag_it(clo_se, 1, false));
+  arma::mat close_open = (clo_se - ohlc.col(0));
+  arma::mat close_high = (clo_se - ohlc.col(1));
+  arma::mat close_low = (clo_se - ohlc.col(2));
+  arma::mat high_low = (ohlc.col(1) - ohlc.col(2));
+  arma::mat high_open = (ohlc.col(1) - ohlc.col(0));
+  arma::mat low_open = (ohlc.col(2) - ohlc.col(0));
+  
+  // Perform loop over the rows
+  vars.row(0) = arma::square(open_close.row(0)) + coeff*arma::square(close_open.row(0)) +
+    (coeff-1)*(close_high.row(0)*high_open.row(0) + close_low.row(0)*low_open.row(0));
+  for (arma::uword it = 1; it < num_rows; it++) {
+    // Calculate the variance as the weighted sum of squared returns minus the squared means
+    vars.row(it) = lambda1*(arma::square(open_close.row(it)) + coeff*arma::square(close_open.row(it)) +
+      (coeff-1)*(close_high.row(it)*high_open.row(it) + close_low.row(it)*low_open.row(it))) + lambda*vars.row(it-1);
+  }  // end for
+  
+  return vars;
+  
+}  // end run_var_ohlc
 
 
 
