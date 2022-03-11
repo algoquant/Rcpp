@@ -45,10 +45,10 @@ void which_method(const std::string& calc_method = "yang_zhang") {
 // Making a function static limits its scope to functions from the same source file. 
 // https://www.cprogramming.com/tutorial/statickeyword.html
 // [[Rcpp::export]]
-void count_er(int see_d=1) {
+void count_er(int seedv=1) {
   
   // cou_nt is static so it's initialized only once the first time count_er() is called.
-  static int cou_nt = see_d;
+  static int cou_nt = seedv;
   
   std::cout << "The function count_er() was called " << cou_nt << " times." << std::endl;
   
@@ -60,14 +60,14 @@ void count_er(int see_d=1) {
 
 //' @export
 // [[Rcpp::export]]
-arma::vec sort_back(const arma::vec& da_ta) {
+arma::vec sort_back(const arma::vec& datav) {
   
   // Reverse sort index
-  arma::uvec in_dex = arma::sort_index(arma::sort_index(da_ta));
-  // Sort the da_ta
-  arma::vec sort_ed = arma::sort(da_ta);
-  // Reverse sort the da_ta
-  sort_ed = sort_ed.elem(in_dex);
+  arma::uvec indeks = arma::sort_index(arma::sort_index(datav));
+  // Sort the datav
+  arma::vec sort_ed = arma::sort(datav);
+  // Reverse sort the datav
+  sort_ed = sort_ed.elem(indeks);
   
   return sort_ed;
 }  // end sort_back
@@ -75,8 +75,8 @@ arma::vec sort_back(const arma::vec& da_ta) {
 
 //' @export
 // [[Rcpp::export]]
-arma::uvec calc_ranks(const arma::vec& da_ta) {
-  return (arma::sort_index(arma::sort_index(da_ta)) + 1);
+arma::uvec calc_ranks(const arma::vec& datav) {
+  return (arma::sort_index(arma::sort_index(datav)) + 1);
 }  // end calc_ranks
 
 
@@ -87,207 +87,207 @@ arma::uvec calc_ranks(const arma::vec& da_ta) {
 
 // Conditional sums using Rcpp
 
-// The function sum_na() performs sum(is.na(vec_tor)) using Rcpp.
+// The function sum_na() performs sum(is.na(vectorv)) using Rcpp.
 // Adapted from:
 // https://stackoverflow.com/questions/46892399/fast-checking-of-missing-values-in-rcpp
 //' @export
 // [[Rcpp::export]]
-int sum_na(const NumericVector& vec_tor) {
+int sum_na(const NumericVector& vectorv) {
   int count_ = 0;
-  for (int i = 0; i < vec_tor.size(); i++)
-    count_ += NumericVector::is_na(vec_tor[i]);
+  for (int i = 0; i < vectorv.size(); i++)
+    count_ += NumericVector::is_na(vectorv[i]);
   return count_;
 }  // end sum_na
 
 
-// The function sum_na_stl() performs sum(is.na(vec_tor)) using Rcpp and STL.
+// The function sum_na_stl() performs sum(is.na(vectorv)) using Rcpp and STL.
 //' @export
 // [[Rcpp::export]]
-int sum_na_stl(const NumericVector& vec_tor) {
-  return std::count_if(vec_tor.begin(), vec_tor.end(), NumericVector::is_na);
+int sum_na_stl(const NumericVector& vectorv) {
+  return std::count_if(vectorv.begin(), vectorv.end(), NumericVector::is_na);
 }  // end sum_na_stl
 
 
-// The function sum_if_cpp() performs sum(ivec_tor<fi_nd) using Rcpp.
+// The function sum_if_cpp() performs sum(ivectorv<fi_nd) using Rcpp.
 //' @export
 // [[Rcpp::export]]
-int sum_if_cpp(NumericVector& vec_tor, double fi_nd) {
+int sum_if_cpp(NumericVector& vectorv, double fi_nd) {
   int count_ = 0;
-  for (int i = 0; i < vec_tor.size(); i++)
-    count_ += (vec_tor[i]<fi_nd);
+  for (int i = 0; i < vectorv.size(); i++)
+    count_ += (vectorv[i]<fi_nd);
   return count_;
 }  // end sum_if_cpp
 
 
-// The function sum_if() performs sum(ivec_tor<fi_nd) using Rcpp.
+// The function sum_if() performs sum(ivectorv<fi_nd) using Rcpp.
 //' @export
 // [[Rcpp::export]]
-int sum_if(NumericVector& vec_tor, double fi_nd) {
+int sum_if(NumericVector& vectorv, double fi_nd) {
   int count_ = 0;
   NumericVector::iterator it;
-  for (it = vec_tor.begin(); it != vec_tor.end(); it++) {
+  for (it = vectorv.begin(); it != vectorv.end(); it++) {
     if (*it < fi_nd) count_++;
   }  // end for
   return count_;
 }  // end sum_if
 
 
-// The function sum_if_stl() performs sum(ivec_tor<fi_nd) using Rcpp and STL.
+// The function sum_if_stl() performs sum(ivectorv<fi_nd) using Rcpp and STL.
 //' @export
 // [[Rcpp::export]]
-int sum_if_stl(const NumericVector& vec_tor, double fi_nd) {
-  return std::count_if(vec_tor.begin(), vec_tor.end(), bind2nd(std::less<double>(), fi_nd));
+int sum_if_stl(const NumericVector& vectorv, double fi_nd) {
+  return std::count_if(vectorv.begin(), vectorv.end(), bind2nd(std::less<double>(), fi_nd));
 }  // end sum_if_stl
 
 
-// The function whi_ch() performs which() using Rcpp with Sugar and RcppArmadillo
+// The function whichv() performs which() using Rcpp with Sugar and RcppArmadillo
 //' @export
 // [[Rcpp::export]]
-arma::uvec whi_ch(arma::uvec logic_al) {
+arma::uvec whichv(arma::uvec logic_al) {
   // arma::uvec logic_al;
   // logic_al = arma::find(logic_al);
   return arma::find(logic_al);
-}  // end whi_ch
+}  // end whichv
 
 
-// The function whi_ch2() performs which() using Rcpp and arma::find() from
+// The function whichv2() performs which() using Rcpp and arma::find() from
 // RcppArmadillo
 //' @export
 // [[Rcpp::export]]
-arma::uvec whi_ch2(LogicalVector& vec_tor) {
+arma::uvec whichv2(LogicalVector& vectorv) {
   arma::uvec logic_al;
-  logic_al = arma::find(Rcpp::as<uvec>(vec_tor));
+  logic_al = arma::find(Rcpp::as<uvec>(vectorv));
   return logic_al+1;
-}  // end whi_ch2
+}  // end whichv2
 
 
-// The function whi_ch3() performs which() using Rcpp and STL
+// The function whichv3() performs which() using Rcpp and STL
 //' @export
 // [[Rcpp::export]]
-Rcpp::IntegerVector whi_ch3(const LogicalVector& vec_tor) {
+Rcpp::IntegerVector whichv3(const LogicalVector& vectorv) {
   // arma::uvec logic_al;
-  // logic_al = arma::find(Rcpp::as<uvec>(vec_tor));
-  int n_row = vec_tor.size();
-  std::vector<int> in_dex;
-  in_dex.reserve(n_row);
+  // logic_al = arma::find(Rcpp::as<uvec>(vectorv));
+  int n_row = vectorv.size();
+  std::vector<int> indeks;
+  indeks.reserve(n_row);
   for (int i=0; i<n_row; i++) {
-    if (vec_tor[i]) in_dex.push_back(i+1);
+    if (vectorv[i]) indeks.push_back(i+1);
   }  // end for
-  return Rcpp::wrap(in_dex);
+  return Rcpp::wrap(indeks);
   // return logic_al;
-}  // end whi_ch3
+}  // end whichv3
 
 
-// The function whi_ch32() performs which() using Rcpp.
+// The function whichv32() performs which() using Rcpp.
 //' @export
 // [[Rcpp::export]]
-Rcpp::IntegerVector whi_ch32(const LogicalVector& vec_tor) {
-  int n_row = vec_tor.size();
-  IntegerVector in_dex(sum(vec_tor));
+Rcpp::IntegerVector whichv32(const LogicalVector& vectorv) {
+  int n_row = vectorv.size();
+  IntegerVector indeks(sum(vectorv));
   int j = 0;
   for (int i=0; i<n_row; i++) {
-    if (vec_tor[i]) 
-      in_dex(j++) = i+1;
+    if (vectorv[i]) 
+      indeks(j++) = i+1;
   }  // end for
-  return in_dex;
-}  // end whi_ch32
+  return indeks;
+}  // end whichv32
 
 
-// The function whi_ch34() performs which() using Rcpp.
+// The function whichv34() performs which() using Rcpp.
 //' @export
 // [[Rcpp::export]]
-Rcpp::IntegerVector whi_ch34(LogicalVector& vec_tor) {
-  // int n_row = vec_tor.size();
-  IntegerVector in_dex(sum(vec_tor));
+Rcpp::IntegerVector whichv34(LogicalVector& vectorv) {
+  // int n_row = vectorv.size();
+  IntegerVector indeks(sum(vectorv));
   int i=0, j=0;
   LogicalVector::iterator it;
-  for (it = vec_tor.begin(); it != vec_tor.end(); it++, i++) {
+  for (it = vectorv.begin(); it != vectorv.end(); it++, i++) {
     if (*it) 
-      in_dex(j++) = i+1;
+      indeks(j++) = i+1;
   }  // end for
-  return in_dex;
-}  // end whi_ch34
+  return indeks;
+}  // end whichv34
 
 
-// The function whi_ch35() performs which() using Rcpp and STL.
+// The function whichv35() performs which() using Rcpp and STL.
 // Currently it doesn't work.
-// int whi_ch35(LogicalVector& vec_tor) {
-//   return std::find(std::begin(vec_tor), std::end(vec_tor), TRUE);
-// }  // end whi_ch35
+// int whichv35(LogicalVector& vectorv) {
+//   return std::find(std::begin(vectorv), std::end(vectorv), TRUE);
+// }  // end whichv35
 
 
-// The function whi_ch33() performs which() using RcppArmadillo.
+// The function whichv33() performs which() using RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::uvec whi_ch33(arma::uvec& vec_tor) {
-  int n_row = vec_tor.size();
-  arma::uvec in_dex(accu(vec_tor));
+arma::uvec whichv33(arma::uvec& vectorv) {
+  int n_row = vectorv.size();
+  arma::uvec indeks(accu(vectorv));
   int j = 0;
   for (int i=0; i<n_row; i++) {
-    if (vec_tor[i]) 
-      in_dex(j++) = i+1;
+    if (vectorv[i]) 
+      indeks(j++) = i+1;
   }  // end for
-  return in_dex;
-}  // end whi_ch33
+  return indeks;
+}  // end whichv33
 
 
-// The function whi_ch4() performs which() using Rcpp
+// The function whichv4() performs which() using Rcpp
 //' @export
 // [[Rcpp::export]]
-Rcpp::IntegerVector whi_ch4(LogicalVector& vec_tor) {
+Rcpp::IntegerVector whichv4(LogicalVector& vectorv) {
   // arma::uvec logic_al;
-  // logic_al = arma::find(Rcpp::as<uvec>(vec_tor));
-  int n_row = vec_tor.size();
-  IntegerVector in_dex(n_row);
+  // logic_al = arma::find(Rcpp::as<uvec>(vectorv));
+  int n_row = vectorv.size();
+  IntegerVector indeks(n_row);
   int j=0;
   for (int i=0; i<n_row; i++) {
-    if (vec_tor[i]) {
-      in_dex(j)=i+1;
+    if (vectorv[i]) {
+      indeks(j)=i+1;
       j++;
     }  // end if
   }  // end for
-  vector<int> sub_vector(in_dex.begin(), in_dex.begin() + j);
+  vector<int> sub_vector(indeks.begin(), indeks.begin() + j);
   return wrap(sub_vector);
   // return logic_al;
-}  // end whi_ch4
+}  // end whichv4
 
 
-// The function whi_ch5() calls R function which().
+// The function whichv5() calls R function which().
 // It's very slow.
 //' @export
 // [[Rcpp::export]]
-Rcpp::IntegerVector whi_ch5(LogicalVector& vec_tor) {
+Rcpp::IntegerVector whichv5(LogicalVector& vectorv) {
   // Obtain environment containing the function
   Rcpp::Environment base("package:base"); 
   // Define function which() callable from Rcpp
   Rcpp::Function which = base["which"];
-  return which(vec_tor);
+  return which(vectorv);
   // return logic_al;
-}  // end whi_ch5
+}  // end whichv5
 
 
 // The function tapply_arma() performs aggregations over a vector using a
 // factor.
 // It produces the same result as the R code: 
-//    tapply(X=vec_tor, INDEX=fac_tor, FUN=NROW)
+//    tapply(X=vectorv, INDEX=ratio, FUN=NROW)
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::vec tapply_arma(const arma::vec& vec_tor, const arma::vec& fac_tor) {
-  Function whi_ch3("whi_ch3");
-  // int n_row = vec_tor.size();
-  arma::vec uniq_ue = arma::unique(fac_tor);
+arma::vec tapply_arma(const arma::vec& vectorv, const arma::vec& ratio) {
+  Function whichv3("whichv3");
+  // int n_row = vectorv.size();
+  arma::vec uniq_ue = arma::unique(ratio);
   int n_unique = uniq_ue.size();
   arma::vec agg_s(n_unique);
-  arma::uvec in_dex;
+  arma::uvec indeks;
   arma::vec sub_vec;
   for (int i=0; i<n_unique; i++) {
-    in_dex = find(fac_tor == uniq_ue(i));
-    sub_vec = vec_tor(in_dex);
+    indeks = find(ratio == uniq_ue(i));
+    sub_vec = vectorv(indeks);
     agg_s(i) = sub_vec.n_elem;
   }  // end for
   return agg_s;
-  // return find_unique(vec_tor);
+  // return find_unique(vectorv);
 }  // end tapply_arma
 
 
@@ -296,18 +296,18 @@ arma::vec tapply_arma(const arma::vec& vec_tor, const arma::vec& fac_tor) {
 // It uses Rcpp.
 //' @export
 // [[Rcpp::export]]
-NumericMatrix cbind_rcpp(NumericMatrix mat_rix1, NumericMatrix mat_rix2) {
-  int n_col1 = mat_rix1.ncol();
-  int n_col2 = mat_rix2.ncol();
-  NumericMatrix out_put = Rcpp::no_init_matrix(mat_rix1.nrow(), n_col1 + n_col2);
+NumericMatrix cbind_rcpp(NumericMatrix matrixv1, NumericMatrix matrixv2) {
+  int n_col1 = matrixv1.ncol();
+  int n_col2 = matrixv2.ncol();
+  NumericMatrix output = Rcpp::no_init_matrix(matrixv1.nrow(), n_col1 + n_col2);
   for (int j = 0; j < n_col1 + n_col2; j++) {
     if (j < n_col1) {
-      out_put(_, j) = mat_rix1(_, j);
+      output(_, j) = matrixv1(_, j);
     } else {
-      out_put(_, j) = mat_rix2(_, j - n_col1);
+      output(_, j) = matrixv2(_, j - n_col1);
     }
   }
-  return out_put;
+  return output;
 }  // end cbind_rcpp
 
 
@@ -315,17 +315,17 @@ NumericMatrix cbind_rcpp(NumericMatrix mat_rix1, NumericMatrix mat_rix2) {
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::mat cbind_arma(const arma::mat& mat_rix1, const arma::mat& mat_rix2) {
-  return arma::join_rows(mat_rix1, mat_rix2);
+arma::mat cbind_arma(const arma::mat& matrixv1, const arma::mat& matrixv2) {
+  return arma::join_rows(matrixv1, matrixv2);
 }  // end cbind_arma
 
 
 // The function sub_mat() selects a sub-matrix using RcppArmadillo
 //' @export
 // [[Rcpp::export]]
-arma::mat sub_mat(const arma::mat& mat_rix, arma::uvec row_num, arma::uvec col_num) {
-  // arma::mat sub_matrix = mat_rix.cols(col_num);
-  arma::mat sub_matrix = mat_rix.submat(row_num, col_num);
+arma::mat sub_mat(const arma::mat& matrixv, arma::uvec row_num, arma::uvec col_num) {
+  // arma::mat sub_matrix = matrixv.cols(col_num);
+  arma::mat sub_matrix = matrixv.submat(row_num, col_num);
   return sub_matrix;
 }  // end sub_mat
 
@@ -334,10 +334,10 @@ arma::mat sub_mat(const arma::mat& mat_rix, arma::uvec row_num, arma::uvec col_n
 // It casts Rcpp arguments into RcppArmadillo structures
 //' @export
 // [[Rcpp::export]]
-arma::mat sub_mat_cast(NumericMatrix& mat_rix, IntegerVector& row_num, IntegerVector col_num=0) {
-  // arma::mat sub_matrix = mat_rix.cols(row_num);
-  // arma::mat sub_matrix = mat_rix.cols(col_num);
-  arma::mat sub_matrix = as<mat>(mat_rix);
+arma::mat sub_mat_cast(NumericMatrix& matrixv, IntegerVector& row_num, IntegerVector col_num=0) {
+  // arma::mat sub_matrix = matrixv.cols(row_num);
+  // arma::mat sub_matrix = matrixv.cols(col_num);
+  arma::mat sub_matrix = as<mat>(matrixv);
   // arma::uvec urow_num = as<uvec>(row_num);
   // arma::uvec ucol_num = as<uvec>(col_num);
   // sub_matrix = sub_matrix.submat(as<uvec>(row_num), as<uvec>(col_num));
@@ -353,9 +353,9 @@ arma::mat sub_mat_cast(NumericMatrix& mat_rix, IntegerVector& row_num, IntegerVe
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-arma::rowvec sub_assign(arma::rowvec vec_tor, arma::uvec in_dex, arma::vec da_ta) {
-  vec_tor.elem(in_dex) = da_ta;
-  return vec_tor;
+arma::rowvec sub_assign(arma::rowvec vectorv, arma::uvec indeks, arma::vec datav) {
+  vectorv.elem(indeks) = datav;
+  return vectorv;
 }  // end sub_assign
 
 
@@ -365,10 +365,10 @@ arma::rowvec sub_assign(arma::rowvec vec_tor, arma::uvec in_dex, arma::vec da_ta
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-arma::rowvec find_assign_vec(arma::rowvec& vec_tor, double fi_nd, double da_ta) {
-  arma::uvec in_dex = find(vec_tor == fi_nd);
-  vec_tor(in_dex).fill(da_ta);
-  return vec_tor;
+arma::rowvec find_assign_vec(arma::rowvec& vectorv, double fi_nd, double datav) {
+  arma::uvec indeks = find(vectorv == fi_nd);
+  vectorv(indeks).fill(datav);
+  return vectorv;
 }  // end find_assign_vec
 
 
@@ -381,10 +381,10 @@ arma::rowvec find_assign_vec(arma::rowvec& vec_tor, double fi_nd, double da_ta) 
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-double find_assign_vec_point(arma::rowvec& vec_tor, double fi_nd, double da_ta) {
-  arma::uvec in_dex = find(vec_tor > fi_nd);
-  vec_tor(in_dex).fill(da_ta);
-  return arma::accu(in_dex);
+double find_assign_vec_point(arma::rowvec& vectorv, double fi_nd, double datav) {
+  arma::uvec indeks = find(vectorv > fi_nd);
+  vectorv(indeks).fill(datav);
+  return arma::accu(indeks);
 }  // end find_assign_vec_point
 
 
@@ -394,10 +394,10 @@ double find_assign_vec_point(arma::rowvec& vec_tor, double fi_nd, double da_ta) 
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-arma::mat find_assign_mat(arma::mat mat_rix, double fi_nd, double da_ta) {
-  arma::uvec in_dex = find(mat_rix >= fi_nd);
-  mat_rix.elem(in_dex).fill(da_ta);
-  return mat_rix;
+arma::mat find_assign_mat(arma::mat matrixv, double fi_nd, double datav) {
+  arma::uvec indeks = find(matrixv >= fi_nd);
+  matrixv.elem(indeks).fill(datav);
+  return matrixv;
 }  // end find_assign_mat
 
 
@@ -405,11 +405,11 @@ arma::mat find_assign_mat(arma::mat mat_rix, double fi_nd, double da_ta) {
 // to an input value, using Rcpp with Sugar.
 //' @export
 // [[Rcpp::export]]
-LogicalVector compare_col(NumericMatrix& mat_rix, double fi_nd, int col_num=0) {
-  // NumericVector col_umn = mat_rix(_, col_num);
+LogicalVector compare_col(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
+  // NumericVector colnum = matrixv(_, col_num);
   // LogicalVector bar;
-  // bar = (col_umn > fi_nd);
-  return (mat_rix(_, col_num) > fi_nd);
+  // bar = (colnum > fi_nd);
+  return (matrixv(_, col_num) > fi_nd);
 }  // end compare_col
 
 
@@ -417,10 +417,10 @@ LogicalVector compare_col(NumericMatrix& mat_rix, double fi_nd, int col_num=0) {
 // it to an input value, using Rcpp with Sugar and RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::uvec compare_col_arma(NumericMatrix& mat_rix, double fi_nd, int col_num=0) {
-  NumericVector col_umn = mat_rix(_, col_num);
+arma::uvec compare_col_arma(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
+  NumericVector colnum = matrixv(_, col_num);
   LogicalVector bar;
-  bar = (col_umn > fi_nd);
+  bar = (colnum > fi_nd);
   return Rcpp::as<uvec>(bar);
 }  // end compare_col_arma
 
@@ -429,16 +429,16 @@ arma::uvec compare_col_arma(NumericMatrix& mat_rix, double fi_nd, int col_num=0)
 // it to an input value, using Rcpp with Sugar and RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::uvec compare_col_armaa(const arma::mat& mat_rix, double fi_nd, int col_num=0) {
-  arma::vec col_umn = mat_rix.cols(as<uvec>(wrap(col_num)));
-  // NumericVector col_umn = mat_rix(_, col_num);
+arma::uvec compare_col_armaa(const arma::mat& matrixv, double fi_nd, int col_num=0) {
+  arma::vec colnum = matrixv.cols(as<uvec>(wrap(col_num)));
+  // NumericVector colnum = matrixv(_, col_num);
   // LogicalVector bar;
   // arma::uvec bar;
-  // bar = (col_umn > fi_nd);
-  // for (int i=0; i<col_umn.n_rows; i++) {
-  //   bar[i] = (col_umn[i] > fi_nd);
+  // bar = (colnum > fi_nd);
+  // for (int i=0; i<colnum.n_rows; i++) {
+  //   bar[i] = (colnum[i] > fi_nd);
   // }  // end for
-  return (col_umn > fi_nd);
+  return (colnum > fi_nd);
 }  // end compare_col_armaa
 
 
@@ -447,12 +447,12 @@ arma::uvec compare_col_armaa(const arma::mat& mat_rix, double fi_nd, int col_num
 // It uses Rcpp with Sugar and RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::uvec which_col(NumericMatrix& mat_rix, double fi_nd, int col_num=0) {
-  NumericVector col_umn = mat_rix(_, col_num);
-  LogicalVector vec_tor = (col_umn > fi_nd);
-  arma::uvec whi_ch;
-  whi_ch = arma::find(Rcpp::as<uvec>(vec_tor));
-  return whi_ch;
+arma::uvec which_col(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
+  NumericVector colnum = matrixv(_, col_num);
+  LogicalVector vectorv = (colnum > fi_nd);
+  arma::uvec whichv;
+  whichv = arma::find(Rcpp::as<uvec>(vectorv));
+  return whichv;
 }  // end which_col
 
 
@@ -461,9 +461,9 @@ arma::uvec which_col(NumericMatrix& mat_rix, double fi_nd, int col_num=0) {
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-arma::vec find_extract_mat(arma::mat mat_rix, double fi_nd) {
-  arma::uvec in_dex = find(mat_rix >= fi_nd);
-  return mat_rix.elem(in_dex);
+arma::vec find_extract_mat(arma::mat matrixv, double fi_nd) {
+  arma::uvec indeks = find(matrixv >= fi_nd);
+  return matrixv.elem(indeks);
 }  // end find_extract_mat
 
 
@@ -472,13 +472,13 @@ arma::vec find_extract_mat(arma::mat mat_rix, double fi_nd) {
 // It uses Rcpp with Sugar and RcppArmadillo function find().
 //' @export
 // [[Rcpp::export]]
-NumericMatrix find_sub_mat(NumericMatrix& mat_rix, double fi_nd, int col_num=0) {
-  NumericVector col_umn = mat_rix(_, col_num);
-  LogicalVector vec_tor = (col_umn > fi_nd);
-  arma::uvec whi_ch;
-  whi_ch = arma::find(Rcpp::as<uvec>(vec_tor));
-  arma::mat sub_matrix = as<mat>(mat_rix);
-  sub_matrix = sub_matrix.rows(whi_ch);
+NumericMatrix find_sub_mat(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
+  NumericVector colnum = matrixv(_, col_num);
+  LogicalVector vectorv = (colnum > fi_nd);
+  arma::uvec whichv;
+  whichv = arma::find(Rcpp::as<uvec>(vectorv));
+  arma::mat sub_matrix = as<mat>(matrixv);
+  sub_matrix = sub_matrix.rows(whichv);
   return wrap(sub_matrix);
 }  // end find_sub_mat
 
@@ -488,19 +488,19 @@ NumericMatrix find_sub_mat(NumericMatrix& mat_rix, double fi_nd, int col_num=0) 
 // It uses Rcpp with Sugar and RcppArmadillo, but without function find().
 //' @export
 // [[Rcpp::export]]
-NumericMatrix select_sub_mat(NumericMatrix& mat_rix, double fi_nd, int col_num=0) {
-  NumericVector col_umn = mat_rix(_, col_num);
-  LogicalVector vec_tor = (col_umn > fi_nd);
-  int n_row = vec_tor.size();
+NumericMatrix select_sub_mat(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
+  NumericVector colnum = matrixv(_, col_num);
+  LogicalVector vectorv = (colnum > fi_nd);
+  int n_row = vectorv.size();
   // perform which
-  std::vector<int> in_dex;
-  in_dex.reserve(n_row);
+  std::vector<int> indeks;
+  indeks.reserve(n_row);
   for (int i=0; i<n_row; i++) {
-    if (vec_tor[i]) in_dex.push_back(i);
+    if (vectorv[i]) indeks.push_back(i);
   }  // end for
   // perform which
-  arma::mat sub_matrix = as<mat>(mat_rix);
-  sub_matrix = sub_matrix.rows(as<uvec>(wrap(in_dex)));
+  arma::mat sub_matrix = as<mat>(matrixv);
+  sub_matrix = sub_matrix.rows(as<uvec>(wrap(indeks)));
   return wrap(sub_matrix);
 }  // end select_sub_mat
 
@@ -508,63 +508,63 @@ NumericMatrix select_sub_mat(NumericMatrix& mat_rix, double fi_nd, int col_num=0
 // The function apply_agg() performs aggregations over a matrix using its
 // first column as a factor.
 // It produces the same result as the R code: 
-//      sapply(X=unique(mat_rix[, 1]), FUN=function(mat_rix[, -1]))
+//      sapply(X=unique(matrixv[, 1]), FUN=function(matrixv[, -1]))
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::vec apply_agg(const arma::mat& mat_rix) {
-  // Function whi_ch3("whi_ch3");
-  // int n_row = vec_tor.size();
-  arma::vec uniq_ue = arma::unique(mat_rix.col(0));
+arma::vec apply_agg(const arma::mat& matrixv) {
+  // Function whichv3("whichv3");
+  // int n_row = vectorv.size();
+  arma::vec uniq_ue = arma::unique(matrixv.col(0));
   int n_unique = uniq_ue.size();
   arma::vec agg_s(n_unique);
-  arma::uvec in_dex;
-  arma::mat sub_mat = mat_rix.cols(1, mat_rix.n_cols-1);
+  arma::uvec indeks;
+  arma::mat sub_mat = matrixv.cols(1, matrixv.n_cols-1);
   for (int i=0; i<n_unique; i++) {
-    in_dex = find(mat_rix.col(0) == uniq_ue(i));
-    agg_s(i) = as_scalar(sum(prod(sub_mat.rows(in_dex), 1)));
-    // agg_s(i) = as_scalar(accu(sub_mat.rows(in_dex)));
+    indeks = find(matrixv.col(0) == uniq_ue(i));
+    agg_s(i) = as_scalar(sum(prod(sub_mat.rows(indeks), 1)));
+    // agg_s(i) = as_scalar(accu(sub_mat.rows(indeks)));
   }  // end for
   return agg_s;
-  // return find_unique(mat_rix);
+  // return find_unique(matrixv);
 }  // end apply_agg
 
 
 //' @export
 // [[Rcpp::export]]
-double  agg_mat(const arma::mat& mat_rix) {
-  return  arma::as_scalar(sum(prod(mat_rix, 1)));
-  // return find_unique(mat_rix);
+double  agg_mat(const arma::mat& matrixv) {
+  return  arma::as_scalar(sum(prod(matrixv, 1)));
+  // return find_unique(matrixv);
 }  // end agg_mat
 
 
-// The function vari_ance() calculates the variance of a vector using Rcpp
+// The function variance() calculates the variance of a vector using Rcpp
 //' @export
 // [[Rcpp::export]]
-double vari_ance(NumericVector vec_tor) {
-  return sum(pow(vec_tor - sum(vec_tor)/vec_tor.size(), 2));
-}  // end vari_ance
+double variance(NumericVector vectorv) {
+  return sum(pow(vectorv - sum(vectorv)/vectorv.size(), 2));
+}  // end variance
 
 
 
 // The function roll_rows() rolls over the rows of a matrix
 //' @export
 // [[Rcpp::export]]
-arma::vec roll_rows(arma::mat& oh_lc, 
+arma::vec roll_rows(arma::mat& ohlc, 
                     arma::uword look_back=11) {
   
-  arma::uword num_rows = oh_lc.n_rows;
-  arma::vec var_vec = arma::zeros(num_rows);
+  arma::uword nrows = ohlc.n_rows;
+  arma::vec var_vec = arma::zeros(nrows);
   
   // Warmup period
   for (arma::uword it=1; it < look_back; it++) {
-    arma::mat sub_ohlc = oh_lc.rows(0, it);
+    arma::mat sub_ohlc = ohlc.rows(0, it);
     var_vec(it) = sum(sum(sub_ohlc));
   }  // end for
   
   // Remaining period
-  for (arma::uword it=look_back; it < num_rows; it++) {
-    arma::mat sub_ohlc = oh_lc.rows(it-look_back+1, it);
+  for (arma::uword it=look_back; it < nrows; it++) {
+    arma::mat sub_ohlc = ohlc.rows(it-look_back+1, it);
     var_vec(it) = sum(sum(sub_ohlc));
   }  // end for
   
@@ -577,21 +577,21 @@ arma::vec roll_rows(arma::mat& oh_lc,
 // The function roll_cols() rolls over the columns of a matrix
 //' @export
 // [[Rcpp::export]]
-arma::vec roll_cols(arma::mat& oh_lc, 
+arma::vec roll_cols(arma::mat& ohlc, 
                     arma::uword look_back=11) {
   
-  arma::uword num_cols = oh_lc.n_cols;
-  arma::vec var_vec = arma::zeros(num_cols);
+  arma::uword ncols = ohlc.n_cols;
+  arma::vec var_vec = arma::zeros(ncols);
   
   // Warmup period
   for (arma::uword it=1; it < look_back; it++) {
-    arma::mat sub_ohlc = oh_lc.cols(0, it);
+    arma::mat sub_ohlc = ohlc.cols(0, it);
     var_vec(it) = sum(sum(sub_ohlc));
   }  // end for
   
   // Remaining period
-  for (arma::uword it=look_back; it < num_cols; it++) {
-    arma::mat sub_ohlc = oh_lc.cols(it-look_back+1, it);
+  for (arma::uword it=look_back; it < ncols; it++) {
+    arma::mat sub_ohlc = ohlc.cols(it-look_back+1, it);
     var_vec(it) = sum(sum(sub_ohlc));
   }  // end for
   
@@ -612,12 +612,12 @@ arma::vec roll_cols(arma::mat& oh_lc,
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::mat demean_arma(const arma::mat& mat_rix) {
+arma::mat demean_arma(const arma::mat& matrixv) {
   // de-mean response and explanatory variables
-  arma::mat mat_demean(mat_rix.n_rows, mat_rix.n_cols);
-  for (uword i = 0; i < mat_rix.n_cols; i++) {
-    mat_demean.col(i) = mat_rix.col(i) - arma::mean(mat_rix.col(i));
-    // mat_demean(i) = arma::mean(mat_rix.col(i));
+  arma::mat mat_demean(matrixv.n_rows, matrixv.n_cols);
+  for (uword i = 0; i < matrixv.n_cols; i++) {
+    mat_demean.col(i) = matrixv.col(i) - arma::mean(matrixv.col(i));
+    // mat_demean(i) = arma::mean(matrixv.col(i));
   }  // end for
   return mat_demean;
 }  // end demean_arma
@@ -629,14 +629,14 @@ arma::mat demean_arma(const arma::mat& mat_rix) {
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-int demean_mat(arma::mat& mat_rix) {
+int demean_mat(arma::mat& matrixv) {
   // de-mean response and explanatory variables
-  // arma::mat mat_demean(mat_rix.n_cols);
-  for (uword i = 0; i < mat_rix.n_cols; i++) {
-    mat_rix.col(i) -= arma::mean(mat_rix.col(i));
-    // mat_demean(i) = arma::mean(mat_rix.col(i));
+  // arma::mat mat_demean(matrixv.n_cols);
+  for (uword i = 0; i < matrixv.n_cols; i++) {
+    matrixv.col(i) -= arma::mean(matrixv.col(i));
+    // mat_demean(i) = arma::mean(matrixv.col(i));
   }  // end for
-  return mat_rix.n_cols;
+  return matrixv.n_cols;
 }  // end demean_mat
 
 
@@ -655,8 +655,8 @@ double inner_vec(const arma::vec& vec1, const arma::vec& vec2) {
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::vec mat_inner_vec(const arma::vec& vec_tor, const arma::mat& mat_rix) {
-  return mat_rix * vec_tor;
+arma::vec mat_inner_vec(const arma::vec& vectorv, const arma::mat& matrixv) {
+  return matrixv * vectorv;
 }  // end mat_inner_vec
 
 
@@ -666,16 +666,16 @@ arma::vec mat_inner_vec(const arma::vec& vec_tor, const arma::mat& mat_rix) {
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-double inner_mat(const arma::vec& vec_tor2, const arma::mat& mat_rix, const arma::vec& vec_tor1) {
-  return arma::as_scalar(trans(vec_tor2) * (mat_rix * vec_tor1));
+double inner_mat(const arma::vec& vectorv2, const arma::mat& matrixv, const arma::vec& vectorv1) {
+  return arma::as_scalar(trans(vectorv2) * (matrixv * vectorv1));
 }  // end inner_mat
 
 
 ////////////////////////////////////////////////////////////
 //' Multiply the columns or rows of a matrix times a vector, element-wise.
 //' 
-//' @param vec_tor A numeric \emph{vector}.
-//' @param mat_rix A numeric \emph{matrix}.
+//' @param vectorv A numeric \emph{vector}.
+//' @param matrixv A numeric \emph{matrix}.
 //' @param by_col A \emph{Boolean} argument: if \code{TRUE} then multiply the
 //'   columns, else multiply the rows. (The default is \code{TRUE})
 //' 
@@ -703,56 +703,56 @@ double inner_mat(const arma::vec& vec_tor2, const arma::mat& mat_rix, const arma
 //' @examples
 //' \dontrun{
 //' # Multiply matrix columns
-//' mat_rix <- matrix(round(runif(25e4), 2), nc=5e2)
-//' vec_tor <- round(runif(5e2), 2)
-//' prod_uct <- vec_tor*mat_rix
-//' mult_vec_mat(vec_tor, mat_rix)
-//' all.equal(prod_uct, mat_rix)
+//' matrixv <- matrix(round(runif(25e4), 2), nc=5e2)
+//' vectorv <- round(runif(5e2), 2)
+//' prod_uct <- vectorv*matrixv
+//' mult_vec_mat(vectorv, matrixv)
+//' all.equal(prod_uct, matrixv)
 //' summary(microbenchmark(
-//'     r_cpp=mult_vec_mat(vec_tor, mat_rix),
-//'     r_code=vec_tor*mat_rix,
+//'     r_cpp=mult_vec_mat(vectorv, matrixv),
+//'     r_code=vectorv*matrixv,
 //'     times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 //' 
 //' # Multiply matrix rows
-//' mat_rix <- matrix(round(runif(25e4), 2), nc=5e2)
-//' vec_tor <- round(runif(5e2), 2)
-//' prod_uct <- t(vec_tor*t(mat_rix))
-//' mult_vec_mat(vec_tor, mat_rix, by_col=FALSE)
-//' all.equal(prod_uct, mat_rix)
+//' matrixv <- matrix(round(runif(25e4), 2), nc=5e2)
+//' vectorv <- round(runif(5e2), 2)
+//' prod_uct <- t(vectorv*t(matrixv))
+//' mult_vec_mat(vectorv, matrixv, by_col=FALSE)
+//' all.equal(prod_uct, matrixv)
 //' library(microbenchmark)
 //' summary(microbenchmark(
-//'     r_cpp=mult_vec_mat(vec_tor, mat_rix, by_col=FALSE),
-//'     r_code=t(vec_tor*t(mat_rix)),
+//'     r_cpp=mult_vec_mat(vectorv, matrixv, by_col=FALSE),
+//'     r_code=t(vectorv*t(matrixv)),
 //'     times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 //' }
 //' 
 //' @export
 // [[Rcpp::export]]
-uword mult_vec_mat(const arma::vec& vec_tor,
-                   arma::mat& mat_rix,
+uword mult_vec_mat(const arma::vec& vectorv,
+                   arma::mat& matrixv,
                    const bool& by_col=true) {
-  uword n_elem = vec_tor.n_elem;
-  uword n_rows = mat_rix.n_rows;
-  uword n_cols = mat_rix.n_cols;
+  uword n_elem = vectorv.n_elem;
+  uword nrows = matrixv.n_rows;
+  uword ncols = matrixv.n_cols;
   
-  if ((n_cols == n_rows) && (n_elem == n_rows)) {
+  if ((ncols == nrows) && (n_elem == nrows)) {
     if (by_col) {
-      // Multiply each column of mat_rix by vec_tor
-      mat_rix.each_col() %= vec_tor;
-      return n_rows;
+      // Multiply each column of matrixv by vectorv
+      matrixv.each_col() %= vectorv;
+      return nrows;
     } else {
-      // Multiply each row of mat_rix by vec_tor
-      mat_rix.each_row() %= conv_to< rowvec >::from(vec_tor);
-      return n_cols;
+      // Multiply each row of matrixv by vectorv
+      matrixv.each_row() %= conv_to< rowvec >::from(vectorv);
+      return ncols;
     }
-  } else if (n_elem == n_rows) {
-    // Multiply each column of mat_rix by vec_tor
-    mat_rix.each_col() %= vec_tor;
-    return n_rows;
-  } else if (n_elem == n_cols) {
-    // Multiply each row of mat_rix by vec_tor
-    mat_rix.each_row() %= conv_to< rowvec >::from(vec_tor);
-    return n_cols;
+  } else if (n_elem == nrows) {
+    // Multiply each column of matrixv by vectorv
+    matrixv.each_col() %= vectorv;
+    return nrows;
+  } else if (n_elem == ncols) {
+    // Multiply each row of matrixv by vectorv
+    matrixv.each_row() %= conv_to< rowvec >::from(vectorv);
+    return ncols;
   } else 
     return NA_INTEGER;
 }  // end mult_vec_mat
@@ -767,13 +767,13 @@ uword mult_vec_mat(const arma::vec& vec_tor,
 // 
 //' @export
 // [[Rcpp::export]]
-int mult_vec_mat2(arma::rowvec& vec_tor, 
-                  arma::mat& mat_rix) {
-  // unsigned int mn_rows = mat_rix.n_rows;
-  uword n_rows = mat_rix.n_rows;
-  arma::mat vec_mat = repmat(vec_tor, n_rows, 1);
-  mat_rix = mat_rix % vec_mat;
-  return mat_rix.n_cols;
+int mult_vec_mat2(arma::rowvec& vectorv, 
+                  arma::mat& matrixv) {
+  // unsigned int mnrows = matrixv.n_rows;
+  uword nrows = matrixv.n_rows;
+  arma::mat vec_mat = repmat(vectorv, nrows, 1);
+  matrixv = matrixv % vec_mat;
+  return matrixv.n_cols;
 }  // end mult_vec_mat2
 
 
@@ -788,12 +788,12 @@ int mult_vec_mat2(arma::rowvec& vec_tor,
 // 
 //' @export
 // [[Rcpp::export]]
-arma::uword mult_vec_mat3(arma::vec& vec_tor, 
-                          arma::mat& mat_rix) {
-  for (uword it = 0; it < mat_rix.n_cols; it++) {
-    mat_rix.col(it) *= vec_tor(it);
+arma::uword mult_vec_mat3(arma::vec& vectorv, 
+                          arma::mat& matrixv) {
+  for (uword it = 0; it < matrixv.n_cols; it++) {
+    matrixv.col(it) *= vectorv(it);
   }  // end for
-  return mat_rix.n_cols;
+  return matrixv.n_cols;
 }  // end mult_vec_mat3
 
 
@@ -803,24 +803,24 @@ arma::uword mult_vec_mat3(arma::vec& vec_tor,
 //'   equally fast).
 //' @export
 // [[Rcpp::export]]
-arma::uword mult_vec_mat31(arma::vec& vec_tor, 
-                           arma::mat& mat_rix) {
-  mat_rix.each_row() %= conv_to< rowvec >::from(vec_tor);
-  return mat_rix.n_cols;
+arma::uword mult_vec_mat31(arma::vec& vectorv, 
+                           arma::mat& matrixv) {
+  matrixv.each_row() %= conv_to< rowvec >::from(vectorv);
+  return matrixv.n_cols;
 }  // end mult_vec_mat31
 
 
 //'   It performs two explicit \code{for()} loops.
 //' @export
 // [[Rcpp::export]]
-arma::uword mult_vec_mat32(arma::vec& vec_tor, 
-                           arma::mat& mat_rix) {
-  for (uword it = 0; it < mat_rix.n_cols; it++) {
-    for (uword jt = 0; jt < mat_rix.n_rows; jt++) {
-      mat_rix(jt, it) *= vec_tor(it);
+arma::uword mult_vec_mat32(arma::vec& vectorv, 
+                           arma::mat& matrixv) {
+  for (uword it = 0; it < matrixv.n_cols; it++) {
+    for (uword jt = 0; jt < matrixv.n_rows; jt++) {
+      matrixv(jt, it) *= vectorv(it);
     }  // end for
   }  // end for
-  return mat_rix.n_cols;
+  return matrixv.n_cols;
 }  // end mult_vec_mat32
 
 
@@ -830,34 +830,34 @@ arma::uword mult_vec_mat32(arma::vec& vec_tor,
 //'   equally fast).
 //' @export
 // [[Rcpp::export]]
-arma::uword mult_vec_mat4(arma::vec& vec_tor, 
-                          arma::mat& mat_rix) {
-  mat_rix.each_col() %= vec_tor;
-  return mat_rix.n_cols;
+arma::uword mult_vec_mat4(arma::vec& vectorv, 
+                          arma::mat& matrixv) {
+  matrixv.each_col() %= vectorv;
+  return matrixv.n_cols;
 }  // end mult_vec_mat4
 
 //' @export
 // [[Rcpp::export]]
-arma::uword mult_vec_mat5(arma::vec& vec_tor, 
-                          arma::mat& mat_rix) {
-  for (uword it = 0; it < mat_rix.n_cols; it++) {
-    mat_rix.col(it) %= vec_tor;
+arma::uword mult_vec_mat5(arma::vec& vectorv, 
+                          arma::mat& matrixv) {
+  for (uword it = 0; it < matrixv.n_cols; it++) {
+    matrixv.col(it) %= vectorv;
   }  // end for
-  return mat_rix.n_cols;
+  return matrixv.n_cols;
 }  // end mult_vec_mat5
 
 
 //'   It performs two explicit \code{for()} loops.
 //' @export
 // [[Rcpp::export]]
-arma::uword mult_vec_mat6(arma::vec& vec_tor, 
-                          arma::mat& mat_rix) {
-  for (uword it = 0; it < mat_rix.n_rows; it++) {
-    for (uword jt = 0; jt < mat_rix.n_cols; jt++) {
-      mat_rix(it, jt) *= vec_tor(it);
+arma::uword mult_vec_mat6(arma::vec& vectorv, 
+                          arma::mat& matrixv) {
+  for (uword it = 0; it < matrixv.n_rows; it++) {
+    for (uword jt = 0; jt < matrixv.n_cols; jt++) {
+      matrixv(it, jt) *= vectorv(it);
     }  // end for
   }  // end for
-  return mat_rix.n_cols;
+  return matrixv.n_cols;
 }  // end mult_vec_mat6
 
 
@@ -866,21 +866,21 @@ arma::uword mult_vec_mat6(arma::vec& vec_tor,
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-int mult_vec_mat_copy(arma::vec& vec_tor, arma::mat& mat_rix) {
-  // uword n_rows = mat_rix.n_rows;
-  uword n_cols = mat_rix.n_cols;
-  arma::mat vec_mat = repmat(vec_tor, 1, n_cols);
-  mat_rix = mat_rix % vec_mat;
-  return mat_rix.n_cols;
+int mult_vec_mat_copy(arma::vec& vectorv, arma::mat& matrixv) {
+  // uword nrows = matrixv.n_rows;
+  uword ncols = matrixv.n_cols;
+  arma::mat vec_mat = repmat(vectorv, 1, ncols);
+  matrixv = matrixv % vec_mat;
+  return matrixv.n_cols;
 }  // end mult_vec_mat_copy
 
 
 
 // The function mult_vec2_mat_copy() calculates the product of a matrix times
 // two vectors.
-// It multiplies the rows of the matrix by vec_tor1, and the columns by
-// vec_tor2.
-// It produces the same result as the R code: t(t(vec_tor2*mat_rix)*vec_tor1)
+// It multiplies the rows of the matrix by vectorv1, and the columns by
+// vectorv2.
+// It produces the same result as the R code: t(t(vectorv2*matrixv)*vectorv1)
 // It accepts pointers to the matrix and vectors, assigns the matrix values in
 // place without copying the input vector, and returns a double.
 // It uses RcppArmadillo.
@@ -888,83 +888,83 @@ int mult_vec_mat_copy(arma::vec& vec_tor, arma::mat& mat_rix) {
 // https://stackoverflow.com/questions/24933290/elementwise-matrix-multiplication-r-versus-rcpp-how-to-speed-this-code-up
 //' @export
 // [[Rcpp::export]]
-int mult_vec2_mat_copy(arma::vec& vec_tor2, arma::mat& mat_rix, arma::vec& vec_tor1) {
-  uword n_rows = mat_rix.n_rows;
-  uword n_cols = mat_rix.n_cols;
-  arma::mat vec_mat = repmat(vec_tor2, 1, n_cols);
-  mat_rix = mat_rix % vec_mat;
-  vec_mat = repmat(trans(vec_tor1), n_rows, 1);
-  mat_rix = mat_rix % vec_mat;
-  return mat_rix.n_cols;
+int mult_vec2_mat_copy(arma::vec& vectorv2, arma::mat& matrixv, arma::vec& vectorv1) {
+  uword nrows = matrixv.n_rows;
+  uword ncols = matrixv.n_cols;
+  arma::mat vec_mat = repmat(vectorv2, 1, ncols);
+  matrixv = matrixv % vec_mat;
+  vec_mat = repmat(trans(vectorv1), nrows, 1);
+  matrixv = matrixv % vec_mat;
+  return matrixv.n_cols;
 }  // end mult_vec2_mat_copy
 
 
 // The function mult_vec2_mat_rcpp() calculates the product of a matrix times
 // two vectors.
-// It multiplies the rows of the matrix by vec_tor1, and the columns by
-// vec_tor2.
-// It produces the same result as the R code: t(t(vec_tor2*mat_rix)*vec_tor1)
+// It multiplies the rows of the matrix by vectorv1, and the columns by
+// vectorv2.
+// It produces the same result as the R code: t(t(vectorv2*matrixv)*vectorv1)
 // It accepts pointers to the matrix and vectors, assigns the matrix values in
 // place without copying the input vector, and returns a double.
 // It uses Rcpp.
 //' @export
 // [[Rcpp::export]]
-int mult_vec2_mat_rcpp(NumericVector& vec_tor2, NumericMatrix& mat_rix, NumericVector& vec_tor1) {
-  uword n_rows = mat_rix.nrow();
-  uword n_cols = mat_rix.ncol();
-  if (!(n_rows == vec_tor2.size())) stop("vec_tor2 length not equal to number of rows of mat_rix");
-  if (!(n_cols == vec_tor1.size())) stop("vec_tor1 length not equal to number of columns of mat_rix");
-  for (uword i = 0; i < n_rows; i++) {
-    mat_rix(i, _) = vec_tor1 * mat_rix(i, _);
+int mult_vec2_mat_rcpp(NumericVector& vectorv2, NumericMatrix& matrixv, NumericVector& vectorv1) {
+  uword nrows = matrixv.nrow();
+  uword ncols = matrixv.ncol();
+  if (!(nrows == vectorv2.size())) stop("vectorv2 length not equal to number of rows of matrixv");
+  if (!(ncols == vectorv1.size())) stop("vectorv1 length not equal to number of columns of matrixv");
+  for (uword i = 0; i < nrows; i++) {
+    matrixv(i, _) = vectorv1 * matrixv(i, _);
   }  // end for
-  for (uword i = 0; i < n_cols; i++) {
-    mat_rix(_, i) = vec_tor2 * mat_rix(_, i);
+  for (uword i = 0; i < ncols; i++) {
+    matrixv(_, i) = vectorv2 * matrixv(_, i);
   }  // end for
-  return n_cols;
+  return ncols;
 }  // end mult_vec2_mat_rcpp
 
 
-// The function mult_vec2_mat_rcpp2() is similar to mat_2vec_rcpp_by(), 
+// The function mult_vec2_mat_rcpp2() is similar to mat2vec_rcpp_by(), 
 // but uses a simple loop without Rcpp, and is much slower.
 //' @export
 // [[Rcpp::export]]
-int mult_vec2_mat_rcpp2(NumericVector& vec_tor2, NumericMatrix& mat_rix, NumericVector& vec_tor1) {
-  for (int i = 0; i < mat_rix.nrow(); i++) {
-    for (int j = 0; j < mat_rix.ncol(); j++) {
-      mat_rix(i, j) = vec_tor1(j) * vec_tor2(i) * mat_rix(i, j);
+int mult_vec2_mat_rcpp2(NumericVector& vectorv2, NumericMatrix& matrixv, NumericVector& vectorv1) {
+  for (int i = 0; i < matrixv.nrow(); i++) {
+    for (int j = 0; j < matrixv.ncol(); j++) {
+      matrixv(i, j) = vectorv1(j) * vectorv2(i) * matrixv(i, j);
     }  // end for
   }  // end for
-  return mat_rix.ncol();
+  return matrixv.ncol();
 }  // end mult_vec2_mat_rcpp2
 
 
-// The function get_cor() calculates the correlation of the matrix re_turns.
+// The function get_cor() calculates the correlation of the matrix returns.
 //' @export
 // [[Rcpp::export]]
-arma::mat get_cor(const arma::mat& re_turns) {
-  return arma::cor(re_turns);
+arma::mat get_cor(const arma::mat& returns) {
+  return arma::cor(returns);
 }  // end get_cor
 
 
 // homework
 // The function get_eigenvals() calculates the eigen_values 
-// of the matrix cov_mat.
+// of the matrix covmat.
 //' @export
 // [[Rcpp::export]]
-arma::vec get_eigenvals(const arma::mat& cov_mat) {
-  arma::vec eigen_vals = arma::eig_sym(cov_mat);
+arma::vec get_eigenvals(const arma::mat& covmat) {
+  arma::vec eigen_vals = arma::eig_sym(covmat);
   return eigen_vals;
 }  // end get_eigenvals
 
 
 // The function get_eigen() calculates the eigen decomposition 
-// of the matrix re_turns.
+// of the matrix returns.
 //' @export
 // [[Rcpp::export]]
-List get_eigen(const arma::mat& re_turns) {
+List get_eigen(const arma::mat& returns) {
   arma::mat eigen_vec;
   arma::vec eigen_val;
-  arma::eig_sym(eigen_val, eigen_vec, cor(re_turns));
+  arma::eig_sym(eigen_val, eigen_vec, cor(returns));
   return List::create(Named("eigval") = eigen_val,
                       Named("eigvec") = eigen_vec);
 }  // end get_eigen
@@ -972,18 +972,18 @@ List get_eigen(const arma::mat& re_turns) {
 
 // homework
 // The function get_pca() calculates the PCA 
-// of the matrix re_turns.
+// of the matrix returns.
 //' @export
 // [[Rcpp::export]]
-List get_pca(const arma::mat& re_turns) {
-  arma::mat co_eff;
+List get_pca(const arma::mat& returns) {
+  arma::mat coeff;
   arma::mat sco_re;
   arma::vec la_tent;
   arma::vec t_squared;
   
-  arma::princomp(co_eff, sco_re, la_tent, t_squared, re_turns);
+  arma::princomp(coeff, sco_re, la_tent, t_squared, returns);
   
-  return List::create(Named("coefficients") = co_eff,
+  return List::create(Named("coefficients") = coeff,
                       Named("score") = sco_re,
                       Named("latent") = la_tent,
                       Named("tsquared") = t_squared);
@@ -1008,8 +1008,8 @@ SEXP invspd_rcpp(SEXP X_) {
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::mat invspd_arma(const arma::mat& mat_rix) {
-  arma::mat mat_inv = arma::inv_sympd(mat_rix);
+arma::mat invspd_arma(const arma::mat& matrixv) {
+  arma::mat mat_inv = arma::inv_sympd(matrixv);
   return mat_inv;
 }  // end invspd_arma
 
@@ -1021,9 +1021,9 @@ arma::mat invspd_arma(const arma::mat& mat_rix) {
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-double inv_mat(arma::mat& mat_rix) {
-  mat_rix = arma::inv_sympd(mat_rix);
-  return mat_rix.n_cols;
+double inv_mat(arma::mat& matrixv) {
+  matrixv = arma::inv_sympd(matrixv);
+  return matrixv.n_cols;
 }  // end inv_mat
 
 
@@ -1035,43 +1035,43 @@ double inv_mat(arma::mat& mat_rix) {
 // http://gallery.rcpp.org/articles/fast-linear-model-with-armadillo/
 //' @export
 // [[Rcpp::export]]
-Rcpp::List lm_arma(const arma::colvec& res_ponse, const arma::mat& de_sign) {
+Rcpp::List lm_arma(const arma::colvec& response, const arma::mat& design) {
   // add column for intercept to explanatory matrix
-  arma::mat design_p = join_rows(ones(de_sign.n_rows), de_sign);
-  int num_rows = de_sign.n_rows, num_cols = design_p.n_cols;
-  int deg_free = (num_rows - num_cols);
+  arma::mat designp = join_rows(ones(design.n_rows), design);
+  int nrows = design.n_rows, ncols = designp.n_cols;
+  int deg_free = (nrows - ncols);
   
-  // fit the model res_ponse ~ de_sign, and calculate alpha and beta coefficients
-  arma::colvec co_eff = arma::solve(design_p, res_ponse);
+  // fit the model response ~ design, and calculate alpha and beta coefficients
+  arma::colvec coeff = arma::solve(designp, response);
   // calculate residuals
-  arma::colvec resid_uals = res_ponse - design_p*co_eff;
+  arma::colvec residuals = response - designp*coeff;
   
   // calculate TSS, RSS, and ESS
-  double tot_sumsq = (num_rows-1)*arma::var(res_ponse);
-  double res_sumsq = arma::dot(resid_uals, resid_uals);
+  double tot_sumsq = (nrows-1)*arma::var(response);
+  double res_sumsq = arma::dot(residuals, residuals);
   double exp_sumsq = tot_sumsq - res_sumsq;
   
   // calculate R-squared and F-statistic
-  double r_squared = exp_sumsq/tot_sumsq;
-  double f_stat = (exp_sumsq*deg_free)/(res_sumsq*(num_cols-1));
-  // arma::rowvec stat_s=join_horiz(r_squared, f_stat);
-  Rcpp::NumericVector stat_s(2);
-  stat_s(0) = r_squared;
-  stat_s(1) = f_stat;
-  stat_s.attr("names") = Rcpp::CharacterVector::create("R-squared", "F-statistic");
+  double rsquared = exp_sumsq/tot_sumsq;
+  double fstat = (exp_sumsq*deg_free)/(res_sumsq*(ncols-1));
+  // arma::rowvec stats=join_horiz(rsquared, fstat);
+  Rcpp::NumericVector stats(2);
+  stats(0) = rsquared;
+  stats(1) = fstat;
+  stats.attr("names") = Rcpp::CharacterVector::create("R-squared", "F-statistic");
   
   // calculate standard errors of beta coefficients
-  arma::colvec std_err = arma::sqrt(res_sumsq/deg_free*arma::diagvec(arma::pinv(arma::trans(design_p)*design_p)));
+  arma::colvec stderr = arma::sqrt(res_sumsq/deg_free*arma::diagvec(arma::pinv(arma::trans(designp)*designp)));
   // calculate t-values and p-values of beta coefficients
-  arma::colvec beta_tvals = co_eff/std_err;
+  arma::colvec beta_tvals = coeff/stderr;
   arma::colvec beta_pvals = 2*Rcpp::pt(-abs(wrap(beta_tvals)), deg_free);
-  NumericMatrix coeff_mat = wrap(join_rows(join_rows(join_rows(co_eff, std_err), beta_tvals), beta_pvals));
-  Rcpp::colnames(coeff_mat) = Rcpp::CharacterVector::create("coeff", "std_err", "tvals", "pvals");
+  NumericMatrix coeffmat = wrap(join_rows(join_rows(join_rows(coeff, stderr), beta_tvals), beta_pvals));
+  Rcpp::colnames(coeffmat) = Rcpp::CharacterVector::create("coeff", "stderr", "tvals", "pvals");
   
-  return Rcpp::List::create(Named("coefficients") = coeff_mat,
-                            // Named("residuals") = resid_uals,
-                            Named("z_score") = resid_uals(num_rows-1)/arma::stddev(resid_uals),
-                            Named("stats") = stat_s);
+  return Rcpp::List::create(Named("coefficients") = coeffmat,
+                            // Named("residuals") = residuals,
+                            Named("z_score") = residuals(nrows-1)/arma::stddev(residuals),
+                            Named("stats") = stats);
 }  // end lm_arma
 
 
@@ -1084,45 +1084,45 @@ Rcpp::List lm_arma(const arma::colvec& res_ponse, const arma::mat& de_sign) {
 // The function test_rcpp() is for testing some Rcpp code snippets.
 //' @export
 // [[Rcpp::export]]
-LogicalVector test_rcpp(NumericVector& vec_tor2, NumericMatrix& mat_rix, NumericVector& vec_tor1) {
-  Rcpp::IntegerVector stat_s(4);
-  stat_s(0) = mat_rix.nrow();
-  stat_s(1) = mat_rix.ncol();
-  stat_s(2) = vec_tor1.size();
-  stat_s(3) = vec_tor2.size();
-  stat_s.attr("names") = Rcpp::CharacterVector::create("n_rows", "n_cols", "v_siz1", "v_siz2");
-  // uword n_rows = mat_rix.nrow();
-  uword n_cols = mat_rix.ncol();
-  // uword v_siz1 = vec_tor1.size();
-  // uword v_siz2 = vec_tor2.size();
-  // return stat_s;
-  return !(n_cols == vec_tor2.size());
+LogicalVector test_rcpp(NumericVector& vectorv2, NumericMatrix& matrixv, NumericVector& vectorv1) {
+  Rcpp::IntegerVector stats(4);
+  stats(0) = matrixv.nrow();
+  stats(1) = matrixv.ncol();
+  stats(2) = vectorv1.size();
+  stats(3) = vectorv2.size();
+  stats.attr("names") = Rcpp::CharacterVector::create("nrows", "ncols", "v_siz1", "v_siz2");
+  // uword nrows = matrixv.nrow();
+  uword ncols = matrixv.ncol();
+  // uword v_siz1 = vectorv1.size();
+  // uword v_siz2 = vectorv2.size();
+  // return stats;
+  return !(ncols == vectorv2.size());
 }  // end test_rcpp
 
 
 // The function test_arma() is for testing some RcppArmadillo code snippets.
 //' @export
 // [[Rcpp::export]]
-LogicalVector test_arma(arma::mat& mat_rix) {
-  // Rcout << "Num rows: " << mat_rix.n_rows << std::endl;
-  // Rcout << "Num cols: " << mat_rix.n_cols << std::endl;
-  mat_rix.print("This is the input matrix:");
-  mat_rix(0, 1) = 111;
-  mat_rix.print("This is the output matrix:");
-  return !(mat_rix.n_cols == mat_rix.n_rows);
+LogicalVector test_arma(arma::mat& matrixv) {
+  // Rcout << "Num rows: " << matrixv.n_rows << std::endl;
+  // Rcout << "Num cols: " << matrixv.n_cols << std::endl;
+  matrixv.print("This is the input matrix:");
+  matrixv(0, 1) = 111;
+  matrixv.print("This is the output matrix:");
+  return !(matrixv.n_cols == matrixv.n_rows);
 }  // end test_arma
 
 
 //' @export
 // [[Rcpp::export]]
-arma::uvec test_more_arma(const LogicalVector& vec_tor) {
-  Function whi_ch3("whi_ch3");
-  // Rcout << "Num rows: " << mat_rix.n_rows << std::endl;
-  // Rcout << "Num cols: " << mat_rix.n_cols << std::endl;
-  // mat_rix.print("This is the input matrix:");
-  // mat_rix(0, 1) = 111;
-  // mat_rix.print("This is the output matrix:");
-  arma::uvec in_dex = Rcpp::as<uvec>(whi_ch3(vec_tor));
-  return in_dex;
+arma::uvec test_more_arma(const LogicalVector& vectorv) {
+  Function whichv3("whichv3");
+  // Rcout << "Num rows: " << matrixv.n_rows << std::endl;
+  // Rcout << "Num cols: " << matrixv.n_cols << std::endl;
+  // matrixv.print("This is the input matrix:");
+  // matrixv(0, 1) = 111;
+  // matrixv.print("This is the output matrix:");
+  arma::uvec indeks = Rcpp::as<uvec>(whichv3(vectorv));
+  return indeks;
 }  // end test_more_arma
 

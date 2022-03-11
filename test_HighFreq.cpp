@@ -27,23 +27,23 @@ arma::mat run_rego(const arma::mat& response,
                   double lambda, 
                   std::string method = "none") {
   
-  arma::uword num_rows = predictor.n_rows;
-  arma::uword num_cols = predictor.n_cols;
-  arma::mat means_resp = arma::zeros<mat>(num_rows, 1);
-  arma::mat means_pred = arma::zeros<mat>(num_rows, num_cols);
+  arma::uword nrows = predictor.n_rows;
+  arma::uword ncols = predictor.n_cols;
+  arma::mat means_resp = arma::zeros<mat>(nrows, 1);
+  arma::mat means_pred = arma::zeros<mat>(nrows, ncols);
   arma::mat vars = arma::square(predictor);
-  arma::mat covars = arma::zeros<mat>(num_rows, num_cols);
-  arma::mat betas = arma::zeros<mat>(num_rows, num_cols);
-  arma::mat alphas = arma::zeros<mat>(num_rows, 1);
-  arma::mat resids = arma::zeros<mat>(num_rows, 1);
-  arma::mat varz = arma::ones<mat>(num_rows, 1);
-  arma::mat meanz = arma::zeros<mat>(num_rows, 1);
+  arma::mat covars = arma::zeros<mat>(nrows, ncols);
+  arma::mat betas = arma::zeros<mat>(nrows, ncols);
+  arma::mat alphas = arma::zeros<mat>(nrows, 1);
+  arma::mat resids = arma::zeros<mat>(nrows, 1);
+  arma::mat varz = arma::ones<mat>(nrows, 1);
+  arma::mat meanz = arma::zeros<mat>(nrows, 1);
   double lambda1 = 1-lambda;
   
   // Perform loop over the rows
   means_resp.row(0) = response.row(0);
   means_pred.row(0) = predictor.row(0);
-  for (arma::uword it = 1; it < num_rows; it++) {
+  for (arma::uword it = 1; it < nrows; it++) {
     // Calculate the mean as the weighted sum
     means_resp.row(it) = lambda1*response.row(it) + lambda*means_resp.row(it-1);
     means_pred.row(it) = lambda1*predictor.row(it) + lambda*means_pred.row(it-1);

@@ -4,7 +4,7 @@
 ////////////////////////////
 
 // Compile this file in R by running this command:
-// Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/test_rcpp_stl_functor.cpp")
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_rcpp_stl_functor.cpp")
 
 #include <Rcpp.h>
 using namespace Rcpp;
@@ -21,72 +21,72 @@ double double_it(double x) {
 
 
 // Function for multiplying a number by 2.
-double mult_two(double fac_tor, double x) {
-  return (fac_tor * x);
+double mult_two(double ratio, double x) {
+  return (ratio * x);
 }  // end mult_two
 
 
-// Define a functor for multiplying a number by a fac_tor.
+// Define a functor for multiplying a number by a ratio.
 class mult_class {
   
-  double fac_tor = 2.0;
+  double ratio = 2.0;
   
 public:
   // Constructor
-  mult_class(double in_put) : fac_tor(in_put) {}
+  mult_class(double input) : ratio(input) {}
   
   // Overloaded operator - actual function
-  double operator()(double x) {return (fac_tor*x);}
+  double operator()(double x) {return (ratio*x);}
   
 };  // end mult_class
 
 
 // Call function pointer.
 // [[Rcpp::export]]
-std::vector<double> double_vec(std::vector<double> vec_tor) {
-  std::vector<double> out_put(vec_tor.size());
-  std::transform(vec_tor.begin(), vec_tor.end(), out_put.begin(), double_it);
-  return out_put;
+std::vector<double> double_vec(std::vector<double> vectorv) {
+  std::vector<double> output(vectorv.size());
+  std::transform(vectorv.begin(), vectorv.end(), output.begin(), double_it);
+  return output;
 }  // end double_vec
 
 
 // Call functor.
 // [[Rcpp::export]]
-std::vector<double> mult_vec2(std::vector<double> vec_tor, double fac_tor) {
+std::vector<double> mult_vec2(std::vector<double> vectorv, double ratio) {
   
   // Create the instance mult_it of the functor class mult_class
-  mult_class mult_it(fac_tor);
+  mult_class mult_it(ratio);
   // Define output vector
-  std::vector<double> out_put(vec_tor.size());
+  std::vector<double> output(vectorv.size());
   
-  std::transform(vec_tor.begin(), vec_tor.end(), out_put.begin(), 
+  std::transform(vectorv.begin(), vectorv.end(), output.begin(), 
                  mult_it
                    // Or pass a lambda function - similar speed
-                   // [&fac_tor](double x) {return (fac_tor*x);}
+                   // [&ratio](double x) {return (ratio*x);}
   );
   // Or simply
-  // std::transform(vec_tor.begin(), vec_tor.end(), out_put.begin(), mult_class(fac_tor));
-  return out_put;
+  // std::transform(vectorv.begin(), vectorv.end(), output.begin(), mult_class(ratio));
+  return output;
 }  // end mult_vec2
 
 
 // Call lambda function.
 // [[Rcpp::export]]
-std::vector<double> mult_vec_lambda(std::vector<double> vec_tor, double fac_tor) {
-  std::vector<double> out_put(vec_tor.size());
-  std::transform(vec_tor.begin(), vec_tor.end(), out_put.begin(), 
-                 [&fac_tor](double x) {return (fac_tor*x);}
+std::vector<double> mult_vec_lambda(std::vector<double> vectorv, double ratio) {
+  std::vector<double> output(vectorv.size());
+  std::transform(vectorv.begin(), vectorv.end(), output.begin(), 
+                 [&ratio](double x) {return (ratio*x);}
   );
-  return out_put;
+  return output;
 }  // end mult_vec_lambda
 
 
 
 // Call function pointer.
-// std::vector<double> double_vec_funcpt(std::vector<double> vec_tor, double (*func_p)(double)) {
-//   std::vector<double> out_put(vec_tor.size());
-//   std::transform(vec_tor.begin(), vec_tor.end(), out_put.begin(), func_p);
-//   return out_put;
+// std::vector<double> double_vec_funcpt(std::vector<double> vectorv, double (*func_p)(double)) {
+//   std::vector<double> output(vectorv.size());
+//   std::transform(vectorv.begin(), vectorv.end(), output.begin(), func_p);
+//   return output;
 // }  // end double_vec_funcpt
 
 
@@ -108,25 +108,25 @@ NumericVector execute_r(Function func, double l) {
   return core_processing<Function>(func, l);
 }
 
-typedef SEXP (*ptr_func_2arg)(int, double);
+typedef SEXP (*ptr_func2arg)(int, double);
 
 // [[Rcpp::export]]
 NumericVector execute_cpp(SEXP func_, double l) {
-  ptr_func_2arg func = *XPtr<ptr_func_2arg>(func_);
-  return core_processing<ptr_func_2arg>(func, l);
+  ptr_func2arg func = *XPtr<ptr_func2arg>(func_);
+  return core_processing<ptr_func2arg>(func, l);
 }
 
-typedef double (*ptr_func_1arg)(double, double);
+typedef double (*ptr_func1arg)(double, double);
 // [[Rcpp::export]]
-NumericVector run_cpp(SEXP func_, double fac_tor, NumericVector vec_) {
-  ptr_func_1arg func = *XPtr<ptr_func_1arg>(func_);
+NumericVector run_cpp(SEXP func_, double ratio, NumericVector vec_) {
+  ptr_func1arg func = *XPtr<ptr_func1arg>(func_);
   
-  Rcpp::NumericVector out_put(vec_.size());
+  Rcpp::NumericVector output(vec_.size());
   // These two lines produce C++ warnings but they compile fine anyway
-  for (int i = 0; i < out_put.size(); i++){
-    out_put[i] = func(fac_tor, vec_[i]);
+  for (int i = 0; i < output.size(); i++){
+    output[i] = func(ratio, vec_[i]);
   }
-  // Rcpp::NumericVector out_put = Rcpp::NumericVector::create(1.0, 2.0, 3.0);
-  return out_put;
+  // Rcpp::NumericVector output = Rcpp::NumericVector::create(1.0, 2.0, 3.0);
+  return output;
 }  // end run_cpp
 

@@ -4,7 +4,7 @@ using namespace Rcpp;
 
 //' @export
 // [[Rcpp::export]]
-CharacterVector rcpp_hello_world() {
+CharacterVector rcpp_hellowporld() {
   
   CharacterVector x = CharacterVector::create( "hello", "world" )  ;
   //    NumericVector y   = NumericVector::create( 0.0, 1.0 ) ;

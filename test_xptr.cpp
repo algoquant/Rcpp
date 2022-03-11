@@ -4,7 +4,7 @@
 ////////////////////////////
 
 // Compile this file in R by running this command:
-// Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/test_xptr.cpp")
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_xptr.cpp")
 
 #include <Rcpp.h>
 using namespace Rcpp;
@@ -22,17 +22,17 @@ typedef double (*func_ptr)(double, double);
 
 // Define function that accepts a function pointer
 // [[Rcpp::export]]
-NumericVector run_cpp(SEXP func_, double fac_tor, NumericVector vec_) {
+NumericVector run_cpp(SEXP func_, double ratio, NumericVector vec_) {
   func_ptr func = *XPtr<func_ptr>(func_);
   
   // The lines below produce C++ warnings but they compile fine anyway
-  Rcpp::NumericVector out_put(vec_.size());
+  Rcpp::NumericVector output(vec_.size());
   
-  for (int i = 0; i < out_put.size(); i++){
-    out_put[i] = func(fac_tor, vec_[i]);
+  for (int i = 0; i < output.size(); i++){
+    output[i] = func(ratio, vec_[i]);
   }
-  // Rcpp::NumericVector out_put = Rcpp::NumericVector::create(1.0, 2.0, 3.0);
-  return out_put;
+  // Rcpp::NumericVector output = Rcpp::NumericVector::create(1.0, 2.0, 3.0);
+  return output;
 }  // end run_cpp
 
 

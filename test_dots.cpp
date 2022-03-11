@@ -4,7 +4,7 @@
 ////////////////////////////
 
 // Compile this file in R by running this command:
-// Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/test_dots.cpp")
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_dots.cpp")
 
 // Compiler instructions
 // #include <Rcpp.h>
@@ -72,7 +72,7 @@ void back_test(Rcpp::List param_s) {
 //   for (int i = 0 ; i < num ; i++) {
 //     n = va_arg(valst, int);
 //     // printf("%d\n", n);
-//     std::cout << "Warning: Incorrect typ_e argument: " << n << endl;
+//     std::cout << "Warning: Incorrect typev argument: " << n << endl;
 //   }
 //   va_end(valst);
 // }  // end varargs_fn

@@ -4,7 +4,7 @@
 ////////////////////////////
 
 // Compile this file in R by running this command:
-// Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_kurtosis.cpp")
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/roll_kurtosis.cpp")
 
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
@@ -39,8 +39,8 @@ kurtosis_type calc_kurtosis_type(const std::string& method) {
 //' @param \code{method} A \emph{string} specifying the type of kurtosis (see
 //'   Details). (The default is the \code{method = "pearson"}.)
 //'
-//' @param \code{al_pha} The confidence level for calculating the quantiles.
-//'   (the default is \code{al_pha = 0.25}).
+//' @param \code{alpha} The confidence level for calculating the quantiles.
+//'   (the default is \code{alpha = 0.25}).
 //'
 //' @return A single-row matrix with the kurtosis of the columns of
 //'   \code{se_ries}.
@@ -69,46 +69,46 @@ kurtosis_type calc_kurtosis_type(const std::string& method) {
 //' @examples
 //' \dontrun{
 //' # Calculate VTI returns
-//' re_turns <- na.omit(rutils::etf_env$re_turns$VTI)
+//' returns <- na.omit(rutils::etfenv$returns$VTI)
 //' # Calculate the Pearson kurtosis
-//' HighFreq::calc_kurtosis(re_turns)
+//' HighFreq::calc_kurtosis(returns)
 //' # Compare HighFreq::calc_kurtosis() with Pearson kurtosis
 //' calc_kurtosisr <- function(x) {
 //'   x <- (x-mean(x)); nr <- NROW(x);
 //'   nr*sum(x^3)/(var(x))^1.5/(nr-1)/(nr-2)
 //' }  # end calc_kurtosisr
-//' all.equal(HighFreq::calc_kurtosis(re_turns), 
-//'   calc_kurtosisr(re_turns), check.attributes=FALSE)
+//' all.equal(HighFreq::calc_kurtosis(returns), 
+//'   calc_kurtosisr(returns), check.attributes=FALSE)
 //' # Compare the speed of RcppArmadillo with R code
 //' library(microbenchmark)
 //' summary(microbenchmark(
-//'   Rcpp=HighFreq::calc_kurtosis(re_turns),
-//'   Rcode=calc_kurtosisr(re_turns),
+//'   Rcpp=HighFreq::calc_kurtosis(returns),
+//'   Rcode=calc_kurtosisr(returns),
 //'   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 //' # Calculate the quantile kurtosis
-//' HighFreq::calc_kurtosis(re_turns, method = "quantile", al_pha = 0.1)
+//' HighFreq::calc_kurtosis(returns, method = "quantile", alpha = 0.1)
 //' # Compare HighFreq::calc_kurtosis() with quantile kurtosis
 //' calc_kurtosisq <- function(x) {
-//'   	quantile_s <- quantile(x, c(0.25, 0.5, 0.75), type=5)
-//'   	(quantile_s[3] + quantile_s[1] - 2*quantile_s[2])/(quantile_s[3] - quantile_s[1])
+//'   	quantiles <- quantile(x, c(0.25, 0.5, 0.75), type=5)
+//'   	(quantiles[3] + quantiles[1] - 2*quantiles[2])/(quantiles[3] - quantiles[1])
 //' }  # end calc_kurtosisq
-//' all.equal(drop(HighFreq::calc_kurtosis(re_turns, method = "quantile")), 
-//'   calc_kurtosisq(re_turns), check.attributes=FALSE)
+//' all.equal(drop(HighFreq::calc_kurtosis(returns, method = "quantile")), 
+//'   calc_kurtosisq(returns), check.attributes=FALSE)
 //' # Compare the speed of RcppArmadillo with R code
 //' summary(microbenchmark(
-//'   Rcpp=HighFreq::calc_kurtosis(re_turns, method = "quantile"),
-//'   Rcode=calc_kurtosisq(re_turns),
+//'   Rcpp=HighFreq::calc_kurtosis(returns, method = "quantile"),
+//'   Rcode=calc_kurtosisq(returns),
 //'   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 //' # Calculate the nonparametric kurtosis
-//' HighFreq::calc_kurtosis(re_turns, method = "nonparametric")
+//' HighFreq::calc_kurtosis(returns, method = "nonparametric")
 //' # Compare HighFreq::calc_kurtosis() with R nonparametric kurtosis
-//' all.equal(drop(HighFreq::calc_kurtosis(re_turns, method = "nonparametric")), 
-//'   (mean(re_turns)-median(re_turns))/sd(re_turns), 
+//' all.equal(drop(HighFreq::calc_kurtosis(returns, method = "nonparametric")), 
+//'   (mean(returns)-median(returns))/sd(returns), 
 //'   check.attributes=FALSE)
 //' # Compare the speed of RcppArmadillo with R code
 //' summary(microbenchmark(
-//'   Rcpp=HighFreq::calc_kurtosis(re_turns, method = "nonparametric"),
-//'   Rcode=(mean(re_turns)-median(re_turns))/sd(re_turns),
+//'   Rcpp=HighFreq::calc_kurtosis(returns, method = "nonparametric"),
+//'   Rcode=(mean(returns)-median(returns))/sd(returns),
 //'   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 //' }
 //' 
@@ -116,7 +116,7 @@ kurtosis_type calc_kurtosis_type(const std::string& method) {
 // [[Rcpp::export]]
 arma::mat calc_kurtosis(arma::mat se_ries,
                         std::string method = "pearson", 
-                        double al_pha = 0.25) {
+                        double alpha = 0.25) {
   // Return zeros if not enough data
   if (se_ries.n_rows < 3) {
     return arma::zeros<rowvec>(se_ries.n_cols);
@@ -125,17 +125,17 @@ arma::mat calc_kurtosis(arma::mat se_ries,
   // Switch statement for all the different methods of skew
   switch(calc_kurtosis_type(method)) {
   case skew_type::Pearson: {  // Pearson
-    double num_rows = se_ries.n_rows;
+    double nrows = se_ries.n_rows;
     arma::mat mean_s = arma::mean(se_ries);
     arma::mat var_s = arma::var(se_ries);
     // De-mean the columns of se_ries
     se_ries.each_row() -= mean_s;
-    return (num_rows/(num_rows-1)/(num_rows-2))*arma::sum(arma::pow(se_ries, 3))/arma::pow(var_s, 1.5);
+    return (nrows/(nrows-1)/(nrows-2))*arma::sum(arma::pow(se_ries, 3))/arma::pow(var_s, 1.5);
   }  // end pearson
   case skew_type::Quantile: {  // Quantile
-    arma::vec prob_s = {al_pha, 0.5, 1.0 - al_pha};
-    arma::mat quantile_s = quantile(se_ries, prob_s);
-    return (quantile_s.row(2) + quantile_s.row(0) - 2*quantile_s.row(1))/(quantile_s.row(2) - quantile_s.row(0));
+    arma::vec probs = {alpha, 0.5, 1.0 - alpha};
+    arma::mat quantiles = quantile(se_ries, probs);
+    return (quantiles.row(2) + quantiles.row(0) - 2*quantiles.row(1))/(quantiles.row(2) - quantiles.row(0));
   }  // end quantile
   case skew_type::Nonparametric: {  // Nonparametric
     return (arma::mean(se_ries) - arma::median(se_ries))/arma::stddev(se_ries);
@@ -163,8 +163,8 @@ arma::mat calc_kurtosis(arma::mat se_ries,
 //' @param \code{method} A \emph{string} specifying the type of kurtosis.  (The
 //'   default is the \code{method = "pearson"}.)
 //'
-//' @param \code{al_pha} The confidence level for calculating the quantiles.
-//'   (the default is \code{al_pha = 0.25}).
+//' @param \code{alpha} The confidence level for calculating the quantiles.
+//'   (the default is \code{alpha = 0.25}).
 //'
 //' @return A \emph{matrix} with the same number of columns as the input time
 //'   series \code{se_ries}, and the number of rows equal to the number of end
@@ -200,24 +200,24 @@ arma::mat calc_kurtosis(arma::mat se_ries,
 //' @examples
 //' \dontrun{
 //' # Define time series of returns using package rutils
-//' re_turns <- na.omit(rutils::etf_env$re_turns$VTI)
+//' returns <- na.omit(rutils::etfenv$returns$VTI)
 //' # Define end points and start points
-//' end_p <- 1 + HighFreq::calc_endpoints(NROW(re_turns), ste_p)
-//' start_p <- HighFreq::calc_startpoints(end_p, 3)
+//' endp <- 1 + HighFreq::calc_endpoints(NROW(returns), ste_p)
+//' startp <- HighFreq::calc_startpoints(endp, 3)
 //' # Calculate the rolling kurtosis at 25 day end points, with a 75 day look-back
-//' kurto_sis <- HighFreq::roll_kurtosis(re_turns, ste_p=25, look_back=3)
+//' kurto_sis <- HighFreq::roll_kurtosis(returns, ste_p=25, look_back=3)
 //' # Calculate the rolling kurtosis using R code
-//' kurto_r <- sapply(1:NROW(end_p), function(it) {
-//'   HighFreq::calc_kurtosis(re_turns[start_p[it]:end_p[it], ])
+//' kurto_r <- sapply(1:NROW(endp), function(it) {
+//'   HighFreq::calc_kurtosis(returns[startp[it]:endp[it], ])
 //' })  # end sapply
 //' # Compare the kurtosis estimates
 //' all.equal(drop(kurto_sis), kurto_r, check.attributes=FALSE)
 //' # Compare the speed of RcppArmadillo with R code
 //' library(microbenchmark)
 //' summary(microbenchmark(
-//'   Rcpp=HighFreq::roll_kurtosis(re_turns, ste_p=25, look_back=3),
-//'   Rcode=sapply(1:NROW(end_p), function(it) {
-//'     HighFreq::calc_kurtosis(re_turns[start_p[it]:end_p[it], ])
+//'   Rcpp=HighFreq::roll_kurtosis(returns, ste_p=25, look_back=3),
+//'   Rcode=sapply(1:NROW(endp), function(it) {
+//'     HighFreq::calc_kurtosis(returns[startp[it]:endp[it], ])
 //'   }),
 //'   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 //' }
@@ -227,22 +227,22 @@ arma::mat roll_kurtosis(arma::mat se_ries,
                         arma::uword ste_p = 1, 
                         arma::uword look_back = 11, 
                         std::string method = "pearson", 
-                        double al_pha = 0.25) {
+                        double alpha = 0.25) {
   
   // Calculate end points
-  arma::uword num_rows = se_ries.n_rows;
-  arma::uvec end_p = calc_endpoints(num_rows, ste_p);
+  arma::uword nrows = se_ries.n_rows;
+  arma::uvec endp = calc_endpoints(nrows, ste_p);
   // Start points equal to end points lagged by look_back
-  arma::uvec start_p = calc_startpoints(end_p, look_back);
+  arma::uvec startp = calc_startpoints(endp, look_back);
   // Allocate kurtosis matrix
-  arma::uword num_points = end_p.n_elem;
+  arma::uword num_points = endp.n_elem;
   arma::mat kurto_sis = arma::zeros<mat>(num_points, se_ries.n_cols);
   
-  // Perform loop over the end_p
+  // Perform loop over the endp
   for (arma::uword ep = 0; ep < num_points; ep++) {
     // Calculate kurtosis
-    if (end_p(ep) > start_p(ep)) {
-      kurto_sis.row(ep) = calc_kurtosis(se_ries.rows(start_p(ep), end_p(ep)), method);
+    if (endp(ep) > startp(ep)) {
+      kurto_sis.row(ep) = calc_kurtosis(se_ries.rows(startp(ep), endp(ep)), method);
     }  // end if
   }  // end for
   

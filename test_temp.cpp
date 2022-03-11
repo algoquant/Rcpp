@@ -15,9 +15,9 @@ using namespace std;
 
 
 // [[Rcpp::export]]
-arma::uword calc_pos(arma::vec da_ta, arma::uword eigen_max, double eigen_thresh = 0.001) {
+arma::uword calc_pos(arma::vec datav, arma::uword eigen_max, double eigen_thresh = 0.001) {
   
-  return min(eigen_max, arma::sum(da_ta > eigen_thresh) - 1);
+  return min(eigen_max, arma::sum(datav > eigen_thresh) - 1);
   
 }  // end calc_pos
 

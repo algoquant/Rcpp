@@ -3,7 +3,7 @@
 ////////////////////////////
 
 // Compile this file in R by running this command:
-// Rcpp::sourceCpp("C:/Develop/R/Rcpp/test_boost.cpp")
+// Rcpp::sourceCpp("/Users/jerzy/Develop/Rcpp/test_boost.cpp")
 
 #include <Rcpp.h>
 // include Boost headers from R package BH  

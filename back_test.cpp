@@ -15,20 +15,20 @@ using namespace arma;
 
 //' @export
 // [[Rcpp::export]]
-arma::mat calc_inv(const arma::mat& re_turns,
-                   double to_l = 0.001, 
+arma::mat calc_inv(const arma::mat& returns,
+                   double precision = 0.001, 
                    int max_eigen = 0) {
   
-  arma::mat cov_mat = cov(re_turns);
+  arma::mat covmat = cov(returns);
   
   if (max_eigen == 0) {
     // Calculate the inverse using arma::pinv()
-    return arma::pinv(cov_mat, to_l);
+    return arma::pinv(covmat, precision);
   } else {
     // Calculate the inverse using eigen decomposition
     arma::mat eigen_vec;
     arma::vec eigen_val;
-    arma::eig_sym(eigen_val, eigen_vec, cov_mat);
+    arma::eig_sym(eigen_val, eigen_vec, covmat);
     eigen_vec = eigen_vec.cols(eigen_vec.n_cols-max_eigen, eigen_vec.n_cols-1);
     eigen_val = 1/eigen_val.subvec(eigen_val.n_elem-max_eigen, eigen_val.n_elem-1);
     return eigen_vec*diagmat(eigen_val)*eigen_vec.t();
@@ -41,131 +41,131 @@ arma::mat calc_inv(const arma::mat& re_turns,
 
 //' @export
 // [[Rcpp::export]]
-arma::vec calc_weights(const arma::mat& re_turns, 
-                       const std::string& model_type = "rank_sharpe",
-                       double to_l = 0.001,
+arma::vec calc_weights(const arma::mat& returns, 
+                       const std::string& model_type = "ranksharpe",
+                       double precision = 0.001,
                        int max_eigen = 0,
-                       const double& pro_b = 0.1,
-                       const double& al_pha = 0.0,
-                       const bool scal_e = true,
+                       const double& probv = 0.1,
+                       const double& alpha = 0.0,
+                       const bool scalit = true,
                        double vo_l = 0.01) {
   // Initialize
-  arma::vec weight_s(re_turns.n_cols);
-  if (max_eigen == 0)  max_eigen = re_turns.n_cols;
+  arma::vec weights(returns.n_cols);
+  if (max_eigen == 0)  max_eigen = returns.n_cols;
   
   // Calculate weights depending on model_type
-  if (model_type == "rank_sharpe") {
+  if (model_type == "ranksharpe") {
     // Mean returns by columns
-    arma::vec mean_cols = arma::trans(arma::mean(re_turns, 0));
+    arma::vec meancols = arma::trans(arma::mean(returns, 0));
     // Standard deviation by columns
-    arma::vec sd_cols = arma::trans(arma::stddev(re_turns, 0));
+    arma::vec sd_cols = arma::trans(arma::stddev(returns, 0));
     sd_cols.replace(0, 1);
-    mean_cols = mean_cols/sd_cols;
+    meancols = meancols/sd_cols;
     // Weights equal to ranks of Sharpe
-    // weight_s = conv_to< vec >::from(arma::sort_index(arma::sort_index(mean_cols)));
-    // weight_s = (weight_s - arma::mean(weight_s));
-    weight_s = mean_cols;
+    // weights = conv_to< vec >::from(arma::sort_index(arma::sort_index(meancols)));
+    // weights = (weights - arma::mean(weights));
+    weights = meancols;
   } else if (model_type == "max_sharpe") {
     // Mean returns by columns
-    arma::vec mean_cols = arma::trans(arma::mean(re_turns, 0));
-    // Shrink mean_cols to the mean of re_turns
-    mean_cols = ((1-al_pha)*mean_cols + al_pha*arma::mean(mean_cols));
+    arma::vec meancols = arma::trans(arma::mean(returns, 0));
+    // Shrink meancols to the mean of returns
+    meancols = ((1-alpha)*meancols + alpha*arma::mean(meancols));
     // Apply regularized inverse
-    // arma::mat in_verse = calc_inv(re_turns, max_eigen);
-    // weight_s = calc_inv(re_turns, max_eigen=max_eigen)*mean_cols;
-    weight_s = calc_inv(re_turns, to_l=to_l, max_eigen=max_eigen)*mean_cols;
+    // arma::mat inverse = calc_inv(returns, max_eigen);
+    // weights = calc_inv(returns, max_eigen=max_eigen)*meancols;
+    weights = calc_inv(returns, precision=precision, max_eigen=max_eigen)*meancols;
   } else if (model_type == "max_sharpe_median") {
     // Mean returns by columns
-    arma::vec mean_cols = arma::trans(arma::median(re_turns, 0));
-    // Shrink mean_cols to the mean of re_turns
-    mean_cols = ((1-al_pha)*mean_cols + al_pha*arma::median(mean_cols));
+    arma::vec meancols = arma::trans(arma::median(returns, 0));
+    // Shrink meancols to the mean of returns
+    meancols = ((1-alpha)*meancols + alpha*arma::median(meancols));
     // Apply regularized inverse
-    // arma::mat in_verse = calc_inv(re_turns, max_eigen);
-    weight_s = calc_inv(re_turns, to_l=to_l, max_eigen=max_eigen)*mean_cols;
+    // arma::mat inverse = calc_inv(returns, max_eigen);
+    weights = calc_inv(returns, precision=precision, max_eigen=max_eigen)*meancols;
   } else if (model_type == "min_var") {
     // Apply regularized inverse to unit vector
-    weight_s = calc_inv(re_turns, to_l=to_l, max_eigen=max_eigen)*arma::ones(re_turns.n_cols);
+    weights = calc_inv(returns, precision=precision, max_eigen=max_eigen)*arma::ones(returns.n_cols);
   } else if (model_type == "min_varpca") {
     // Calculate highest order principal component
     arma::vec eigen_val;
     arma::mat eigen_vec;
-    arma::eig_sym(eigen_val, eigen_vec, cov(re_turns));
-    weight_s = eigen_vec.col(0);
+    arma::eig_sym(eigen_val, eigen_vec, cov(returns));
+    weights = eigen_vec.col(0);
   } else if (model_type == "rank") {
     // Mean returns by columns
-    arma::vec mean_cols = arma::trans(arma::mean(re_turns, 0));
+    arma::vec meancols = arma::trans(arma::mean(returns, 0));
     // Standard deviation by columns
-    arma::vec sd_cols = arma::trans(arma::stddev(re_turns, 0));
+    arma::vec sd_cols = arma::trans(arma::stddev(returns, 0));
     sd_cols.replace(0, 1);
-    mean_cols = mean_cols/sd_cols;
+    meancols = meancols/sd_cols;
     // Weights equal to ranks of Sharpe
-    weight_s = conv_to< vec >::from(arma::sort_index(arma::sort_index(mean_cols)));
-    weight_s = (weight_s - arma::mean(weight_s));
+    weights = conv_to< vec >::from(arma::sort_index(arma::sort_index(meancols)));
+    weights = (weights - arma::mean(weights));
   } else if (model_type == "rankrob") {
     // Median returns by columns
-    arma::vec mean_cols = arma::trans(arma::median(re_turns, 0));
-    // mean_cols = ((1-al_pha)*mean_cols + al_pha*arma::mean(mean_cols));
+    arma::vec meancols = arma::trans(arma::median(returns, 0));
+    // meancols = ((1-alpha)*meancols + alpha*arma::mean(meancols));
     // Standard deviation by columns
-    arma::vec sd_cols = arma::trans(arma::stddev(re_turns, 0));
+    arma::vec sd_cols = arma::trans(arma::stddev(returns, 0));
     sd_cols.replace(0, 1);
-    mean_cols = mean_cols/sd_cols;
+    meancols = meancols/sd_cols;
     // Apply regularized inverse
-    // arma::mat in_verse = calc_inv(re_turns, max_eigen);
-    // weight_s = calc_inv(re_turns, max_eigen)*mean_cols;
-    // weight_s = calc_inv(re_turns, max_eigen)*mean_cols;
+    // arma::mat inverse = calc_inv(returns, max_eigen);
+    // weights = calc_inv(returns, max_eigen)*meancols;
+    // weights = calc_inv(returns, max_eigen)*meancols;
     // // Standard deviation by columns
-    // arma::vec sd_cols = mean_cols;
-    // for (arma::uword it=0; it < re_turns.n_cols; it++) {
-    //   sd_cols(it) = arma::median(arma::abs((re_turns.col(it) - sd_cols)));
+    // arma::vec sd_cols = meancols;
+    // for (arma::uword it=0; it < returns.n_cols; it++) {
+    //   sd_cols(it) = arma::median(arma::abs((returns.col(it) - sd_cols)));
     // }  // end for
     // sd_cols.replace(0, 1);
-    // mean_cols = mean_cols/sd_cols;
+    // meancols = meancols/sd_cols;
     // Weights equal to ranks of Sharpe
-    weight_s = conv_to< vec >::from(arma::sort_index(arma::sort_index(mean_cols)));
-    // pro_b;
-    weight_s = (weight_s - arma::mean(weight_s));
+    weights = conv_to< vec >::from(arma::sort_index(arma::sort_index(meancols)));
+    // probv;
+    weights = (weights - arma::mean(weights));
   } else if (model_type == "quan_tile") {
     // Sum of quantiles for columns
-    arma::vec prob_s = {pro_b, 1-pro_b};
-    weight_s = conv_to< vec >::from(arma::sum(arma::quantile(re_turns, prob_s, 0), 0));
+    arma::vec probs = {probv, 1-probv};
+    weights = conv_to< vec >::from(arma::sum(arma::quantile(returns, probs, 0), 0));
     // Weights equal to ranks
-    weight_s = conv_to< vec >::from(arma::sort_index(arma::sort_index(weight_s)));
-    weight_s = (weight_s - arma::mean(weight_s));
+    weights = conv_to< vec >::from(arma::sort_index(arma::sort_index(weights)));
+    weights = (weights - arma::mean(weights));
   } else {
     cout << "Warning: Incorrect model_type argument: " << model_type << endl;
-    return arma::ones(re_turns.n_cols);
+    return arma::ones(returns.n_cols);
   }  // end if
   
-  if (scal_e == TRUE) {
-    // return weight_s/sqrt(sum(square(weight_s)));
-    // return weight_s/sum(weight_s);
+  if (scalit == TRUE) {
+    // return weights/sqrt(sum(square(weights)));
+    // return weights/sum(weights);
     // Returns of equally weighted portfolio
-    // arma::vec mean_rows = arma::mean(re_turns, 1);
+    // arma::vec meanrows = arma::mean(returns, 1);
     // Returns of weighted portfolio
-    // arma::vec returns_portf = re_turns*weight_s;
-    // Scale weight_s to equally weighted portfolio and return them
-    // return weight_s*arma::stddev(arma::mean(re_turns, 1))/arma::stddev(re_turns*weight_s);
-    // Scale weight_s so the resulting portfolio has a volatility equal to vo_l
-    return weight_s*vo_l/arma::stddev(re_turns*weight_s);
+    // arma::vec returns_portf = returns*weights;
+    // Scale weights to equally weighted portfolio and return them
+    // return weights*arma::stddev(arma::mean(returns, 1))/arma::stddev(returns*weights);
+    // Scale weights so the resulting portfolio has a volatility equal to vo_l
+    return weights*vo_l/arma::stddev(returns*weights);
   }  // end if
   
-  return weight_s;
+  return weights;
 }  // end calc_weights
 
 
 
 
-// First sort the da_ta and then unsort it back to original
+// First sort the datav and then unsort it back to original
 //' @export
 // [[Rcpp::export]]
-arma::vec sort_back(const arma::vec& da_ta) {
+arma::vec sort_back(const arma::vec& datav) {
 
   // Reverse sort index
-  arma::uvec in_dex = arma::sort_index(arma::sort_index(da_ta));
-  // Sort the da_ta
-  arma::vec sort_ed = arma::sort(da_ta);
-  // Reverse sort the da_ta
-  sort_ed = sort_ed.elem(in_dex);
+  arma::uvec indeks = arma::sort_index(arma::sort_index(datav));
+  // Sort the datav
+  arma::vec sort_ed = arma::sort(datav);
+  // Reverse sort the datav
+  sort_ed = sort_ed.elem(indeks);
   
   return sort_ed;
 }  // end sort_back
@@ -173,26 +173,26 @@ arma::vec sort_back(const arma::vec& da_ta) {
 
 //' @export
 // [[Rcpp::export]]
-arma::uvec calc_ranks(const arma::vec& da_ta) {
-  return (arma::sort_index(arma::sort_index(da_ta)) + 1);
+arma::uvec calc_ranks(const arma::vec& datav) {
+  return (arma::sort_index(arma::sort_index(datav)) + 1);
 }  // end calc_ranks
 
 
 
 //' @export
 // [[Rcpp::export]]
-arma::vec calc_ranks_m(const arma::vec& da_ta) {
+arma::vec calc_ranks_m(const arma::vec& datav) {
   // Ranks
-  arma::vec rank_s = conv_to< vec >::from(arma::sort_index(arma::sort_index(da_ta)));
-  return (rank_s - arma::mean(rank_s));
+  arma::vec ranks = conv_to< vec >::from(arma::sort_index(arma::sort_index(datav)));
+  return (ranks - arma::mean(ranks));
 }  // end calc_ranks_m
 
 
 
 //' @export
 // [[Rcpp::export]]
-arma::vec weight_returns(const arma::mat& re_turns, const arma::vec& weight_s) {
-  return re_turns*weight_s;
+arma::vec weight_returns(const arma::mat& returns, const arma::vec& weights) {
+  return returns*weights;
 }  // end weight_returns
 
 
@@ -200,38 +200,38 @@ arma::vec weight_returns(const arma::mat& re_turns, const arma::vec& weight_s) {
 
 //' @export
 // [[Rcpp::export]]
-arma::mat back_test(const arma::mat& ex_cess, // Portfolio excess returns
-                    const arma::mat& re_turns, // Portfolio returns
-                    const arma::uvec& start_points, 
-                    const arma::uvec& end_points, 
-                    const std::string& model_type = "rank_sharpe",
-                    double to_l = 0.001,
+arma::mat back_test(const arma::mat& excess, // Portfolio excess returns
+                    const arma::mat& returns, // Portfolio returns
+                    const arma::uvec& startpoints, 
+                    const arma::uvec& endpoints, 
+                    const std::string& model_type = "ranksharpe",
+                    double precision = 0.001,
                     int max_eigen = 0,
-                    const double& pro_b = 0.1,
-                    const double& al_pha = 0,
-                    const bool& scal_e = true,
+                    const double& probv = 0.1,
+                    const double& alpha = 0,
+                    const bool& scalit = true,
                     double vo_l = 0.01,
-                    const double& co_eff = 1.0,
+                    const double& coeff = 1.0,
                     const double& bid_offer = 0.0) {
   
-  arma::vec weight_s(re_turns.n_cols);
-  arma::vec weights_past = zeros(re_turns.n_cols);
-  arma::mat pnl_s(re_turns.n_rows, re_turns.n_cols);
+  arma::vec weights(returns.n_cols);
+  arma::vec weights_past = zeros(returns.n_cols);
+  arma::mat pnls(returns.n_rows, returns.n_cols);
   
-  // Perform loop over the end_points
-  for (arma::uword it = 1; it < end_points.size(); it++) {
+  // Perform loop over the endpoints
+  for (arma::uword it = 1; it < endpoints.size(); it++) {
     // cout << "it: " << it << endl;
     // Calculate portfolio weights
-    weight_s = co_eff*calc_weights(ex_cess.rows(start_points(it-1), end_points(it-1)), model_type, to_l, max_eigen, pro_b, al_pha, scal_e, vo_l);
+    weights = coeff*calc_weights(excess.rows(startpoints(it-1), endpoints(it-1)), model_type, precision, max_eigen, probv, alpha, scalit, vo_l);
     // Calculate out-of-sample returns
-    pnl_s.rows(end_points(it-1)+1, end_points(it)) = weight_s.t();
+    pnls.rows(endpoints(it-1)+1, endpoints(it)) = weights.t();
     // Add transaction costs
-    // pnl_s.row(end_points(it-1)+1) -= bid_offer*sum(abs(weight_s - weights_past))/2;
-    // weights_past = weight_s;
+    // pnls.row(endpoints(it-1)+1) -= bid_offer*sum(abs(weights - weights_past))/2;
+    // weights_past = weights;
   }  // end for
   
-  // Return the strategy pnl_s
-  return pnl_s;
+  // Return the strategy pnls
+  return pnls;
   
 }  // end back_test
 

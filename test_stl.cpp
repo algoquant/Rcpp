@@ -3,7 +3,7 @@
 ////////////////////////////
 
 // Compile this file in R by running this command:
-// Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/test_stl.cpp")
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_stl.cpp")
 
 #include <Rcpp.h>
 using namespace Rcpp;
@@ -24,16 +24,16 @@ using namespace std;
 // The function sum_it() sums up the elements of a vector using an STL iterator.
 // It may be simpler to use std::accumulate().
 // [[Rcpp::export]]
-int sum_it(std::vector<int> vec_tor) {
+int sum_it(std::vector<int> vectorv) {
   
   // Define STL iterator
   // std::vector<int>::iterator it_er;
   
   // Sum up elements of a vector using STL iterator
   int total = 0;
-  for (auto it_er: vec_tor) {
+  for (auto it_er: vectorv) {
     // Old-style loop
-    // for (auto it_er = vec_tor.begin(); it_er != vec_tor.end(); ++it_er) {
+    // for (auto it_er = vectorv.begin(); it_er != vectorv.end(); ++it_er) {
     total += it_er;
   }  // end for
   
@@ -44,25 +44,25 @@ int sum_it(std::vector<int> vec_tor) {
 
 // The function select_it() selects elements of a vector using an STL iterator.
 // [[Rcpp::export]]
-void select_it(std::vector<double> vec_tor, int shif_t) {
+void select_it(std::vector<double> vectorv, int shiftv) {
   
   // Define STL iterator
-  std::vector<double>::iterator it_er = vec_tor.begin();
+  std::vector<double>::iterator it_er = vectorv.begin();
   // Select element from the front of the vector
-  it_er = next(it_er, shif_t-1);
+  it_er = next(it_er, shiftv-1);
   
   // Print iterator value
-  std::cout << "The " << shif_t << "th ";
+  std::cout << "The " << shiftv << "th ";
   std::cout << "vector element from the front is = "; 
   std::cout << *it_er << " "; 
   std::cout << std::endl;
 
   // Select element from the end of the vector
-  it_er = vec_tor.end();
-  it_er = prev(it_er, shif_t);
+  it_er = vectorv.end();
+  it_er = prev(it_er, shiftv);
 
   // Print iterator value
-  std::cout << "The " << shif_t << "th ";
+  std::cout << "The " << shiftv << "th ";
   std::cout << "vector element from the end is = "; 
   std::cout << *it_er << " "; 
   std::cout << std::endl;
@@ -86,36 +86,36 @@ void select_it(std::vector<double> vec_tor, int shif_t) {
 // occurs.
 // Run-length encoding is different from a contingency table.
 // [[Rcpp::export]]
-List encode_it(std::vector<double> in_puts) {
+List encode_it(std::vector<double> inputs) {
   
   // Define vector of input data
-  std::vector<double> da_ta;
+  std::vector<double> datav;
   // Define vector of data counts (repeats)
   std::vector<int> count_s;
   
   // Define iterators
-  std::vector<double>::iterator in_put = in_puts.begin();
+  std::vector<double>::iterator input = inputs.begin();
   std::vector<int>::reverse_iterator cou_nt = count_s.rbegin();
   
   // Initialise the data
-  double la_st = *in_put;
-  da_ta.push_back(la_st);
+  double lastv = *input;
+  datav.push_back(lastv);
   count_s.push_back(1);
   
-  // Perform loop over in_puts using the iterator
-  for (in_put = in_puts.begin() + 1; in_put != in_puts.end(); ++in_put) {
-    if (la_st == *in_put) {
+  // Perform loop over inputs using the iterator
+  for (input = inputs.begin() + 1; input != inputs.end(); ++input) {
+    if (lastv == *input) {
       (*cou_nt)++;
     } else {
-      da_ta.push_back(*in_put);
+      datav.push_back(*input);
       count_s.push_back(1);
       cou_nt = count_s.rbegin();
-      la_st = *in_put;
+      lastv = *input;
     }  // end if
   }  // end for
   
   return List::create(
-    _["data"] = da_ta,
+    _["data"] = datav,
     _["counts"] = count_s
   );
 }  // end encode_it
@@ -126,35 +126,35 @@ List encode_it(std::vector<double> in_puts) {
 // wippp
 // The function decode_it() decodes a vector from its run length encoding.
 // [[Rcpp::export]]
-std::vector<double> decode_it(List in_puts) {
+std::vector<double> decode_it(List inputs) {
   
   // Define vector of input data
-  std::vector<double> da_ta;
+  std::vector<double> datav;
   // Define vector of data counts (repeats)
   // std::vector<int> count_s;
   
   // Define iterators
-  // std::vector<double>::iterator in_put = in_puts.begin();
+  // std::vector<double>::iterator input = inputs.begin();
   // std::vector<int>::reverse_iterator cou_nt = count_s.rbegin();
   // 
   // // Initialise the data
-  // double la_st = *in_put;
-  // da_ta.push_back(la_st);
+  // double lastv = *input;
+  // datav.push_back(lastv);
   // count_s.push_back(1);
   // 
-  // // Perform loop over in_puts using the iterator
-  // for (in_put = in_puts.begin() + 1; in_put != in_puts.end(); ++in_put) {
-  //   if (la_st == *in_put) {
+  // // Perform loop over inputs using the iterator
+  // for (input = inputs.begin() + 1; input != inputs.end(); ++input) {
+  //   if (lastv == *input) {
   //     (*cou_nt)++;
   //   } else {
-  //     da_ta.push_back(*in_put);
+  //     datav.push_back(*input);
   //     count_s.push_back(1);
   //     cou_nt = count_s.rbegin();
-  //     la_st = *in_put;
+  //     lastv = *input;
   //   }  // end if
   // }  // end for
   
-  return da_ta;
+  return datav;
 }  // end decode_it
 
 
@@ -173,27 +173,27 @@ std::vector<double> decode_it(List in_puts) {
 // i.e it's not already in the set.
 // https://thispointer.com/different-ways-to-insert-elements-in-an-unordered_set-in-c11/
 // [[Rcpp::export]]
-std::vector<bool> not_dup(std::vector<int> vec_tor) {
+std::vector<bool> not_dup(std::vector<int> vectorv) {
   
-  // int num_el = vec_tor.size();
+  // int num_el = vectorv.size();
   // Define iterator for input vector
   // std::vector<int>::iterator ele_ment;
   // Define Boolean output vector
-  std::vector<bool> out_put(vec_tor.size());
+  std::vector<bool> output(vectorv.size());
   // Define Boolean iterator for output vector
-  std::vector<bool>::iterator is_dup = out_put.begin();
+  std::vector<bool>::iterator is_dup = output.begin();
   // Define unordered_set with unique elements
   std::unordered_set<int> se_t;
   
   // Copy the elements of the input vector into a set
-  for (auto ele_ment: vec_tor) {
-    // for (auto ele_ment = vec_tor.begin(); ele_ment != vec_tor.end(); ++ele_ment) {
+  for (auto ele_ment: vectorv) {
+    // for (auto ele_ment = vectorv.begin(); ele_ment != vectorv.end(); ++ele_ment) {
     // The .insert().second is a Boolean equal to TRUE if the element 
     // is new, i.e it's not already in the set.
     *is_dup++ = se_t.insert(ele_ment).second;
   }  // end for
   
-  return out_put;
+  return output;
   
 }  // end not_dup
 
@@ -215,15 +215,15 @@ std::vector<bool> not_dup(std::vector<int> vec_tor) {
 // https://www.techiedelight.com/convert-set-vector-cpp/
 // https://codeyarns.com/2010/07/16/c-stl-inserting-vector-into-set/
 // [[Rcpp::export]]
-std::vector<double> calc_unique(std::vector<double> vec_tor) {
+std::vector<double> calc_unique(std::vector<double> vectorv) {
   
   // Define unordered_set and copy the input vector into it.
   // The set contains only unique elements.
-  std::unordered_set<double> se_t(vec_tor.begin(), vec_tor.end());
+  std::unordered_set<double> se_t(vectorv.begin(), vectorv.end());
   // Define output vector and copy the set into it.
-  std::vector<double> out_put(se_t.begin(), se_t.end());
+  std::vector<double> output(se_t.begin(), se_t.end());
   
-  return out_put;
+  return output;
   
 }  // end calc_unique
 
@@ -238,25 +238,25 @@ std::vector<double> calc_unique(std::vector<double> vec_tor) {
 // The function calc_unique_loop() is about as fast as the R function unique().
 // https://www.techiedelight.com/remove-duplicates-vector-cpp/
 // [[Rcpp::export]]
-std::vector<double> calc_unique_loop(std::vector<double> vec_tor) {
+std::vector<double> calc_unique_loop(std::vector<double> vectorv) {
   
   // Define iterator for input vector
   // std::vector<double>::iterator ele_ment;
   // Define output vector
-  std::vector<double> out_put;
+  std::vector<double> output;
   // Define unordered_set with unique elements
   std::unordered_set<double> se_t;
   
   // Copy the elements of the input vector into a set
-  for (auto ele_ment: vec_tor) {
-    // for (auto ele_ment = vec_tor.begin(); ele_ment != vec_tor.end(); ++ele_ment) {
+  for (auto ele_ment: vectorv) {
+    // for (auto ele_ment = vectorv.begin(); ele_ment != vectorv.end(); ++ele_ment) {
     // The .insert().second is a Boolean equal to TRUE if the element 
     // is new, i.e it's not already in the set.
     if (se_t.insert(ele_ment).second)
-      out_put.push_back(ele_ment);
+      output.push_back(ele_ment);
   }  // end for
   
-  return out_put;
+  return output;
 
 }  // end calc_unique_loop
 
@@ -270,25 +270,25 @@ std::vector<double> calc_unique_loop(std::vector<double> vec_tor) {
 // i.e it's not already in the set.
 // The function calc_unique() is about as fast as the R function unique().
 // [[Rcpp::export]]
-std::vector<int> calc_unique_int(std::vector<int> vec_tor) {
+std::vector<int> calc_unique_int(std::vector<int> vectorv) {
   
   // Define iterator for input vector
   // std::vector<int>::iterator ele_ment;
   // Define output vector
-  std::vector<int> out_put;
+  std::vector<int> output;
   // Define unordered_set with unique elements
   std::unordered_set<int> se_t;
   
   // Copy the elements of the input vector into a set
-  for (auto ele_ment: vec_tor) {
-    // for (auto ele_ment = vec_tor.begin(); ele_ment != vec_tor.end(); ++ele_ment) {
+  for (auto ele_ment: vectorv) {
+    // for (auto ele_ment = vectorv.begin(); ele_ment != vectorv.end(); ++ele_ment) {
     // The .insert().second is a Boolean equal to TRUE if the element 
     // is new, i.e it's not already in the set.
     if (se_t.insert(ele_ment).second)
-      out_put.push_back(ele_ment);
+      output.push_back(ele_ment);
   }  // end for
   
-  return out_put;
+  return output;
   
 }  // end calc_unique_int
 
@@ -312,8 +312,8 @@ std::vector<std::string> calc_unique_str(std::vector<std::string> string_s) {
   // Define vector iterator
   // std::vector<std::string>::iterator stri_ng;
   // Define vector of output strings
-  std::vector<std::string> out_put;
-  out_put.reserve(num_el);
+  std::vector<std::string> output;
+  output.reserve(num_el);
   // Define unordered_set of strings
   std::unordered_set<std::string> se_t;
   // Define unordered_set iterator
@@ -331,10 +331,10 @@ std::vector<std::string> calc_unique_str(std::vector<std::string> string_s) {
   for (auto uniqu_e: se_t) {
     // for (auto uniqu_e=se_t.begin(); uniqu_e!=se_t.end(); ++uniqu_e) {
     //   std::cout << *uniqu_e << std::endl;
-    out_put.push_back(uniqu_e);
+    output.push_back(uniqu_e);
   }  // end for
   
-  return out_put;
+  return output;
 
 }  // end calc_unique_str
 
@@ -385,7 +385,7 @@ int map_it(std::string stri_ng) {
 // of the integer input vector.
 // It uses the STL map structure.
 // [[Rcpp::export]]
-std::vector<int> calc_table(std::vector<int> vec_tor) {
+std::vector<int> calc_table(std::vector<int> vectorv) {
 
   // Define iterator for input vector
   // std::vector<int>::iterator ele_ment;
@@ -395,31 +395,31 @@ std::vector<int> calc_table(std::vector<int> vec_tor) {
   std::map <int, int> ma_p;
   
   // Copy the elements of the input vector into a map
-  for (auto ele_ment: vec_tor) {
-    // for (auto ele_ment = vec_tor.begin(); ele_ment != vec_tor.end(); ++ele_ment) {
+  for (auto ele_ment: vectorv) {
+    // for (auto ele_ment = vectorv.begin(); ele_ment != vectorv.end(); ++ele_ment) {
     ma_p[ele_ment]++;
   }  // end for
   
   // Define contingency table
-  std::vector<int> ta_ble;
-  ta_ble.reserve(ma_p.size());
+  std::vector<int> tablev;
+  tablev.reserve(ma_p.size());
   
   // Below are four different methods of copying the map to the output vector
   
   // Explicit for loop:
   // https://thispointer.com/how-to-copy-all-values-from-a-map-to-a-vector-in-c/
   for (auto cou_nt: ma_p) {
-    ta_ble.push_back(cou_nt.second);
+    tablev.push_back(cou_nt.second);
   }  // end for
   
   // Old style loop:
   // for (cou_nt=ma_p.begin(); cou_nt!=ma_p.end(); ++cou_nt) {
-  //   ta_ble.push_back(cou_nt->second);
+  //   tablev.push_back(cou_nt->second);
   // }  // end for
   
   // Copy the map to the output vector using std::transform() STL algorithm.
   // The STL algorithm std::transform() is similar to the R functional apply().
-  // std::transform(ma_p.begin(), ma_p.end(), std::back_inserter(ta_ble),
+  // std::transform(ma_p.begin(), ma_p.end(), std::back_inserter(tablev),
                  // Lambda function extracts the second field from the map row.
                  // The std::transform() STL algorithm passes in rows (pairs) of the ma_p variable
                  // through the brackets ().
@@ -434,12 +434,12 @@ std::vector<int> calc_table(std::vector<int> vec_tor) {
                 // through the brackets ().
                 // The brackets [] are used to pass in variables from the outer scope of the lambda function.
                 // The "&" passes the outer scope variables by reference.
-  //               [&ta_ble](std::pair<int, int>  r_ow) {
-  //                 ta_ble.push_back(r_ow.second);
+  //               [&tablev](std::pair<int, int>  r_ow) {
+  //                 tablev.push_back(r_ow.second);
   //               }
   // );
   
-  return ta_ble;
+  return tablev;
 
 }  // end calc_table
 
@@ -453,28 +453,28 @@ std::vector<int> calc_table(std::vector<int> vec_tor) {
 // The function sort_num() sorts the elements of a numeric vector.
 // It uses the STL algorithm std::sort().
 // [[Rcpp::export]]
-std::vector<double> sort_num(std::vector<double> in_puts) {
+std::vector<double> sort_num(std::vector<double> inputs) {
   
-  std::sort(in_puts.begin(), in_puts.end());
-  return in_puts;
+  std::sort(inputs.begin(), inputs.end());
+  return inputs;
   
 }  // end sort_num
 
 // The function sort_string() sorts the elements of a vector of strings.
 // It uses the STL algorithm std::sort().
 // [[Rcpp::export]]
-std::vector<std::string> sort_string(std::vector<std::string> in_puts) {
+std::vector<std::string> sort_string(std::vector<std::string> inputs) {
   
-  std::sort(in_puts.begin(), in_puts.end());
-  return in_puts;
+  std::sort(inputs.begin(), inputs.end());
+  return inputs;
   
 }  // end sort_string
 
 
 // Define a comparison function.
 // [[Rcpp::export]]
-bool is_greater(const std::vector<double> in_puts, int i1, int i2) {
-  return (in_puts[i1] < in_puts[i2]);
+bool is_greater(const std::vector<double> inputs, int i1, int i2) {
+  return (inputs[i1] < inputs[i2]);
 }  // end is_greater
 
 
@@ -483,7 +483,7 @@ class is_greater_functor {
   
 public:
   // Overloaded operator - actual function
-  bool operator()(std::vector<double> in_puts, int i1, int i2) { return (in_puts[i1] < in_puts[i2]); }
+  bool operator()(std::vector<double> inputs, int i1, int i2) { return (inputs[i1] < inputs[i2]); }
   
 };  // end is_greater_functor
 
@@ -491,14 +491,14 @@ public:
 // Define a comparison functor as a class.
 class is_greater_functor2 {
   
-  std::vector<double> in_puts;
+  std::vector<double> inputs;
   
 public:
   // Constructor
-  is_greater_functor2(std::vector<double> in_puts) : in_puts(in_puts) {}
+  is_greater_functor2(std::vector<double> inputs) : inputs(inputs) {}
   
   // Overloaded operator - actual function
-  bool operator()(int i1, int i2) { return (in_puts[i1] < in_puts[i2]); }
+  bool operator()(int i1, int i2) { return (inputs[i1] < inputs[i2]); }
   
 };  // end is_greater_functor2
 
@@ -507,32 +507,32 @@ public:
 // The function sort_index() calculates the sort index of a numeric vector.
 // It uses the STL algorithm std::sort().
 // [[Rcpp::export]]
-std::vector<int> sort_index(const std::vector<double> in_puts) {
+std::vector<int> sort_index(const std::vector<double> inputs) {
   
-  int num_el = in_puts.size();
-  // Define index of integers along in_puts
-  std::vector<int> in_dex(num_el);
-  // Fill the vector in_dex with a sequence of consecutive integers.
+  int num_el = inputs.size();
+  // Define index of integers along inputs
+  std::vector<int> indeks(num_el);
+  // Fill the vector indeks with a sequence of consecutive integers.
   // The function std::iota() is simiar to the R function seq_along()
-  std::iota(in_dex.begin(), in_dex.end(), 0);
-  // Sort the index according to the order of in_puts
+  std::iota(indeks.begin(), indeks.end(), 0);
+  // Sort the index according to the order of inputs
   // is_greater_functor is_greater2;
-  sort(in_dex.begin(), in_dex.end(), 
+  sort(indeks.begin(), indeks.end(), 
        // Lambda function defines sorting order.
        // The brackets [] are used to pass in variables from the outer scope of the lambda function.
        // The "&" passes the outer scope variables by reference.
-       [&in_puts](int i1, int i2) {return in_puts[i1] < in_puts[i2];}
+       [&inputs](int i1, int i2) {return inputs[i1] < inputs[i2];}
        // Or call functor is_greater_functor2() - elegant but very slow!!!
-       // is_greater_functor2(in_puts)
+       // is_greater_functor2(inputs)
        // Or call function is_greater() using std::bind() - very slow!!!
-       // std::bind(is_greater, in_puts, std::placeholders::_1, std::placeholders::_2)
+       // std::bind(is_greater, inputs, std::placeholders::1, std::placeholders::2)
        // Call function is_greater() using lambda function - also very slow!!!
-       // [&in_puts](int i1, int i2) {return is_greater(in_puts, i1, i2);}
+       // [&inputs](int i1, int i2) {return is_greater(inputs, i1, i2);}
        // Or call function is_greater() using std::bind() - very slow!!!
-       // std::bind(is_greater2, in_puts, std::placeholders::_1, std::placeholders::_2)
+       // std::bind(is_greater2, inputs, std::placeholders::1, std::placeholders::2)
   );
   
-  return in_dex;
+  return indeks;
   
 }  // end sort_index
 
@@ -545,35 +545,35 @@ std::vector<int> sort_index(const std::vector<double> in_puts) {
 // First, the permutation index is calculated, and then the ranks are calculated by sorting the sequence 
 // of consecutive integers according to the order of the permutation index.
 // [[Rcpp::export]]
-std::vector<int> calc_ranks(const std::vector<double> &in_puts) {
+std::vector<int> calc_ranks(const std::vector<double> &inputs) {
   
-  size_t num_el = in_puts.size();
-  // size_t num_el = sizeof(in_puts);
+  size_t num_el = inputs.size();
+  // size_t num_el = sizeof(inputs);
   
-  // Define index of integers along in_puts
-  std::vector<int> in_dex(num_el);
+  // Define index of integers along inputs
+  std::vector<int> indeks(num_el);
   // Define the ranks of the vector elements
-  std::vector<int> rank_s(num_el);
+  std::vector<int> ranks(num_el);
   // Fill the vectors with a sequence of consecutive integers.
   // The function std::iota() is simiar to the R function seq_along()
-  std::iota(in_dex.begin(), in_dex.end(), 0);
-  std::iota(rank_s.begin(), rank_s.end(), 0);
+  std::iota(indeks.begin(), indeks.end(), 0);
+  std::iota(ranks.begin(), ranks.end(), 0);
   
-  // Calculate the permutation index by sorting the sequence according to the order of in_puts
-  std::sort(in_dex.begin(), in_dex.end(), 
+  // Calculate the permutation index by sorting the sequence according to the order of inputs
+  std::sort(indeks.begin(), indeks.end(), 
        // Lambda function defines sorting order.
        // The brackets [] are used to pass in variables from the outer scope of the lambda function.
        // The "&" passes the outer scope variables by reference.
-       [&in_puts](int i1, int i2) {return in_puts[i1] < in_puts[i2];});
+       [&inputs](int i1, int i2) {return inputs[i1] < inputs[i2];});
   
   // Calculate the ranks by sorting the sequence according to the order of the permutation index
-  std::sort(rank_s.begin(), rank_s.end(), 
+  std::sort(ranks.begin(), ranks.end(), 
        // Lambda function defines sorting order.
        // The brackets [] are used to pass in variables from the outer scope of the lambda function.
        // The "&" passes the outer scope variables by reference.
-       [&in_dex](int i1, int i2) {return in_dex[i1] < in_dex[i2];});
+       [&indeks](int i1, int i2) {return indeks[i1] < indeks[i2];});
   
-  return rank_s;
+  return ranks;
   
 }  // end calc_ranks
 
@@ -591,15 +591,15 @@ std::vector<std::string> remove_dup(std::vector<std::string> string_s) {
   // Define vector iterator
   std::vector<std::string>::iterator stri_ng;
   // Define vector of output strings
-  std::vector<std::string> out_put = string_s;
-  out_put.reserve(num_el);
+  std::vector<std::string> output = string_s;
+  output.reserve(num_el);
   
   // Remove consecutive duplicate elements
-  stri_ng = std::unique(out_put.begin(), out_put.end());
+  stri_ng = std::unique(output.begin(), output.end());
   // Resize the output vector
-  out_put.resize(std::distance(out_put.begin(), stri_ng));
+  output.resize(std::distance(output.begin(), stri_ng));
 
-  return out_put;
+  return output;
   
 }  // end remove_dup
 
@@ -619,16 +619,16 @@ std::vector<std::string> calc_unique_sort(std::vector<std::string> string_s) {
   // Define vector iterator
   std::vector<std::string>::iterator stri_ng;
   // Define vector of output strings
-  std::vector<std::string> out_put = string_s;
-  out_put.reserve(num_el);
+  std::vector<std::string> output = string_s;
+  output.reserve(num_el);
   // Sort the elements of the input vector
-  std::sort(out_put.begin(), out_put.end());
+  std::sort(output.begin(), output.end());
   // Remove consecutive duplicate elements
-  stri_ng = std::unique(out_put.begin(), out_put.end());
+  stri_ng = std::unique(output.begin(), output.end());
   // Resize the output vector
-  out_put.resize(std::distance(out_put.begin(), stri_ng));
+  output.resize(std::distance(output.begin(), stri_ng));
   
-  return out_put;
+  return output;
   
 }  // end calc_unique_sort
 
@@ -660,14 +660,14 @@ std::vector<int> map_out(std::string stri_ng = "blah") {
   ma_p["second"] = 2;
   ma_p["third"] = 3;
   
-  std::vector<int> vec_tor;
-  vec_tor.reserve(ma_p.size());
+  std::vector<int> vectorv;
+  vectorv.reserve(ma_p.size());
   
   // std::cout << "Value: " << stri_ng << std::endl;
   // Copy all values from a map to vector using transform() and a function pointer
-  std::transform(ma_p.begin(), ma_p.end(), std::back_inserter(vec_tor), &get_val);
+  std::transform(ma_p.begin(), ma_p.end(), std::back_inserter(vectorv), &get_val);
   
-  return vec_tor;
+  return vectorv;
   
 }  // end map_out
 
@@ -676,9 +676,9 @@ std::vector<int> map_out(std::string stri_ng = "blah") {
 // The function print_string() prints the elements of a vector of strings 
 // using the STL algorithm std::for_each().
 // [[Rcpp::export]]
-void print_string(std::vector<std::string> in_puts) {
+void print_string(std::vector<std::string> inputs) {
   
-  std::for_each(in_puts.begin(), in_puts.end(),
+  std::for_each(inputs.begin(), inputs.end(),
                 // Lambda function prints a single string
                 [](std::string stri_ng) { std::cout << stri_ng << ", "; });
   std::cout << std::endl;
@@ -798,17 +798,17 @@ double square_it(double x) { return x*x; }
 // by calling a lambda function using the functional std::transform().
 // Lambda functions are anonymous functions which can be passed to functionals.
 // [[Rcpp::export]]
-std::vector<double> square_vec(const std::vector<double> vec_tor) {
-  std::vector<double> out_put(vec_tor.size());
+std::vector<double> square_vec(const std::vector<double> vectorv) {
+  std::vector<double> output(vectorv.size());
   
-  std::transform(vec_tor.begin(), vec_tor.end(), out_put.begin(), 
+  std::transform(vectorv.begin(), vectorv.end(), output.begin(), 
                  // Pass function square_it() to functional std::transform()
                  // square_it
                  // Or pass a lambda function
                  [](double x) { return x*x; }
   ); // end std::transform()
   
-  return out_put;
+  return output;
 }  // end square_vec
 
 
@@ -890,22 +890,22 @@ void third() {
 
 // The function match_it() reproduces the R function findInterval().
 // The function match_it() matches its inputs with a vector of break points.
-// in_puts is a vector of inputs to be matched with the break points.
+// inputs is a vector of inputs to be matched with the break points.
 // break_s is a vector of break points.
 // The matches are the indices of the break points closest to the inputs.
 // [[Rcpp::export]]
-std::vector<int> match_it(std::vector<double> in_puts, std::vector<double> break_s) {
+std::vector<int> match_it(std::vector<double> inputs, std::vector<double> break_s) {
   
-  // Allocate vector of match_es: the break points that match the in_puts.
-  std::vector<int> match_es(in_puts.size());
-  // Allocate iterators (pointers) to the in_puts and match_es
+  // Allocate vector of match_es: the break points that match the inputs.
+  std::vector<int> match_es(inputs.size());
+  // Allocate iterators (pointers) to the inputs and match_es
   std::vector<int>::iterator ma_tch;
-  std::vector<double>::iterator in_put, brea_k;
+  std::vector<double>::iterator input, brea_k;
 
-  // Loop over the vectors of in_puts and calculate the match_es
-  for (in_put = in_puts.begin(), ma_tch = match_es.begin(); in_put != in_puts.end(); ++in_put, ++ma_tch) {
-    // Find closest break point to the in_put
-    brea_k = std::upper_bound(break_s.begin(), break_s.end(), *in_put);
+  // Loop over the vectors of inputs and calculate the match_es
+  for (input = inputs.begin(), ma_tch = match_es.begin(); input != inputs.end(); ++input, ++ma_tch) {
+    // Find closest break point to the input
+    brea_k = std::upper_bound(break_s.begin(), break_s.end(), *input);
     // Calculate the index of the closest break point
     *ma_tch = std::distance(break_s.begin(), brea_k);
   }  // end for
@@ -919,16 +919,16 @@ std::vector<int> match_it(std::vector<double> in_puts, std::vector<double> break
 // The function read_back() returns the reverse of its 
 // input vector using a reverse_iterator.
 // [[Rcpp::export]]
-std::vector<int> read_back(std::vector<int> in_puts) {
+std::vector<int> read_back(std::vector<int> inputs) {
   
   // Define vectors
   std::vector<int> re_verse;
 
   // Initialise first value
-  std::vector<int>::reverse_iterator in_put;
+  std::vector<int>::reverse_iterator input;
   
-  for(in_put = in_puts.rbegin(); in_put != in_puts.rend(); ++in_put) {
-    re_verse.push_back(*in_put);
+  for(input = inputs.rbegin(); input != inputs.rend(); ++input) {
+    re_verse.push_back(*input);
   }
   
   return re_verse;

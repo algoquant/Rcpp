@@ -25,15 +25,15 @@ double calc_mult(double x1, double x2) {
 }  // end calc_mult
 
 // The functional do_run() accepts a function pointer and executes it.
-double do_run(double (func_tion)(double, double), double x1, double x2) {
-  return (func_tion)(x1, x2);
+double do_run(double (func)(double, double), double x1, double x2) {
+  return (func)(x1, x2);
 }  // end do_run
 
 
 
-// The function is_greater() returns a Boolean depending on the order of the two elements of in_puts.
-bool is_greater(const std::vector<double> in_puts, int i1, int i2) {
-  return (in_puts[i1] < in_puts[i2]);
+// The function is_greater() returns a Boolean depending on the order of the two elements of inputs.
+bool is_greater(const std::vector<double> inputs, int i1, int i2) {
+  return (inputs[i1] < inputs[i2]);
 }  // end is_greater
 
 
@@ -42,8 +42,8 @@ bool is_greater(const std::vector<double> in_puts, int i1, int i2) {
 // Define a comparison functor as a struct.
 struct is_greater_functor {
   // Overloaded operator - actual function
-  bool operator()(std::vector<double> in_puts, int i1, int i2) {
-    return (in_puts[i1] < in_puts[i2]);
+  bool operator()(std::vector<double> inputs, int i1, int i2) {
+    return (inputs[i1] < inputs[i2]);
   }
 };  // end is_greater_functor
 
@@ -57,17 +57,17 @@ public:
 
 
 
-// Functor for multiplying a number by a fac_tor.
+// Functor for multiplying a number by a ratio.
 class mult_class {
   
-  double fac_tor;
+  double ratio;
   
 public:
   // Constructor
-  mult_class(double in_put) : fac_tor(in_put) {}
+  mult_class(double input) : ratio(input) {}
   
   // Overloaded operator - actual function
-  double operator()(double x) {return (fac_tor*x);}
+  double operator()(double x) {return (ratio*x);}
   
 };  // end mult_class
 
@@ -75,11 +75,11 @@ public:
 
 int main() {
   
-	// int in_put;
+	// int input;
 	size_t num_el = 7;
   // std::string stri_ng;
-  // std::vector<double> vec_tor;
-  // std::vector<int> vec_tor = {7, 5, 16, 8, 16, 8};
+  // std::vector<double> vectorv;
+  // std::vector<int> vectorv = {7, 5, 16, 8, 16, 8};
   
   // double x1 = 5.0;
   // double x2 = 10.0;
@@ -87,42 +87,42 @@ int main() {
   // std::cout << "Add: " << do_run(calc_add, x1, x2) << std::endl;
   // std::cout << "Multiply: " << do_run(calc_mult, x1, x2) << std::endl;
   
-  double fac_tor;
+  double ratio;
   std::cout << "Enter multiplier: ";
-  std::cin >> fac_tor;
+  std::cin >> ratio;
   // Create the instance mult_it of the functor class mult_class
-  mult_class mult_it(fac_tor);
+  mult_class mult_it(ratio);
   
   double va_r;
   std::cout << "Enter number: ";
   std::cin >> va_r;
   // Call the functor mult_it
   double x = mult_it(va_r);
-  // assert(x == (fac_tor*va_r));
+  // assert(x == (ratio*va_r));
   std::cout << "mult_it = " << x << std::endl;
   
-  std::vector<double> vec_tor(num_el);
-  // Fill vec_tor with a sequence of consecutive integers.
+  std::vector<double> vectorv(num_el);
+  // Fill vectorv with a sequence of consecutive integers.
   // The function std::iota() is simiar to the R function seq_along()
-  std::iota(vec_tor.begin(), vec_tor.end(), 0);
-  // Fill vec_tor with an integers using pointer
-  // for (auto &ele_ment: vec_tor) {
+  std::iota(vectorv.begin(), vectorv.end(), 0);
+  // Fill vectorv with an integers using pointer
+  // for (auto &ele_ment: vectorv) {
   //   ele_ment = 4;
   // }  // end for
   // Old-style loop
   // for (auto ele_ment = 0; ele_ment < num_el; ele_ment++) {
-  //   vec_tor[ele_ment] = ele_ment;
+  //   vectorv[ele_ment] = ele_ment;
   // }  // end for
   std::cout << "These are the vector elements before mult:" << std::endl;
-  for (auto ele_ment: vec_tor) {
+  for (auto ele_ment: vectorv) {
     std::cout << ele_ment << " ";
   }  // end for
   std::cout << std::endl;
-  // std::iota(vec_tor.begin(), vec_tor.begin() + num_el, 0);
-  std::vector<double> out_put(num_el);
-  std::transform(vec_tor.begin(), vec_tor.end(), out_put.begin(), mult_it);
+  // std::iota(vectorv.begin(), vectorv.begin() + num_el, 0);
+  std::vector<double> output(num_el);
+  std::transform(vectorv.begin(), vectorv.end(), output.begin(), mult_it);
   std::cout << "These are the vector elements after mult:" << std::endl;
-  for (auto ele_ment: out_put) {
+  for (auto ele_ment: output) {
     std::cout << ele_ment << " ";
   }  // end for
   std::cout << std::endl;
@@ -130,8 +130,8 @@ int main() {
   // Test for is_greater()
   // Create the instance is_greater2 of the functor class is_greater_functor
   is_greater_functor is_greater2;
-  std::cout << "is_greater function: " << std::boolalpha << is_greater(out_put, 2, 3) << std::endl;
-  std::cout << "is_greater functor: " << std::boolalpha << is_greater2(out_put, 2, 3) << std::endl;
+  std::cout << "is_greater function: " << std::boolalpha << is_greater(output, 2, 3) << std::endl;
+  std::cout << "is_greater functor: " << std::boolalpha << is_greater2(output, 2, 3) << std::endl;
 
 
 }  // end main

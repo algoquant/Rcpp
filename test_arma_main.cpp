@@ -11,30 +11,30 @@
 #include <string>
 
 
-arma::uvec calc_ranks(const arma::vec& vec_tor) {
-  return (arma::sort_index(arma::sort_index(vec_tor)) + 1);
+arma::uvec calc_ranks(const arma::vec& vectorv) {
+  return (arma::sort_index(arma::sort_index(vectorv)) + 1);
 }  // end calc_ranks
 
 
-std::vector<int> calc_unique(std::vector<int> vec_tor) {
+std::vector<int> calc_unique(std::vector<int> vectorv) {
   
   // Define unordered_set and copy the input vector into it.
   // The set contains only unique elements.
-  std::unordered_set<int> se_t(vec_tor.begin(), vec_tor.end());
+  std::unordered_set<int> se_t(vectorv.begin(), vectorv.end());
   // Define output vector and copy the set into it.
-  std::vector<int> out_put(se_t.begin(), se_t.end());
+  std::vector<int> output(se_t.begin(), se_t.end());
   
-  return out_put;
+  return output;
   
 }  // end calc_unique
 
 
 int main() {
   
-	int in_put;
+	int input;
   std::string stri_ng;
-  std::vector<int> in_puts;
-  // std::vector<int> in_puts = {7, 5, 16, 8, 16, 8};
+  std::vector<int> inputs;
+  // std::vector<int> inputs = {7, 5, 16, 8, 16, 8};
   
   // std::cout << "Enter string: ";
   // std::getline (std::cin, stri_ng);
@@ -46,8 +46,8 @@ int main() {
   // if (stri_ng.empty()) {
   //   std::cout << "Input was empty" << std::endl;
   // } else {
-  //   in_put = std::stoi(stri_ng);
-  //   std::cout << "Integer is " << in_put << std::endl;
+  //   input = std::stoi(stri_ng);
+  //   std::cout << "Integer is " << input << std::endl;
   // }  // end if
   
   stri_ng = "0";
@@ -57,8 +57,8 @@ int main() {
     if (stri_ng.empty()) {
       std::cout << "Input was empty" << std::endl;
     } else {
-      in_put = std::stoi(stri_ng);
-      in_puts.push_back(in_put);
+      input = std::stoi(stri_ng);
+      inputs.push_back(input);
     }  // end if
   }  // end while
   
@@ -67,17 +67,17 @@ int main() {
   // std::cout << "Integer is " << i << std::endl;
   
   
-	std::vector<int> uniqu_e = calc_unique(in_puts);
+	std::vector<int> uniqu_e = calc_unique(inputs);
 
-	std::cout << "The sum of the inputs = " << std::accumulate(in_puts.begin(), in_puts.end(), 0) << std::endl;
-	// std::cout << "The sum of the inputs = " << sum_it(in_puts) << std::endl;
+	std::cout << "The sum of the inputs = " << std::accumulate(inputs.begin(), inputs.end(), 0) << std::endl;
+	// std::cout << "The sum of the inputs = " << sum_it(inputs) << std::endl;
 	
 	std::cout << "These are the unique elements:" << std::endl;
 	for (auto &ele_ment: uniqu_e) {
 		std::cout << ele_ment << " ";
 	}  // end for
 	
-	// return sum_it(in_puts);
+	// return sum_it(inputs);
 	
 }  // end main
 

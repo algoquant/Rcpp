@@ -24,10 +24,10 @@ using namespace std;
 // Making a function static limits its scope to functions from the same source file. 
 // https://www.cprogramming.com/tutorial/statickeyword.html
 // [[Rcpp::export]]
-static void count_er(int see_d=1) {
+static void count_er(int seedv=1) {
   
   // cou_nt is static so it's initialized only once the first time count_er() is called.
-  static int cou_nt = see_d;
+  static int cou_nt = seedv;
   
   std::cout << "The function count_er() was called " << cou_nt << " times." << std::endl;
   
@@ -55,12 +55,12 @@ std::uint32_t calc_seed(int num_el = 1) {
   // 
   // Or produce a single random seed
   // Get time in seconds.
-  time_t see_d;
-  time(&see_d);
+  time_t seedv;
+  time(&seedv);
   
   // Return last 2 seconds.
-  // return (see_d % 100);
-  return (see_d);
+  // return (seedv % 100);
+  return (seedv);
   
 }  // end calc_seed
 
@@ -76,7 +76,7 @@ std::uint32_t calc_seed(int num_el = 1) {
 // std::transform() can also call functions which perform an operation.
 // https://www.cprogramming.com/tutorial/statickeyword.html
 // [[Rcpp::export]]
-std::vector<int> calc_random_int(size_t num_el, int see_d=1, int mi_n=0, int ma_x=100) {
+std::vector<int> calc_random_int(size_t num_el, int seedv=1, int mi_n=0, int ma_x=100) {
 
   // Define the type of random distribution (uniform, Gaussian, etc.)
   std::uniform_int_distribution<int> random_dist(mi_n, ma_x);
@@ -84,20 +84,20 @@ std::vector<int> calc_random_int(size_t num_el, int see_d=1, int mi_n=0, int ma_
   
   // Define the random number calculation engine (generator)
   // The random generator is static to ensure it's initialized only once.
-  static std::default_random_engine random_generator{see_d};
+  static std::default_random_engine random_generator{seedv};
   // Or
-  // static std::mt19937 random_generator(see_d);
+  // static std::mt19937 random_generator(seedv);
   
   // Define the vector of random numbers
-  std::vector<int> da_ta(num_el);
+  std::vector<int> datav(num_el);
   // Populate the vector of random numbers
-  std::generate(da_ta.begin(), da_ta.end(),
+  std::generate(datav.begin(), datav.end(),
                 // Lambda function generates a single integer random number - it doesn't take any arguments
                 [&]() { return random_dist(random_generator); }
                 // [&]() { return ((random_dist(random_generator) % (ma_x - mi_n)) + mi_n); }
   );
 
-  return da_ta;
+  return datav;
 
 }  // end calc_random_int
 
@@ -109,22 +109,22 @@ std::vector<int> calc_random_int(size_t num_el, int see_d=1, int mi_n=0, int ma_
 // The STL algorithm std::generate() is similar to the R functional apply().
 // https://www.cprogramming.com/tutorial/statickeyword.html
 // [[Rcpp::export]]
-std::vector<int> calc_random_int2(size_t num_el, int see_d=1, int mi_n=0, int ma_x=100) {
+std::vector<int> calc_random_int2(size_t num_el, int seedv=1, int mi_n=0, int ma_x=100) {
   
   // Define the vector of random numbers
-  std::vector<int> da_ta(num_el);
+  std::vector<int> datav(num_el);
   // Set the seed
-  srand(see_d);
+  srand(seedv);
   // Populate the vector of random numbers
-  // std::generate(da_ta.begin(), da_ta.end(), rand);
-  std::generate(da_ta.begin(), da_ta.end(),
+  // std::generate(datav.begin(), datav.end(), rand);
+  std::generate(datav.begin(), datav.end(),
                 // Lambda function generates a single integer random number.
                 // The brackets [] are used to pass in variables from the outer scope of the lambda function.
                 // The "&" passes the outer scope variables by reference.
                 // The brackets () are used to pass in variables from the std::generate() STL algorithm.
                 [&ma_x, &mi_n]() { return ((rand() % (ma_x - mi_n)) + mi_n); });
   
-  return da_ta; 
+  return datav; 
   
 }  // end calc_random_int2
 
@@ -135,7 +135,7 @@ std::vector<int> calc_random_int2(size_t num_el, int see_d=1, int mi_n=0, int ma
 // It uses the STL algorithm std::generate().
 // https://www.cprogramming.com/tutorial/statickeyword.html
 // [[Rcpp::export]]
-std::vector<double> calc_random_double(size_t num_el, int see_d=1, double mi_n=0.0, double ma_x=1.0) {
+std::vector<double> calc_random_double(size_t num_el, int seedv=1, double mi_n=0.0, double ma_x=1.0) {
   
   // Define the type of random distribution (uniform, Gaussian, etc.)
   // The random generator is static to ensure it's initialized only once.
@@ -143,21 +143,21 @@ std::vector<double> calc_random_double(size_t num_el, int see_d=1, double mi_n=0
   
   // Define the random number calculation engine (generator)
   // The random generator is static to ensure it's initialized only once.
-  static std::default_random_engine random_generator{see_d};
+  static std::default_random_engine random_generator{seedv};
   // Or
-  // static std::mt19937 random_generator(see_d);
+  // static std::mt19937 random_generator(seedv);
   
   // Define the vector of random numbers
-  std::vector<double> da_ta(num_el);
+  std::vector<double> datav(num_el);
   // Populate the vector of random numbers
-  std::generate(da_ta.begin(), da_ta.end(),
+  std::generate(datav.begin(), datav.end(),
                 // Lambda function generates a single integer random number - it doesn't take any arguments
                 // The brackets [] are used to pass in variables from the outer scope of the lambda function.
                 // The "&" passes the outer scope variables by reference.
                 // The brackets () are used to pass in variables from the std::generate() STL algorithm.
                 [&]() { return random_dist(random_generator); });
   
-  return da_ta;
+  return datav;
   
 }  // end calc_random_double
 
@@ -168,7 +168,7 @@ std::vector<double> calc_random_double(size_t num_el, int see_d=1, double mi_n=0
 
 int main() {
   
-	// int in_put;
+	// int input;
 	size_t num_el;
   // std::string stri_ng;
   
@@ -185,9 +185,9 @@ int main() {
   // Test for time().
   // std::cout << "Time in seconds now:" << time(0) << std::endl;
   // Or
-  // time_t see_d;
-  // time(&see_d);
-  // std::cout << "Time in seconds now:" << see_d << std::endl;
+  // time_t seedv;
+  // time(&seedv);
+  // std::cout << "Time in seconds now:" << seedv << std::endl;
   
   // Test for random_device.
   // std::random_device de_vice;
@@ -208,26 +208,26 @@ int main() {
   // std::default_random_engine random_generator{seed_s};  // this doesn't work
   // std::uniform_real_distribution<double> random_dist(0, 1);
   // std::default_random_engine random_generator{seed_s};
-  // std::vector<double> da_ta(num_el);
-  // std::generate(da_ta.begin(), da_ta.end(), [&]() { return random_dist(random_generator); });
+  // std::vector<double> datav(num_el);
+  // std::generate(datav.begin(), datav.end(), [&]() { return random_dist(random_generator); });
   
   // Test for calc_seed()
-  // int see_d = calc_seed();
+  // int seedv = calc_seed();
   // std::cout << "Enter seed for random number generator: ";
-  // std::cin >> see_d;
+  // std::cin >> seedv;
   // Test for random number generator
-  // std::mt19937 random_generator(see_d);
-  // std::default_random_engine random_generator{see_d};
+  // std::mt19937 random_generator(seedv);
+  // std::default_random_engine random_generator{seedv};
   // std::uniform_real_distribution<double> random_dist(0, 1);
-  std::vector<double> da_ta(num_el);
-  // std::generate(da_ta.begin(), da_ta.end(), [&]() { return random_dist(random_generator); });
+  std::vector<double> datav(num_el);
+  // std::generate(datav.begin(), datav.end(), [&]() { return random_dist(random_generator); });
   // std::cout << "Uniform (0, 1): " << random_dist(random_generator);
   
   // Test for calc_random().
-  // std::vector<int> da_ta = {7, 5, 16, 8, 16, 8};
-  da_ta = calc_random_double(num_el, calc_seed());
+  // std::vector<int> datav = {7, 5, 16, 8, 16, 8};
+  datav = calc_random_double(num_el, calc_seed());
   std::cout << "Random numbers:" << std::endl;
-  for (auto ele_ment: da_ta) {
+  for (auto ele_ment: datav) {
     std::cout << ele_ment << " ";
   }  // end for
   

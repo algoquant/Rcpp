@@ -7,17 +7,17 @@ using namespace arma;
 // The function roll_sum() calculates the rolling sum over a vector using Rcpp
 //' @export
 // [[Rcpp::export]]
-NumericVector roll_sum(NumericVector vec_tor, int look_back) {
-  int len_gth = vec_tor.size();
-  NumericVector rolling_sum(len_gth);
+NumericVector roll_sum(NumericVector vectorv, int look_back) {
+  int nrows = vectorv.size();
+  NumericVector rolling_sum(nrows);
   
-  rolling_sum[0] = vec_tor[0];
+  rolling_sum[0] = vectorv[0];
   for (int it = 1; it < look_back; it++) {
-    rolling_sum[it] = rolling_sum[it-1] + vec_tor[it];
+    rolling_sum[it] = rolling_sum[it-1] + vectorv[it];
   }  // end for
 
-  for (int it = look_back; it < len_gth; it++) {
-    rolling_sum[it] = rolling_sum[it-1] + vec_tor[it] - vec_tor[it-look_back];
+  for (int it = look_back; it < nrows; it++) {
+    rolling_sum[it] = rolling_sum[it-1] + vectorv[it] - vectorv[it-look_back];
   }  // end for
   
   return rolling_sum;
@@ -28,30 +28,30 @@ NumericVector roll_sum(NumericVector vec_tor, int look_back) {
 // RcppArmadillo
 //' @export
 // [[Rcpp::export]]
-arma::vec roll_sum_arma(arma::vec& vec_tor, arma::uword look_back=11) {
-  arma::vec lag_ged = arma::zeros(vec_tor.n_elem);
-  // arma::uword len_gth = vec_tor.n_elem;
-  // arma::vec rolling_sum(len_gth);
+arma::vec roll_sum_arma(arma::vec& vectorv, arma::uword look_back=11) {
+  arma::vec lag_ged = arma::zeros(vectorv.n_elem);
+  // arma::uword nrows = vectorv.n_elem;
+  // arma::vec rolling_sum(nrows);
   
   // Warmup period
-  // rolling_sum[0] = vec_tor[0];
+  // rolling_sum[0] = vectorv[0];
   // for (arma::uword it = 1; it < look_back; it++) {
-  //   rolling_sum[it] = rolling_sum[it-1] + vec_tor[it];
+  //   rolling_sum[it] = rolling_sum[it-1] + vectorv[it];
   // }  // end for
   
   // Remaining period
-  // for (arma::uword it = look_back; it < len_gth; it++) {
-  //   rolling_sum[it] = rolling_sum[it-1] + vec_tor[it] - vec_tor[it-look_back];
+  // for (arma::uword it = look_back; it < nrows; it++) {
+  //   rolling_sum[it] = rolling_sum[it-1] + vectorv[it] - vectorv[it-look_back];
   // }  // end for
   
   // return rolling_sum;
   
-  vec_tor = arma::cumsum(vec_tor);
+  vectorv = arma::cumsum(vectorv);
   // lag_ged(1, look_back) = 0;
-  lag_ged.subvec(look_back, lag_ged.n_elem-1) = vec_tor.subvec(0, vec_tor.n_elem-look_back-1);
+  lag_ged.subvec(look_back, lag_ged.n_elem-1) = vectorv.subvec(0, vectorv.n_elem-look_back-1);
   
-  return (vec_tor - lag_ged);
-  // return vec_tor;
+  return (vectorv - lag_ged);
+  // return vectorv;
 }  // end roll_sum_arma
 
 

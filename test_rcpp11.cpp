@@ -1,5 +1,5 @@
 // Compile this file in R by running this command:
-// Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/test_rcpp11.cpp")
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_rcpp11.cpp")
 
 #include <Rcpp.h>
 using namespace Rcpp;
@@ -8,13 +8,13 @@ using namespace Rcpp;
 //' @export
 // [[Rcpp::export]]
 Rcpp::NumericVector foo(int nn){
-  Rcpp::NumericVector out_put(nn);
-  // out_put = {1, 2, 3};
-  // out_put[1] = 1;
+  Rcpp::NumericVector output(nn);
+  // output = {1, 2, 3};
+  // output[1] = 1;
   // These two lines produce C++ warnings but they compile fine anyway
-  for (int i = 0; i < out_put.size(); i++){
-    out_put[i] = 2*i;
+  for (int i = 0; i < output.size(); i++){
+    output[i] = 2*i;
   }
-  // Rcpp::NumericVector out_put = Rcpp::NumericVector::create(1.0, 2.0, 3.0);
-  return out_put;
+  // Rcpp::NumericVector output = Rcpp::NumericVector::create(1.0, 2.0, 3.0);
+  return output;
 }
