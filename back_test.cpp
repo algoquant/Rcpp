@@ -124,7 +124,7 @@ arma::vec calc_weights(const arma::mat& returns,
     weights = conv_to< vec >::from(arma::sort_index(arma::sort_index(meancols)));
     // probv;
     weights = (weights - arma::mean(weights));
-  } else if (model_type == "quan_tile") {
+  } else if (model_type == "quantilev") {
     // Sum of quantiles for columns
     arma::vec probs = {probv, 1-probv};
     weights = conv_to< vec >::from(arma::sum(arma::quantile(returns, probs, 0), 0));

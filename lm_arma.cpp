@@ -67,7 +67,7 @@ Rcpp::List calc_lm(const arma::vec& response, const arma::mat& design) {
 //' \emph{RcppArmadillo}.
 //' 
 //' @param vectorv A numeric \emph{vector} of data.
-//' @param wei_ghts A numeric \emph{vector} of weights.
+//' @param weightv A numeric \emph{vector} of weights.
 //'
 //' @return A numeric \emph{vector} of the same length as the argument
 //'   \code{vectorv}.
@@ -75,7 +75,7 @@ Rcpp::List calc_lm(const arma::vec& response, const arma::mat& design) {
 //' @details The function \code{roll_scale()} calculates the rolling weighted sum
 //'   of a vector over its past values (a convolution with the \emph{vector} of 
 //'   weights), using \emph{RcppArmadillo}. It performs a similar calculation as
-//'   the standard \emph{R} function \code{filter(x=vectorv, filter=wei_ghts, 
+//'   the standard \emph{R} function \code{filter(x=vectorv, filter=weightv, 
 //'   method="convolution", sides=1)}, but it's about six times faster, and it 
 //'   doesn't produce any \emph{NA} values.
 //'   
@@ -85,21 +85,21 @@ Rcpp::List calc_lm(const arma::vec& response, const arma::mat& design) {
 //' # create vector from historical prices
 //' vectorv <- as.numeric(rutils::env_etf$VTI[, 6])
 //' # create simple weights
-//' wei_ghts <- c(1, rep(0, 10))
+//' weightv <- c(1, rep(0, 10))
 //' # calculate rolling weighted sum
-//' weight_ed <- HighFreq::roll_zscores(vectorv=vectorv, wei_ghts=rev(wei_ghts))
+//' weighted <- HighFreq::roll_zscores(vectorv=vectorv, weights=rev(weightv))
 //' # compare with original
-//' all.equal(vectorv, as.numeric(weight_ed))
+//' all.equal(vectorv, as.numeric(weighted))
 //' # Second example
 //' # create exponentially decaying weights
-//' wei_ghts <- exp(-0.2*1:11)
-//' wei_ghts <- wei_ghts/sum(wei_ghts)
+//' weightv <- exp(-0.2*1:11)
+//' weightv <- weightv/sum(weightv)
 //' # calculate rolling weighted sum
-//' weight_ed <- HighFreq::roll_zscores(vectorv=vectorv, wei_ghts=rev(wei_ghts))
+//' weighted <- HighFreq::roll_zscores(vectorv=vectorv, weights=rev(weightv))
 //' # calculate rolling weighted sum using filter()
-//' filter_ed <- filter(x=vectorv, filter=wei_ghts, method="convolution", sides=1)
+//' filtered <- filter(x=vectorv, filter=weightv, method="convolution", sides=1)
 //' # compare both methods
-//' all.equal(as.numeric(filter_ed[-(1:11)]), as.numeric(weight_ed[-(1:11)]))
+//' all.equal(as.numeric(filtered[-(1:11)]), as.numeric(weighted[-(1:11)]))
 //' }
 //' @export
 // [[Rcpp::export]]
@@ -107,7 +107,7 @@ arma::vec roll_zscores(const arma::vec& response,
                        const arma::mat& design, 
                        const arma::uword& look_back) {
   arma::uword nrows = design.n_rows;
-  arma::vec z_scores(nrows);
+  arma::vec zscores(nrows);
   arma::vec sub_response;
   arma::mat sub_design;
   Rcpp::List lm_list;
@@ -117,7 +117,7 @@ arma::vec roll_zscores(const arma::vec& response,
     sub_response = response.subvec(0, it);
     sub_design = design.rows(0, it);
     lm_list = calc_lm(sub_response, sub_design);
-    z_scores[it] = lm_list["z_score"];
+    zscores[it] = lm_list["z_score"];
   }  // end for
   
   // remaining periods
@@ -125,10 +125,10 @@ arma::vec roll_zscores(const arma::vec& response,
     sub_response = response.subvec(it-look_back+1, it);
     sub_design = design.rows(it-look_back+1, it);
     lm_list = calc_lm(sub_response, sub_design);
-    z_scores[it] = lm_list["z_score"];
+    zscores[it] = lm_list["z_score"];
   }  // end for
   
-  return z_scores;
+  return zscores;
 }  // end roll_zscores
 
 
@@ -145,7 +145,7 @@ arma::vec roll_zscores(const arma::vec& response,
 //' @details The function \code{roll_scale()} calculates the rolling weighted sum
 //'   of a vector over its past values (a convolution with the \emph{vector} of 
 //'   weights), using \emph{RcppArmadillo}. It performs a similar calculation as
-//'   the standard \emph{R} function \code{filter(x=vectorv, filter=wei_ghts, 
+//'   the standard \emph{R} function \code{filter(x=vectorv, filter=weightv, 
 //'   method="convolution", sides=1)}, but it's about six times faster, and it 
 //'   doesn't produce any \emph{NA} values.
 //'   
@@ -155,21 +155,21 @@ arma::vec roll_zscores(const arma::vec& response,
 //' # create vector from historical prices
 //' vectorv <- as.numeric(rutils::env_etf$VTI[, 6])
 //' # create simple weights
-//' wei_ghts <- c(1, rep(0, 10))
+//' weightv <- c(1, rep(0, 10))
 //' # calculate rolling weighted sum
-//' weight_ed <- HighFreq::roll_maxmin(vectorv=vectorv, wei_ghts=rev(wei_ghts))
+//' weighted <- HighFreq::roll_maxmin(vectorv=vectorv, weights=rev(weightv))
 //' # compare with original
-//' all.equal(vectorv, as.numeric(weight_ed))
+//' all.equal(vectorv, as.numeric(weighted))
 //' # Second example
 //' # create exponentially decaying weights
-//' wei_ghts <- exp(-0.2*1:11)
-//' wei_ghts <- wei_ghts/sum(wei_ghts)
+//' weightv <- exp(-0.2*1:11)
+//' weightv <- weightv/sum(weightv)
 //' # calculate rolling weighted sum
-//' weight_ed <- HighFreq::roll_maxmin(vectorv=vectorv, wei_ghts=rev(wei_ghts))
+//' weighted <- HighFreq::roll_maxmin(vectorv=vectorv, weights=rev(weightv))
 //' # calculate rolling weighted sum using filter()
-//' filter_ed <- filter(x=vectorv, filter=wei_ghts, method="convolution", sides=1)
+//' filtered <- filter(x=vectorv, filter=weightv, method="convolution", sides=1)
 //' # compare both methods
-//' all.equal(as.numeric(filter_ed[-(1:11)]), as.numeric(weight_ed[-(1:11)]))
+//' all.equal(as.numeric(filtered[-(1:11)]), as.numeric(weighted[-(1:11)]))
 //' }
 //' @export
 // [[Rcpp::export]]
@@ -211,7 +211,7 @@ arma::mat roll_maxmin(const arma::vec& vectorv,
 //' @details The function \code{roll_cum()} calculates the rolling weighted sum
 //'   of a vector over its past values (a convolution with the \emph{vector} of 
 //'   weights), using \emph{RcppArmadillo}. It performs a similar calculation as
-//'   the standard \emph{R} function \code{filter(x=vectorv, filter=wei_ghts, 
+//'   the standard \emph{R} function \code{filter(x=vectorv, filter=weightv, 
 //'   method="convolution", sides=1)}, but it's about \emph{6} times faster, and it 
 //'   doesn't produce any \emph{NA} values.
 //'   
@@ -221,25 +221,25 @@ arma::mat roll_maxmin(const arma::vec& vectorv,
 //' # create vector from historical prices
 //' vectorv <- as.numeric(rutils::env_etf$VTI[, 6])
 //' # create simple weights
-//' wei_ghts <- c(1, rep(0, 10))
+//' weightv <- c(1, rep(0, 10))
 //' # calculate rolling weighted sum
-//' weight_ed <- HighFreq::roll_cum(vectorv=vectorv, wei_ghts=rev(wei_ghts))
+//' weighted <- HighFreq::roll_cum(vectorv=vectorv, weightv=rev(weightv))
 //' # compare with original
-//' all.equal(vectorv, as.numeric(weight_ed))
+//' all.equal(vectorv, as.numeric(weighted))
 //' # Second example
 //' # create exponentially decaying weights
-//' wei_ghts <- exp(-0.2*1:11)
-//' wei_ghts <- wei_ghts/sum(wei_ghts)
+//' weightv <- exp(-0.2*1:11)
+//' weightv <- weightv/sum(weightv)
 //' # calculate rolling weighted sum
-//' weight_ed <- HighFreq::roll_cum(vectorv=vectorv, wei_ghts=rev(wei_ghts))
+//' weighted <- HighFreq::roll_cum(vectorv=vectorv, weightv=rev(weightv))
 //' # calculate rolling weighted sum using filter()
-//' filter_ed <- filter(x=vectorv, filter=wei_ghts, method="convolution", sides=1)
+//' filtered <- filter(x=vectorv, filter=weightv, method="convolution", sides=1)
 //' # compare both methods
-//' all.equal(as.numeric(filter_ed[-(1:11)]), as.numeric(weight_ed[-(1:11)]))
+//' all.equal(as.numeric(filtered[-(1:11)]), as.numeric(weighted[-(1:11)]))
 //' }
 //' @export
 // [[Rcpp::export]]
-arma::ivec roll_cum(const arma::ivec& vectorv, const arma::sword& m_ax) {
+arma::ivec roll_cum(const arma::ivec& vectorv, const arma::sword& maxv) {
   uword nrows = vectorv.n_elem;
   arma::ivec roll_sum(nrows);
   
@@ -248,10 +248,10 @@ arma::ivec roll_cum(const arma::ivec& vectorv, const arma::sword& m_ax) {
   // remaining periods
   for (uword it = 1; it < nrows; it++) {
     roll_sum[it] = roll_sum[it-1] + vectorv[it];
-    if (roll_sum[it] > m_ax)
-      roll_sum[it] = m_ax;
-    if (roll_sum[it] < (-m_ax))
-      roll_sum[it] = -m_ax;
+    if (roll_sum[it] > maxv)
+      roll_sum[it] = maxv;
+    if (roll_sum[it] < (-maxv))
+      roll_sum[it] = -maxv;
   }  // end for
   
   return roll_sum;

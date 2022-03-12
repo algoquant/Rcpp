@@ -186,7 +186,7 @@ arma::vec calc_top_bottom(const arma::vec& returns,
   weights(indeks).fill(-1);
   
   // Top quantile
-  // arma::rowvec quan_tile = arma::quantile(returns, probv);
+  // arma::rowvec quantilev = arma::quantile(returns, probv);
   indeks = find(returns >= quantiles(1));
   // weights.elem(indeks).ones();
   weights(indeks).fill(1);
@@ -235,7 +235,7 @@ arma::vec calc_top_bottom_columns(const arma::vec& returns,
 //' @export
 // [[Rcpp::export]]
 arma::vec calc_weights(const arma::mat& returns, 
-                       const std::string& typev = "quan_tile",
+                       const std::string& typev = "quantilev",
                        int max_eigen = 1,
                        const double& probv = 0.1,
                        const double& alpha = 0.0,
@@ -253,7 +253,7 @@ arma::vec calc_weights(const arma::mat& returns,
     // Apply regularized inverse
     // arma::mat inverse = calc_inv(returns, max_eigen);
     weights = calc_inv(returns, max_eigen)*meancols;
-  } else if (typev == "quan_tile") {
+  } else if (typev == "quantilev") {
     // Sum of quantiles by columns
     arma::vec probs = {probv, 1-probv};
     weights = conv_to< vec >::from(arma::sum(arma::quantile(returns, probs, 0), 0));
