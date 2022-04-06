@@ -2,7 +2,7 @@
 // Rcpp functions for regression and rolling statistics
 ////////////////////////////////////////////////
 // You can compile this file as follows:
-// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/lm_arma.cpp")
+//  Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/lm_arma.cpp")
 
 // Rcpp header with information for C++ compiler
 // #include <Rcpp.h>
@@ -12,6 +12,81 @@ using namespace std;
 using namespace Rcpp;
 using namespace arma;
 // [[Rcpp::depends(RcppArmadillo)]]
+
+
+
+////////////////////////////////////////////////////////////
+// Define C++ enum type for the different methods for regularization,
+// calculating variance, skewness, kurtosis, covariance, regression, 
+// and matrix inverse.
+enum methodenum {moment, least_squares, quantile, nonparametric, regular, ranksharpe, 
+                 max_sharpe, max_sharpe_median, min_var, min_varpca, rank, rankrob};
+
+// Map string to C++ enum type for switch statement.
+// This is needed because Rcpp can't map C++ enum type to R variable SEXP.
+methodenum calc_method(std::string method) {
+  if (method == "moment" || method == "m") 
+    return methodenum::moment;
+  else if (method == "least_squares" || method == "l")
+    return methodenum::least_squares;
+  else if (method == "quantile" || method == "q")
+    return methodenum::quantile;
+  else if (method == "nonparametric" || method == "n")
+    return methodenum::nonparametric;
+  else if (method == "regular")
+    return methodenum::regular;
+  else if (method == "ranksharpe")
+    return methodenum::ranksharpe;
+  else if (method == "max_sharpe")
+    return methodenum::max_sharpe;
+  else if (method == "max_sharpe_median")
+    return methodenum::max_sharpe_median;
+  else if (method == "min_var")
+    return methodenum::min_var;
+  else if (method == "min_varpca")
+    return methodenum::min_varpca;
+  else if (method == "rank")
+    return methodenum::rank;
+  else if (method == "rankrob")
+    return methodenum::rankrob;
+  else 
+    return methodenum::moment;
+}  // end calc_method
+
+
+//' @export
+// [[Rcpp::export]]
+arma::mat calc_inv(const arma::mat& tseries,
+                   double eigen_thresh = 0.01, 
+                   arma::uword eigen_max = 0) {
+  
+  // Allocate SVD variables
+  arma::vec svdval;  // Singular values
+  arma::mat svdu, svdv;  // Singular matrices
+  // Calculate the SVD
+  arma::svd(svdu, svdval, svdv, tseries);
+  // Calculate the number of non-small singular values
+  arma::uword svdnum = arma::sum(svdval > eigen_thresh*arma::sum(svdval));
+  
+  if (eigen_max == 0) {
+    // Set eigen_max
+    eigen_max = svdnum - 1;
+  } else {
+    // Adjust eigen_max
+    eigen_max = min(eigen_max - 1, svdnum - 1);
+  }  // end if
+  
+  // Remove all small singular values
+  svdval = svdval.subvec(0, eigen_max);
+  svdu = svdu.cols(0, eigen_max);
+  svdv = svdv.cols(0, eigen_max);
+  
+  // Calculate the shrinkage inverse from the SVD decomposition
+  return svdv*arma::diagmat(1/svdval)*svdu.t();
+  
+}  // end calc_inv
+
+
 
 
 // The function calc_lm() performs multivariate linear regression, and 
@@ -61,6 +136,76 @@ Rcpp::List calc_lm(const arma::vec& response, const arma::mat& design) {
                             Named("stats") = stats);
 }  // end calc_lm
 
+
+//' @export
+// [[Rcpp::export]]
+arma::mat calc_reg(const arma::mat& response, 
+                   const arma::mat& predictor,
+                   bool intercept = true,
+                   std::string method = "least_squares",
+                   double eigen_thresh = 1e-5,
+                   arma::uword eigen_max = 0,
+                   double conf_lev = 0.1,
+                   double alpha = 0.0) {
+  
+  // Add column for intercept to predictor matrix
+  arma::uword nrows = predictor.n_rows;
+  arma::mat predictori = predictor;
+  if (intercept)
+    predictori = join_rows(ones(nrows), predictor);
+  
+  arma::uword ncols = predictori.n_cols;
+  arma::uword deg_free = (nrows - ncols);
+  arma::vec coeff;
+  arma::vec tvals;
+  arma::mat reg_data = arma::zeros<mat>(2*ncols+1, 1);
+  
+  // Switch for the different methods for weights
+  switch(calc_method(method)) {
+  case methodenum::least_squares: {
+    // Calculate regression coefficients for the model response ~ predictor
+    coeff = arma::solve(predictori, response);
+    break;
+  }  // end least_squares
+  case methodenum::regular: {
+    // Calculate shrinkage regression coefficients
+    coeff = calc_inv(predictori, eigen_thresh, eigen_max)*response;
+    break;
+  }  // end regular
+  case methodenum::quantile: {
+    // Not implemented yet
+    break;
+  }  // end quantile
+  default : {
+    cout << "Warning: Invalid method parameter: " << method << endl;
+    return reg_data;
+  }  // end default
+  }  // end switch
+  
+  // Calculate residuals
+  arma::mat residuals = response - predictori*coeff;
+  
+  // Calculate TSS, RSS, and ESS
+  // double tot_sumsq = (nrows-1)*arma::var(response);
+  double res_sumsq = arma::dot(residuals, residuals);
+  // double exp_sumsq = tot_sumsq - res_sumsq;
+  
+  // Calculate standard errors of the beta coefficients
+  arma::mat stderr = arma::sqrt(res_sumsq/deg_free*arma::diagvec(arma::pinv(arma::trans(predictori)*predictori)));
+  // Calculate t-values of the beta coefficients
+  tvals = coeff/stderr;
+  
+  // Calculate z-score
+  mat zscore = residuals(nrows-1, 0)/arma::stddev(residuals);
+  
+  // Combine regression data
+  reg_data.rows(0, ncols-1) = coeff;
+  reg_data.rows(ncols, 2*ncols-1) = tvals;
+  reg_data.row(2*ncols) = zscore;
+  
+  return reg_data.t();
+  
+}  // end calc_reg
 
 
 //' Perform a rolling regression over a time series of prices, 
