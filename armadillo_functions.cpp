@@ -108,45 +108,45 @@ int sum_na_stl(const NumericVector& vectorv) {
 }  // end sum_na_stl
 
 
-// The function sum_if_cpp() performs sum(ivectorv<fi_nd) using Rcpp.
+// The function sum_if_cpp() performs sum(ivectorv<findv) using Rcpp.
 //' @export
 // [[Rcpp::export]]
-int sum_if_cpp(NumericVector& vectorv, double fi_nd) {
+int sum_if_cpp(NumericVector& vectorv, double findv) {
   int count_ = 0;
   for (int i = 0; i < vectorv.size(); i++)
-    count_ += (vectorv[i]<fi_nd);
+    count_ += (vectorv[i]<findv);
   return count_;
 }  // end sum_if_cpp
 
 
-// The function sum_if() performs sum(ivectorv<fi_nd) using Rcpp.
+// The function sum_if() performs sum(ivectorv<findv) using Rcpp.
 //' @export
 // [[Rcpp::export]]
-int sum_if(NumericVector& vectorv, double fi_nd) {
+int sum_if(NumericVector& vectorv, double findv) {
   int count_ = 0;
   NumericVector::iterator it;
   for (it = vectorv.begin(); it != vectorv.end(); it++) {
-    if (*it < fi_nd) count_++;
+    if (*it < findv) count_++;
   }  // end for
   return count_;
 }  // end sum_if
 
 
-// The function sum_if_stl() performs sum(ivectorv<fi_nd) using Rcpp and STL.
+// The function sum_if_stl() performs sum(ivectorv<findv) using Rcpp and STL.
 //' @export
 // [[Rcpp::export]]
-int sum_if_stl(const NumericVector& vectorv, double fi_nd) {
-  return std::count_if(vectorv.begin(), vectorv.end(), bind2nd(std::less<double>(), fi_nd));
+int sum_if_stl(const NumericVector& vectorv, double findv) {
+  return std::count_if(vectorv.begin(), vectorv.end(), bind2nd(std::less<double>(), findv));
 }  // end sum_if_stl
 
 
 // The function whichv() performs which() using Rcpp with Sugar and RcppArmadillo
 //' @export
 // [[Rcpp::export]]
-arma::uvec whichv(arma::uvec logic_al) {
-  // arma::uvec logic_al;
-  // logic_al = arma::find(logic_al);
-  return arma::find(logic_al);
+arma::uvec whichv(arma::uvec logicalv) {
+  // arma::uvec logicalv;
+  // logicalv = arma::find(logicalv);
+  return arma::find(logicalv);
 }  // end whichv
 
 
@@ -155,9 +155,9 @@ arma::uvec whichv(arma::uvec logic_al) {
 //' @export
 // [[Rcpp::export]]
 arma::uvec whichv2(LogicalVector& vectorv) {
-  arma::uvec logic_al;
-  logic_al = arma::find(Rcpp::as<uvec>(vectorv));
-  return logic_al+1;
+  arma::uvec logicalv;
+  logicalv = arma::find(Rcpp::as<uvec>(vectorv));
+  return logicalv+1;
 }  // end whichv2
 
 
@@ -165,8 +165,8 @@ arma::uvec whichv2(LogicalVector& vectorv) {
 //' @export
 // [[Rcpp::export]]
 Rcpp::IntegerVector whichv3(const LogicalVector& vectorv) {
-  // arma::uvec logic_al;
-  // logic_al = arma::find(Rcpp::as<uvec>(vectorv));
+  // arma::uvec logicalv;
+  // logicalv = arma::find(Rcpp::as<uvec>(vectorv));
   int n_row = vectorv.size();
   std::vector<int> indeks;
   indeks.reserve(n_row);
@@ -174,7 +174,7 @@ Rcpp::IntegerVector whichv3(const LogicalVector& vectorv) {
     if (vectorv[i]) indeks.push_back(i+1);
   }  // end for
   return Rcpp::wrap(indeks);
-  // return logic_al;
+  // return logicalv;
 }  // end whichv3
 
 
@@ -235,8 +235,8 @@ arma::uvec whichv33(arma::uvec& vectorv) {
 //' @export
 // [[Rcpp::export]]
 Rcpp::IntegerVector whichv4(LogicalVector& vectorv) {
-  // arma::uvec logic_al;
-  // logic_al = arma::find(Rcpp::as<uvec>(vectorv));
+  // arma::uvec logicalv;
+  // logicalv = arma::find(Rcpp::as<uvec>(vectorv));
   int n_row = vectorv.size();
   IntegerVector indeks(n_row);
   int j=0;
@@ -248,7 +248,7 @@ Rcpp::IntegerVector whichv4(LogicalVector& vectorv) {
   }  // end for
   vector<int> sub_vector(indeks.begin(), indeks.begin() + j);
   return wrap(sub_vector);
-  // return logic_al;
+  // return logicalv;
 }  // end whichv4
 
 
@@ -262,7 +262,7 @@ Rcpp::IntegerVector whichv5(LogicalVector& vectorv) {
   // Define function which() callable from Rcpp
   Rcpp::Function which = base["which"];
   return which(vectorv);
-  // return logic_al;
+  // return logicalv;
 }  // end whichv5
 
 
@@ -365,8 +365,8 @@ arma::rowvec sub_assign(arma::rowvec vectorv, arma::uvec indeks, arma::vec datav
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-arma::rowvec find_assign_vec(arma::rowvec& vectorv, double fi_nd, double datav) {
-  arma::uvec indeks = find(vectorv == fi_nd);
+arma::rowvec find_assign_vec(arma::rowvec& vectorv, double findv, double datav) {
+  arma::uvec indeks = find(vectorv == findv);
   vectorv(indeks).fill(datav);
   return vectorv;
 }  // end find_assign_vec
@@ -381,8 +381,8 @@ arma::rowvec find_assign_vec(arma::rowvec& vectorv, double fi_nd, double datav) 
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-double find_assign_vec_point(arma::rowvec& vectorv, double fi_nd, double datav) {
-  arma::uvec indeks = find(vectorv > fi_nd);
+double find_assign_vec_point(arma::rowvec& vectorv, double findv, double datav) {
+  arma::uvec indeks = find(vectorv > findv);
   vectorv(indeks).fill(datav);
   return arma::accu(indeks);
 }  // end find_assign_vec_point
@@ -394,8 +394,8 @@ double find_assign_vec_point(arma::rowvec& vectorv, double fi_nd, double datav) 
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-arma::mat find_assign_mat(arma::mat matrixv, double fi_nd, double datav) {
-  arma::uvec indeks = find(matrixv >= fi_nd);
+arma::mat find_assign_mat(arma::mat matrixv, double findv, double datav) {
+  arma::uvec indeks = find(matrixv >= findv);
   matrixv.elem(indeks).fill(datav);
   return matrixv;
 }  // end find_assign_mat
@@ -405,11 +405,11 @@ arma::mat find_assign_mat(arma::mat matrixv, double fi_nd, double datav) {
 // to an input value, using Rcpp with Sugar.
 //' @export
 // [[Rcpp::export]]
-LogicalVector compare_col(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
+LogicalVector compare_col(NumericMatrix& matrixv, double findv, int col_num=0) {
   // NumericVector colnum = matrixv(_, col_num);
   // LogicalVector bar;
-  // bar = (colnum > fi_nd);
-  return (matrixv(_, col_num) > fi_nd);
+  // bar = (colnum > findv);
+  return (matrixv(_, col_num) > findv);
 }  // end compare_col
 
 
@@ -417,10 +417,10 @@ LogicalVector compare_col(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
 // it to an input value, using Rcpp with Sugar and RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::uvec compare_col_arma(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
+arma::uvec compare_col_arma(NumericMatrix& matrixv, double findv, int col_num=0) {
   NumericVector colnum = matrixv(_, col_num);
   LogicalVector bar;
-  bar = (colnum > fi_nd);
+  bar = (colnum > findv);
   return Rcpp::as<uvec>(bar);
 }  // end compare_col_arma
 
@@ -429,16 +429,16 @@ arma::uvec compare_col_arma(NumericMatrix& matrixv, double fi_nd, int col_num=0)
 // it to an input value, using Rcpp with Sugar and RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::uvec compare_col_armaa(const arma::mat& matrixv, double fi_nd, int col_num=0) {
+arma::uvec compare_col_armaa(const arma::mat& matrixv, double findv, int col_num=0) {
   arma::vec colnum = matrixv.cols(as<uvec>(wrap(col_num)));
   // NumericVector colnum = matrixv(_, col_num);
   // LogicalVector bar;
   // arma::uvec bar;
-  // bar = (colnum > fi_nd);
+  // bar = (colnum > findv);
   // for (int i=0; i<colnum.n_rows; i++) {
-  //   bar[i] = (colnum[i] > fi_nd);
+  //   bar[i] = (colnum[i] > findv);
   // }  // end for
-  return (colnum > fi_nd);
+  return (colnum > findv);
 }  // end compare_col_armaa
 
 
@@ -447,9 +447,9 @@ arma::uvec compare_col_armaa(const arma::mat& matrixv, double fi_nd, int col_num
 // It uses Rcpp with Sugar and RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::uvec which_col(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
+arma::uvec which_col(NumericMatrix& matrixv, double findv, int col_num=0) {
   NumericVector colnum = matrixv(_, col_num);
-  LogicalVector vectorv = (colnum > fi_nd);
+  LogicalVector vectorv = (colnum > findv);
   arma::uvec whichv;
   whichv = arma::find(Rcpp::as<uvec>(vectorv));
   return whichv;
@@ -461,8 +461,8 @@ arma::uvec which_col(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-arma::vec find_extract_mat(arma::mat matrixv, double fi_nd) {
-  arma::uvec indeks = find(matrixv >= fi_nd);
+arma::vec find_extract_mat(arma::mat matrixv, double findv) {
+  arma::uvec indeks = find(matrixv >= findv);
   return matrixv.elem(indeks);
 }  // end find_extract_mat
 
@@ -472,9 +472,9 @@ arma::vec find_extract_mat(arma::mat matrixv, double fi_nd) {
 // It uses Rcpp with Sugar and RcppArmadillo function find().
 //' @export
 // [[Rcpp::export]]
-NumericMatrix find_sub_mat(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
+NumericMatrix find_sub_mat(NumericMatrix& matrixv, double findv, int col_num=0) {
   NumericVector colnum = matrixv(_, col_num);
-  LogicalVector vectorv = (colnum > fi_nd);
+  LogicalVector vectorv = (colnum > findv);
   arma::uvec whichv;
   whichv = arma::find(Rcpp::as<uvec>(vectorv));
   arma::mat sub_matrix = as<mat>(matrixv);
@@ -488,9 +488,9 @@ NumericMatrix find_sub_mat(NumericMatrix& matrixv, double fi_nd, int col_num=0) 
 // It uses Rcpp with Sugar and RcppArmadillo, but without function find().
 //' @export
 // [[Rcpp::export]]
-NumericMatrix select_sub_mat(NumericMatrix& matrixv, double fi_nd, int col_num=0) {
+NumericMatrix select_sub_mat(NumericMatrix& matrixv, double findv, int col_num=0) {
   NumericVector colnum = matrixv(_, col_num);
-  LogicalVector vectorv = (colnum > fi_nd);
+  LogicalVector vectorv = (colnum > findv);
   int n_row = vectorv.size();
   // perform which
   std::vector<int> indeks;

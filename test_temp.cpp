@@ -15,42 +15,116 @@ using namespace std;
 
 
 // [[Rcpp::export]]
-arma::uword calc_pos(arma::vec datav, arma::uword eigen_max, double eigen_thresh = 0.001) {
+void mult_rows(arma::vec& weightv, arma::mat& matrixv) {
   
-  return min(eigen_max, arma::sum(datav > eigen_thresh) - 1);
+  matrixv.each_row() %= weightv.t();
   
-}  // end calc_pos
+  // matrixv.each_row() %= weightv.t();
+  // return matrixv;
+  
+}  // end mult_rows
 
 
+
+////////////////////////////////////////////////////////////
+//' Multiply the rows or columns of a \emph{matrix} times a \emph{vector},
+//' element-wise and in place (without copying).
+//' 
+//' @param \code{vector} A \emph{numeric} \emph{vector}.
+//' 
+//' @param \code{matrix} A \emph{numeric} \emph{matrix}.
+//' 
+//' @param \code{byrow} A \emph{Boolean} argument: if \code{TRUE} then multiply
+//'   the rows of \code{matrix} by \code{vector}, otherwise multiply the columns
+//'   (the default is \code{byrow = TRUE}.)
+//' 
+//' @return Void (no return value).
+//' 
+//' @details
+//'   The function \code{mult_mat_ref()} multiplies the rows or columns of a
+//'   \emph{matrix} times a \emph{vector}, element-wise and in place (without
+//'   copying).
+//'
+//'   It accepts a \emph{pointer} to the argument \code{matrix}, and replaces
+//'   the old \code{matrix} values with the new values. It performs the
+//'   calculation in place, without copying the \emph{matrix} in memory, which
+//'   can significantly increase the computation speed for large matrices.
+//'
+//'   If \code{byrow = TRUE} (the default), then function \code{mult_mat_ref()}
+//'   multiplies the rows of the argument \code{matrix} times the argument
+//'   \code{vector}.
+//'   Otherwise it multiplies the columns of \code{matrix}.
+//' 
+//'   In \code{R}, \emph{matrix} multiplication is performed by columns.
+//'   Performing multiplication by rows is often required, for example when
+//'   multiplying stock returns by portfolio weights.
+//'   But performing multiplication by rows requires explicit loops in \code{R},
+//'   or it requires \emph{matrix} transpose.  And both are slow.
+//'
+//'   The function \code{mult_mat_ref()} uses \code{RcppArmadillo} \code{C++}
+//'   code, so when multiplying large \emph{matrix} columns it's several times
+//'   faster than vectorized \code{R} code, and it's even much faster compared
+//'   to \code{R} when multiplying the \emph{matrix} rows.
+//' 
+//'   The function \code{mult_mat_ref()} performs loops over the \emph{matrix} rows
+//'   and columns using the \emph{Armadillo} operators \code{each_row()} and
+//'   \code{each_col()}, instead of performing explicit \code{for()} loops (both
+//'   methods are equally fast).
+//'   
+//' @examples
+//' \dontrun{
+//' # Create vector and matrix data
+//' matrixv <- matrix(round(runif(25e4), 2), nc=5e2)
+//' vectorv <- round(runif(5e2), 2)
+//' 
+//' # Multiply the matrix rows using R
+//' matrixr <- t(vectorv*t(matrixv))
+//' # Multiply the matrix rows using C++
+//' HighFreq::mult_mat_ref(vectorv, matrixv, byrow=TRUE)
+//' all.equal(matrixr, matrixv)
+//' # Compare the speed of Rcpp with R code
+//' library(microbenchmark)
+//' summary(microbenchmark(
+//'     Rcpp=HighFreq::mult_mat_ref(vectorv, matrixv, byrow=TRUE),
+//'     Rcode=t(vectorv*t(matrixv)),
+//'     times=10))[, c(1, 4, 5)]  # end microbenchmark summary
+//'     
+//' # Multiply the matrix columns using R
+//' matrixr <- vectorv*matrixv
+//' # Multiply the matrix columns using C++
+//' HighFreq::mult_mat_ref(vectorv, matrixv, byrow=FALSE)
+//' all.equal(matrixr, matrixv)
+//' # Compare the speed of Rcpp with R code
+//' library(microbenchmark)
+//' summary(microbenchmark(
+//'     Rcpp=HighFreq::mult_mat_ref(vectorv, matrixv, byrow=FALSE),
+//'     Rcode=vectorv*matrixv,
+//'     times=10))[, c(1, 4, 5)]  # end microbenchmark summary
+//' }
+//' 
+//' @export
 // [[Rcpp::export]]
-arma::mat calc_inv(const arma::mat& tseries,
-                   double eigen_thresh = 0.01, 
-                   arma::uword eigen_max = 0) {
+void mult_mat_ref(arma::vec vector,
+                  arma::mat matrix,
+                  bool byrow = true) {
   
-  // Allocate SVD variables
-  arma::vec svd_val;  // Singular values
-  arma::mat svd_u, svd_v;  // Singular matrices
-  // Calculate the SVD
-  arma::svd(svd_u, svd_val, svd_v, tseries);
-  // Calculate the number of non-small singular values
-  arma::uword svd_num = arma::sum(svd_val > eigen_thresh*arma::sum(svd_val));
+  arma::uword nelem = vector.n_elem;
+  arma::uword nrows = matrix.n_rows;
+  arma::uword ncols = matrix.n_cols;
   
-  if (eigen_max == 0) {
-    // Set eigen_max
-    eigen_max = svd_num - 1;
+  if (byrow && (nelem == ncols)) {
+    // Multiply every row of matrix by vector
+    matrix.each_row() %= vector.t();
+  } else if (!byrow && (nelem == nrows)) {
+    // Multiply every column of matrix by vector
+    matrix.each_col() %= vector;
   } else {
-    // Adjust eigen_max
-    eigen_max = min(eigen_max - 1, svd_num - 1);
+    // Do nothing
+    cout << "Nothing done: Vector length is neither equal to the number of columns nor to the rows of the matrix!" << std::endl;
   }  // end if
   
-  // Remove all small singular values
-  svd_val = svd_val.subvec(0, eigen_max);
-  svd_u = svd_u.cols(0, eigen_max);
-  svd_v = svd_v.cols(0, eigen_max);
+  // return matrix;
   
-  // Calculate the regularized inverse from the SVD decomposition
-  return svd_v*arma::diagmat(1/svd_val)*svd_u.t();
+  }  // end mult_mat_ref
   
-}  // end calc_inv
-
-
+  
