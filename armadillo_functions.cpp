@@ -6,6 +6,8 @@ using namespace Rcpp;
 using namespace arma;
 // [[Rcpp::depends(RcppArmadillo)]]
 
+// Compile this file in R by running this command:
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/armadillo_functions.cpp")
 
 ////////////////////////////
 // RcppArmadillo functions miscellaneous
@@ -34,30 +36,31 @@ void which_method(const std::string& calc_method = "yang_zhang") {
 
 
 
-// The function count_er() counts the number of times it was called.
-// It ceates a static integer variable cou_nt, and advances it every 
+// The function countfun() counts the number of times it was called.
+// It creates a static integer variable countv, and advances it every 
 // time it is called.
-// cou_nt is static so it remains alive outside the scope of count_er(),
-// between calls to count_er().
-// The function count_er() can also be defined as a static function as 
+// countv is static so it remains alive outside the scope of countfun(),
+// between calls to countfun().
+// The function countfun() can also be defined as a static function as 
 // an illustration - it doesn't have to be static.
 // A static function in C is only visible to those functions in the same source file. 
 // Making a function static limits its scope to functions from the same source file. 
 // https://www.cprogramming.com/tutorial/statickeyword.html
 // [[Rcpp::export]]
-void count_er(int seedv=1) {
+void countfun(int initv=1) {
   
-  // cou_nt is static so it's initialized only once the first time count_er() is called.
-  static int cou_nt = seedv;
+  // countv is static so it's initialized only once the first time countfun() is called.
+  static int countv = initv;
   
-  std::cout << "The function count_er() was called " << cou_nt << " times." << std::endl;
+  countv++;
   
-  cou_nt++;
+  std::cout << "The function countfun() was called " << countv << " times." << std::endl;
   
-}  // end count_er
+}  // end countfun
 
 
 
+// First sort the datav and then unsort it back to original
 //' @export
 // [[Rcpp::export]]
 arma::vec sort_back(const arma::vec& datav) {
@@ -65,19 +68,34 @@ arma::vec sort_back(const arma::vec& datav) {
   // Reverse sort index
   arma::uvec indeks = arma::sort_index(arma::sort_index(datav));
   // Sort the datav
-  arma::vec sort_ed = arma::sort(datav);
+  arma::vec sortedv = arma::sort(datav);
   // Reverse sort the datav
-  sort_ed = sort_ed.elem(indeks);
+  sortedv = sortedv.elem(indeks);
   
-  return sort_ed;
+  return sortedv;
 }  // end sort_back
 
 
+
+
+// Calculates the ranks of a vector of data
 //' @export
 // [[Rcpp::export]]
 arma::uvec calc_ranks(const arma::vec& datav) {
   return (arma::sort_index(arma::sort_index(datav)) + 1);
 }  // end calc_ranks
+
+
+
+// Calculates the de-meaned ranks of a vector of data
+//' @export
+// [[Rcpp::export]]
+arma::vec calc_ranksm(const arma::vec& datav) {
+  // Ranks
+  arma::vec ranks = conv_to< vec >::from(arma::sort_index(arma::sort_index(datav)));
+  return (ranks - arma::mean(ranks));
+}  // end calc_ranksm
+
 
 
 
@@ -133,6 +151,7 @@ int sum_if(NumericVector& vectorv, double findv) {
 
 
 // The function sum_if_stl() performs sum(ivectorv<findv) using Rcpp and STL.
+// Warning: bind2nd is deprecated 
 //' @export
 // [[Rcpp::export]]
 int sum_if_stl(const NumericVector& vectorv, double findv) {
@@ -167,10 +186,10 @@ arma::uvec whichv2(LogicalVector& vectorv) {
 Rcpp::IntegerVector whichv3(const LogicalVector& vectorv) {
   // arma::uvec logicalv;
   // logicalv = arma::find(Rcpp::as<uvec>(vectorv));
-  int n_row = vectorv.size();
+  int nrow = vectorv.size();
   std::vector<int> indeks;
-  indeks.reserve(n_row);
-  for (int i=0; i<n_row; i++) {
+  indeks.reserve(nrow);
+  for (int i=0; i<nrow; i++) {
     if (vectorv[i]) indeks.push_back(i+1);
   }  // end for
   return Rcpp::wrap(indeks);
@@ -182,10 +201,10 @@ Rcpp::IntegerVector whichv3(const LogicalVector& vectorv) {
 //' @export
 // [[Rcpp::export]]
 Rcpp::IntegerVector whichv32(const LogicalVector& vectorv) {
-  int n_row = vectorv.size();
+  int nrow = vectorv.size();
   IntegerVector indeks(sum(vectorv));
   int j = 0;
-  for (int i=0; i<n_row; i++) {
+  for (int i=0; i<nrow; i++) {
     if (vectorv[i]) 
       indeks(j++) = i+1;
   }  // end for
@@ -197,7 +216,7 @@ Rcpp::IntegerVector whichv32(const LogicalVector& vectorv) {
 //' @export
 // [[Rcpp::export]]
 Rcpp::IntegerVector whichv34(LogicalVector& vectorv) {
-  // int n_row = vectorv.size();
+  // int nrow = vectorv.size();
   IntegerVector indeks(sum(vectorv));
   int i=0, j=0;
   LogicalVector::iterator it;
@@ -220,10 +239,10 @@ Rcpp::IntegerVector whichv34(LogicalVector& vectorv) {
 //' @export
 // [[Rcpp::export]]
 arma::uvec whichv33(arma::uvec& vectorv) {
-  int n_row = vectorv.size();
+  int nrow = vectorv.size();
   arma::uvec indeks(accu(vectorv));
   int j = 0;
-  for (int i=0; i<n_row; i++) {
+  for (int i=0; i<nrow; i++) {
     if (vectorv[i]) 
       indeks(j++) = i+1;
   }  // end for
@@ -237,10 +256,10 @@ arma::uvec whichv33(arma::uvec& vectorv) {
 Rcpp::IntegerVector whichv4(LogicalVector& vectorv) {
   // arma::uvec logicalv;
   // logicalv = arma::find(Rcpp::as<uvec>(vectorv));
-  int n_row = vectorv.size();
-  IntegerVector indeks(n_row);
+  int nrow = vectorv.size();
+  IntegerVector indeks(nrow);
   int j=0;
-  for (int i=0; i<n_row; i++) {
+  for (int i=0; i<nrow; i++) {
     if (vectorv[i]) {
       indeks(j)=i+1;
       j++;
@@ -275,7 +294,7 @@ Rcpp::IntegerVector whichv5(LogicalVector& vectorv) {
 // [[Rcpp::export]]
 arma::vec tapply_arma(const arma::vec& vectorv, const arma::vec& ratio) {
   Function whichv3("whichv3");
-  // int n_row = vectorv.size();
+  // int nrow = vectorv.size();
   arma::vec uniq_ue = arma::unique(ratio);
   int n_unique = uniq_ue.size();
   arma::vec agg_s(n_unique);
@@ -297,14 +316,14 @@ arma::vec tapply_arma(const arma::vec& vectorv, const arma::vec& ratio) {
 //' @export
 // [[Rcpp::export]]
 NumericMatrix cbind_rcpp(NumericMatrix matrixv1, NumericMatrix matrixv2) {
-  int n_col1 = matrixv1.ncol();
-  int n_col2 = matrixv2.ncol();
-  NumericMatrix output = Rcpp::no_init_matrix(matrixv1.nrow(), n_col1 + n_col2);
-  for (int j = 0; j < n_col1 + n_col2; j++) {
-    if (j < n_col1) {
+  int ncol1 = matrixv1.ncol();
+  int ncol2 = matrixv2.ncol();
+  NumericMatrix output = Rcpp::no_init_matrix(matrixv1.nrow(), ncol1 + ncol2);
+  for (int j = 0; j < ncol1 + ncol2; j++) {
+    if (j < ncol1) {
       output(_, j) = matrixv1(_, j);
     } else {
-      output(_, j) = matrixv2(_, j - n_col1);
+      output(_, j) = matrixv2(_, j - ncol1);
     }
   }
   return output;
@@ -491,11 +510,11 @@ NumericMatrix find_sub_mat(NumericMatrix& matrixv, double findv, int col_num=0) 
 NumericMatrix select_sub_mat(NumericMatrix& matrixv, double findv, int col_num=0) {
   NumericVector colnum = matrixv(_, col_num);
   LogicalVector vectorv = (colnum > findv);
-  int n_row = vectorv.size();
+  int nrow = vectorv.size();
   // perform which
   std::vector<int> indeks;
-  indeks.reserve(n_row);
-  for (int i=0; i<n_row; i++) {
+  indeks.reserve(nrow);
+  for (int i=0; i<nrow; i++) {
     if (vectorv[i]) indeks.push_back(i);
   }  // end for
   // perform which
@@ -514,7 +533,7 @@ NumericMatrix select_sub_mat(NumericMatrix& matrixv, double findv, int col_num=0
 // [[Rcpp::export]]
 arma::vec apply_agg(const arma::mat& matrixv) {
   // Function whichv3("whichv3");
-  // int n_row = vectorv.size();
+  // int nrow = vectorv.size();
   arma::vec uniq_ue = arma::unique(matrixv.col(0));
   int n_unique = uniq_ue.size();
   arma::vec agg_s(n_unique);
@@ -640,6 +659,16 @@ int demean_mat(arma::mat& matrixv) {
 }  // end demean_mat
 
 
+// The function outer_vec() calculates the outer product of two vectors.
+// It accepts pointers to the two vectors and returns a matrix.
+// It uses RcppArmadillo.
+//' @export
+// [[Rcpp::export]]
+arma::mat outer_vec(const arma::vec& vec1, const arma::vec& vec2) {
+  return vec1*vec2.t();
+}  // end outer_vec
+
+
 // The function inner_vec() calculates the inner (dot) product of two vectors.
 // It accepts pointers to the two vectors and returns a double.
 // It uses RcppArmadillo.
@@ -669,6 +698,121 @@ arma::vec mat_inner_vec(const arma::vec& vectorv, const arma::mat& matrixv) {
 double inner_mat(const arma::vec& vectorv2, const arma::mat& matrixv, const arma::vec& vectorv1) {
   return arma::as_scalar(trans(vectorv2) * (matrixv * vectorv1));
 }  // end inner_mat
+
+
+// [[Rcpp::export]]
+void mult_rows(arma::vec& weightv, arma::mat& matrixv) {
+  
+  matrixv.each_row() %= weightv.t();
+  
+  // matrixv.each_row() %= weightv.t();
+  // return matrixv;
+  
+}  // end mult_rows
+
+
+
+// Already in HighFreq.cpp
+////////////////////////////////////////////////////////////
+//' Multiply the rows or columns of a \emph{matrix} times a \emph{vector},
+//' element-wise and in place (without copying).
+//' 
+//' @param \code{vector} A \emph{numeric} \emph{vector}.
+//' 
+//' @param \code{matrix} A \emph{numeric} \emph{matrix}.
+//' 
+//' @param \code{byrow} A \emph{Boolean} argument: if \code{TRUE} then multiply
+//'   the rows of \code{matrix} by \code{vector}, otherwise multiply the columns
+//'   (the default is \code{byrow = TRUE}.)
+//' 
+//' @return Void (no return value).
+//' 
+//' @details
+//'   The function \code{mult_mat_ref()} multiplies the rows or columns of a
+//'   \emph{matrix} times a \emph{vector}, element-wise and in place (without
+//'   copying).
+//'
+//'   It accepts a \emph{pointer} to the argument \code{matrix}, and replaces
+//'   the old \code{matrix} values with the new values. It performs the
+//'   calculation in place, without copying the \emph{matrix} in memory, which
+//'   can significantly increase the computation speed for large matrices.
+//'
+//'   If \code{byrow = TRUE} (the default), then function \code{mult_mat_ref()}
+//'   multiplies the rows of the argument \code{matrix} times the argument
+//'   \code{vector}.
+//'   Otherwise it multiplies the columns of \code{matrix}.
+//' 
+//'   In \code{R}, \emph{matrix} multiplication is performed by columns.
+//'   Performing multiplication by rows is often required, for example when
+//'   multiplying stock returns by portfolio weights.
+//'   But performing multiplication by rows requires explicit loops in \code{R},
+//'   or it requires \emph{matrix} transpose.  And both are slow.
+//'
+//'   The function \code{mult_mat_ref()} uses \code{RcppArmadillo} \code{C++}
+//'   code, so when multiplying large \emph{matrix} columns it's several times
+//'   faster than vectorized \code{R} code, and it's even much faster compared
+//'   to \code{R} when multiplying the \emph{matrix} rows.
+//' 
+//'   The function \code{mult_mat_ref()} performs loops over the \emph{matrix} rows
+//'   and columns using the \emph{Armadillo} operators \code{each_row()} and
+//'   \code{each_col()}, instead of performing explicit \code{for()} loops (both
+//'   methods are equally fast).
+//'   
+//' @examples
+//' \dontrun{
+//' # Create vector and matrix data
+//' matrixv <- matrix(round(runif(25e4), 2), nc=5e2)
+//' vectorv <- round(runif(5e2), 2)
+//' 
+//' # Multiply the matrix rows using R
+//' matrixr <- t(vectorv*t(matrixv))
+//' # Multiply the matrix rows using C++
+//' HighFreq::mult_mat_ref(vectorv, matrixv, byrow=TRUE)
+//' all.equal(matrixr, matrixv)
+//' # Compare the speed of Rcpp with R code
+//' library(microbenchmark)
+//' summary(microbenchmark(
+//'     Rcpp=HighFreq::mult_mat_ref(vectorv, matrixv, byrow=TRUE),
+//'     Rcode=t(vectorv*t(matrixv)),
+//'     times=10))[, c(1, 4, 5)]  # end microbenchmark summary
+//'     
+//' # Multiply the matrix columns using R
+//' matrixr <- vectorv*matrixv
+//' # Multiply the matrix columns using C++
+//' HighFreq::mult_mat_ref(vectorv, matrixv, byrow=FALSE)
+//' all.equal(matrixr, matrixv)
+//' # Compare the speed of Rcpp with R code
+//' library(microbenchmark)
+//' summary(microbenchmark(
+//'     Rcpp=HighFreq::mult_mat_ref(vectorv, matrixv, byrow=FALSE),
+//'     Rcode=vectorv*matrixv,
+//'     times=10))[, c(1, 4, 5)]  # end microbenchmark summary
+//' }
+//' 
+//' @export
+// [[Rcpp::export]]
+void mult_mat_ref(arma::vec vector,
+                  arma::mat matrix,
+                  bool byrow = true) {
+  
+  arma::uword nelem = vector.n_elem;
+  arma::uword nrows = matrix.n_rows;
+  arma::uword ncols = matrix.n_cols;
+  
+  if (byrow && (nelem == ncols)) {
+    // Multiply every row of matrix by vector
+    matrix.each_row() %= vector.t();
+  } else if (!byrow && (nelem == nrows)) {
+    // Multiply every column of matrix by vector
+    matrix.each_col() %= vector;
+  } else {
+    // Do nothing
+    cout << "Nothing done: Vector length is neither equal to the number of columns nor to the rows of the matrix!" << std::endl;
+  }  // end if
+  
+  // return matrix;
+  
+}  // end mult_mat_ref
 
 
 ////////////////////////////////////////////////////////////
@@ -731,11 +875,11 @@ double inner_mat(const arma::vec& vectorv2, const arma::mat& matrixv, const arma
 uword mult_vec_mat(const arma::vec& vectorv,
                    arma::mat& matrixv,
                    const bool& by_col=true) {
-  uword n_elem = vectorv.n_elem;
+  uword nelem = vectorv.n_elem;
   uword nrows = matrixv.n_rows;
   uword ncols = matrixv.n_cols;
   
-  if ((ncols == nrows) && (n_elem == nrows)) {
+  if ((ncols == nrows) && (nelem == nrows)) {
     if (by_col) {
       // Multiply each column of matrixv by vectorv
       matrixv.each_col() %= vectorv;
@@ -745,11 +889,11 @@ uword mult_vec_mat(const arma::vec& vectorv,
       matrixv.each_row() %= conv_to< rowvec >::from(vectorv);
       return ncols;
     }
-  } else if (n_elem == nrows) {
+  } else if (nelem == nrows) {
     // Multiply each column of matrixv by vectorv
     matrixv.each_col() %= vectorv;
     return nrows;
-  } else if (n_elem == ncols) {
+  } else if (nelem == ncols) {
     // Multiply each row of matrixv by vectorv
     matrixv.each_row() %= conv_to< rowvec >::from(vectorv);
     return ncols;
@@ -1091,7 +1235,7 @@ LogicalVector test_rcpp(NumericVector& vectorv2, NumericMatrix& matrixv, Numeric
   stats(2) = vectorv1.size();
   stats(3) = vectorv2.size();
   stats.attr("names") = Rcpp::CharacterVector::create("nrows", "ncols", "v_siz1", "v_siz2");
-  // uword nrows = matrixv.nrow();
+  // uword nrows = matrixv.n_row();
   uword ncols = matrixv.ncol();
   // uword v_siz1 = vectorv1.size();
   // uword v_siz2 = vectorv2.size();

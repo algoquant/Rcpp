@@ -153,42 +153,6 @@ arma::vec calc_weights(const arma::mat& returns,
 }  // end calc_weights
 
 
-
-
-// First sort the datav and then unsort it back to original
-//' @export
-// [[Rcpp::export]]
-arma::vec sort_back(const arma::vec& datav) {
-
-  // Reverse sort index
-  arma::uvec indeks = arma::sort_index(arma::sort_index(datav));
-  // Sort the datav
-  arma::vec sort_ed = arma::sort(datav);
-  // Reverse sort the datav
-  sort_ed = sort_ed.elem(indeks);
-  
-  return sort_ed;
-}  // end sort_back
-
-
-//' @export
-// [[Rcpp::export]]
-arma::uvec calc_ranks(const arma::vec& datav) {
-  return (arma::sort_index(arma::sort_index(datav)) + 1);
-}  // end calc_ranks
-
-
-
-//' @export
-// [[Rcpp::export]]
-arma::vec calc_ranks_m(const arma::vec& datav) {
-  // Ranks
-  arma::vec ranks = conv_to< vec >::from(arma::sort_index(arma::sort_index(datav)));
-  return (ranks - arma::mean(ranks));
-}  // end calc_ranks_m
-
-
-
 //' @export
 // [[Rcpp::export]]
 arma::vec weight_returns(const arma::mat& returns, const arma::vec& weights) {

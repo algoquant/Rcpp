@@ -42,19 +42,19 @@ Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/armadillo_functions.cpp")
 ## sum_na() sum_if() conditional sums Rcpp functions
 
 # Create synthetic data
-vec_tor <- 1:100
-vec_tor[sample(1:100, 5)] <- NA
+vectorv <- 1:100
+vectorv[sample(1:100, 5)] <- NA
 
-sum(is.na(vec_tor))
-sum_na(vec_tor)
-sum_na_stl(vec_tor)
+sum(is.na(vectorv))
+sum_na(vectorv)
+sum_na_stl(vectorv)
 
 # Benchmark Rcpp sum_na() function
 library(microbenchmark)
 summary(microbenchmark(
-  sum_na=sum_na(vec_tor),
-  sum_na_stl=sum_na_stl(vec_tor),
-  sum_is_na=sum(is.na(vec_tor)),
+  sum_na=sum_na(vectorv),
+  sum_na_stl=sum_na_stl(vectorv),
+  sum_is_na=sum(is.na(vectorv)),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -64,48 +64,48 @@ summary(microbenchmark(
 # 2 sum_na_stl 3592.92   3422
 # 3  sum_is_na  728.87    490
 
-sum_if(vec_tor, 5)
-sum_if_cpp(vec_tor, 5)
-sum_if_stl(vec_tor, 5)
-sum(vec_tor < 5)
+sum_if(vectorv, 5)
+sum_if_cpp(vectorv, 5)
+sum_if_stl(vectorv, 5)
+sum(vectorv < 5)
 
 summary(microbenchmark(
-  sum_if_cpp=sum_if_cpp(vec_tor, 5),
-  sum_if=sum_if(vec_tor, 5),
-  sum_if_stl=sum_if_stl(vec_tor, 5),
-  r_code=sum(vec_tor < 5),
+  sum_if_cpp=sum_if_cpp(vectorv, 5),
+  sum_if=sum_if(vectorv, 5),
+  sum_if_stl=sum_if_stl(vectorv, 5),
+  rcode=sum(vectorv < 5),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
-# sum(vec_tor < 5) is over 2 times faster than Rcpp
+# sum(vectorv < 5) is over 2 times faster than Rcpp
 #         expr    mean median
 # 1 sum_if_cpp 2424.76   2444
 # 2     sum_if 2419.90   2444
 # 3 sum_if_stl 2185.26   1956
-# 4     r_code 1056.44    978
+# 4     rcode 1056.44    978
 
 
 ## which() Rcpp functions
 
 # Create synthetic data
-vec_tor <- round(runif(16), 2)
-mat_rix <- matrix(round(runif(16), 2), nc=4)
-bool_ean <- sample(c(TRUE, rep(FALSE, 9)), size=1e3, replace=TRUE)
+vectorv <- round(runif(16), 2)
+matrixv <- matrix(round(runif(16), 2), nc=4)
+booleanv <- sample(c(TRUE, rep(FALSE, 9)), size=1e3, replace=TRUE)
 
-# whi_ch3(bool_ean)
-all.equal(whi_ch3(bool_ean), whi_ch4(bool_ean))
+# whi_ch3(booleanv)
+all.equal(whi_ch3(booleanv), whi_ch4(booleanv))
 
 # Benchmark Rcpp which functions
 library(microbenchmark)
 summary(microbenchmark(
-  whi_ch32=whi_ch32(bool_ean),
-  whi_ch33=whi_ch33(bool_ean),
-  whi_ch34=whi_ch34(bool_ean),
-  whi_ch=whi_ch(bool_ean),
-  whi_ch2=whi_ch2(bool_ean),
-  whi_ch4=whi_ch4(bool_ean),
-  whi_ch3=whi_ch3(bool_ean),
-  which=which(bool_ean),
+  whi_ch32=whi_ch32(booleanv),
+  whi_ch33=whi_ch33(booleanv),
+  whi_ch34=whi_ch34(booleanv),
+  whi_ch=whi_ch(booleanv),
+  whi_ch2=whi_ch2(booleanv),
+  whi_ch4=whi_ch4(booleanv),
+  whi_ch3=whi_ch3(booleanv),
+  which=which(booleanv),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: which() is fastest followed by whi_ch3():
@@ -121,24 +121,24 @@ summary(microbenchmark(
 ## select elements and assign values
 
 # sub-matrix Rcpp functions
-sub_mat(mat_rix=mat_rix, row_num=c(1, 3), col_num=1:2)
-sub_mat(mat_rix=mat_rix, row_num=1:2, col_num=1:2)
-sub_mat_cast(mat_rix=mat_rix, row_num=1:2, col_num=1:2)
+sub_mat(matrixv=matrixv, row_num=c(1, 3), col_num=1:2)
+sub_mat(matrixv=matrixv, row_num=1:2, col_num=1:2)
+sub_mat_cast(matrixv=matrixv, row_num=1:2, col_num=1:2)
 
 library(microbenchmark)
 # microbenchmark shows: sub_mat() is slightly faster
 summary(microbenchmark(
-  sub_mat=sub_mat(mat_rix=mat_rix, row_num=1:2, col_num=1:2),
-  sub_mat_cast=sub_mat_cast(mat_rix=mat_rix, row_num=1:2, col_num=1:2),
+  sub_mat=sub_mat(matrixv=matrixv, row_num=1:2, col_num=1:2),
+  sub_mat_cast=sub_mat_cast(matrixv=matrixv, row_num=1:2, col_num=1:2),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 
-select_sub_mat(mat_rix=mat_rix, 0.4, 0)
-find_sub_mat(mat_rix=mat_rix, 0.4, 0)
+select_sub_mat(matrixv=matrixv, 0.4, 0)
+find_sub_mat(matrixv=matrixv, 0.4, 0)
 
 summary(microbenchmark(
-  select_sub_mat=select_sub_mat(mat_rix=mat_rix, 0.4, 0),
-  find_sub_mat=find_sub_mat(mat_rix=mat_rix, 0.4, 0),
+  select_sub_mat=select_sub_mat(matrixv=matrixv, 0.4, 0),
+  find_sub_mat=find_sub_mat(matrixv=matrixv, 0.4, 0),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: both about the same
@@ -148,20 +148,20 @@ summary(microbenchmark(
 
 
 # function to assign values to selected vector elements
-sub_assign(vec_tor=vec_tor, in_dex=c(2, 4, 6), da_ta=c(3, 5, 7))
+sub_assign(vectorv=vectorv, in_dex=c(2, 4, 6), da_ta=c(3, 5, 7))
 # function to find selected vector elements and to assign values
-find_assign_vec(vec_tor=vec_tor, fi_nd=0.5, da_ta=0.1)
+find_assign_vec(vectorv=vectorv, fi_nd=0.5, da_ta=0.1)
 # function to find selected vector elements and to assign values
-find_assign_vec_point(vec_tor=vec_tor, fi_nd=0.5, da_ta=0.1)
+find_assign_vec_point(vectorv=vectorv, fi_nd=0.5, da_ta=0.1)
 # Rcpp function to assign values to selected matrix elements
-find_assign_mat(mat_rix=mat_rix, fi_nd=0.5, da_ta=1)
+find_assign_mat(matrixv=matrixv, fi_nd=0.5, da_ta=1)
 # Rcpp function to assign values to selected matrix elements
-find_extract_mat(mat_rix=mat_rix, fi_nd=0.8)
+find_extract_mat(matrixv=matrixv, fi_nd=0.8)
 
 library(microbenchmark)
 summary(microbenchmark(
-  in_place=find_assign_vec_point(vec_tor=vec_tor, fi_nd=0.5, da_ta=1),
-  find_assign=find_assign_vec(vec_tor=vec_tor, fi_nd=0.5, da_ta=1),
+  in_place=find_assign_vec_point(vectorv=vectorv, fi_nd=0.5, da_ta=1),
+  find_assign=find_assign_vec(vectorv=vectorv, fi_nd=0.5, da_ta=1),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -172,16 +172,16 @@ summary(microbenchmark(
 
 
 # column compare Rcpp functions
-compare_col(mat_rix=mat_rix, 0.5, 1)
-compare_col_arma(mat_rix=mat_rix, 0.5)
-compare_col_arma(mat_rix=mat_rix, 0.5, 1)
-compare_col_armaa(mat_rix=mat_rix, 0.5, 1)
+compare_col(matrixv=matrixv, 0.5, 1)
+compare_col_arma(matrixv=matrixv, 0.5)
+compare_col_arma(matrixv=matrixv, 0.5, 1)
+compare_col_armaa(matrixv=matrixv, 0.5, 1)
 
 library(microbenchmark)
 summary(microbenchmark(
-  compare_col=compare_col(mat_rix=mat_rix, 0.5, 1),
-  compare_col_arma=compare_col_arma(mat_rix=mat_rix, 0.5, 1),
-  compare_col_armaa=compare_col_armaa(mat_rix=mat_rix, 0.5, 1),
+  compare_col=compare_col(matrixv=matrixv, 0.5, 1),
+  compare_col_arma=compare_col_arma(matrixv=matrixv, 0.5, 1),
+  compare_col_armaa=compare_col_armaa(matrixv=matrixv, 0.5, 1),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: compare_col() is fastest
@@ -191,29 +191,29 @@ summary(microbenchmark(
 # 3 compare_col_armaa 2024.09   1956
 
 # which column Rcpp function
-which_col(mat_rix=mat_rix, 0.5, 2)
-which_col(mat_rix=mat_rix, 0.5)
+which_col(matrixv=matrixv, 0.5, 2)
+which_col(matrixv=matrixv, 0.5)
 
 
 
-## calculate the rolling sum over a vector
+## Calculate the rolling sum over a vector
 
 Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_sum.cpp")
 
-vec_tor <- rnorm(1e6)
-all.equal(HighFreq::roll_sum(vec_tor, look_back=11)[-(1:10)],
-          RcppRoll::roll_sum(vec_tor, n=11))
-all.equal(HighFreq::roll_sum(vec_tor, look_back=11),
-          drop(roll_sum_arma(vec_tor, look_back=11)))
-all.equal(rutils::roll_sum(matrix(vec_tor, nc=1), look_back=11),
-          roll_sum_arma(vec_tor, look_back=11))
+vectorv <- rnorm(1e6)
+all.equal(HighFreq::roll_sum(vectorv, look_back=11)[-(1:10)],
+          RcppRoll::roll_sum(vectorv, n=11))
+all.equal(HighFreq::roll_sum(vectorv, look_back=11),
+          drop(roll_sum_arma(vectorv, look_back=11)))
+all.equal(rutils::roll_sum(matrix(vectorv, nc=1), look_back=11),
+          roll_sum_arma(vectorv, look_back=11))
 
 library(microbenchmark)
 summary(microbenchmark(
-  rcpp=HighFreq::roll_sum(vec_tor, look_back=11),
-  RcppRoll=RcppRoll::roll_sum(vec_tor, n=11),
-  arma=roll_sum_arma(vec_tor, look_back=11),
-  r_code=rutils::roll_sum(matrix(vec_tor, nc=1), look_back=11),
+  rcpp=HighFreq::roll_sum(vectorv, look_back=11),
+  RcppRoll=RcppRoll::roll_sum(vectorv, n=11),
+  arma=roll_sum_arma(vectorv, look_back=11),
+  rcode=rutils::roll_sum(matrix(vectorv, nc=1), look_back=11),
   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -225,33 +225,33 @@ summary(microbenchmark(
 # 1     rcpp  9.165521  6.592201
 # 2 RcppRoll  9.919361  9.940151
 # 3     arma 18.360971 16.809851
-# 4   r_code 66.861341 54.078750
+# 4   rcode 66.861341 54.078750
 
 
-## calculate the rolling weighted sum over a vector
+## Calculate the rolling weighted sum over a vector
 
 Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_wsum.cpp")
 
 
-vec_tor <- as.numeric(rutils::env_etf$VTI[, 6])
+vectorv <- as.numeric(rutils::env_etf$VTI[, 6])
 wei_ghts <- exp(-0.2*1:11)
 wei_ghts <- wei_ghts/sum(wei_ghts)
 # compare R with Rcpp
-weight_ed <- HighFreq::roll_wsum(vec_tor=vec_tor, wei_ghts=rev(wei_ghts))
-filter_ed <- filter(x=vec_tor, filter=wei_ghts, method="convolution", sides=1)
+weight_ed <- HighFreq::roll_wsum(vectorv=vectorv, wei_ghts=rev(wei_ghts))
+filter_ed <- filter(x=vectorv, filter=wei_ghts, method="convolution", sides=1)
 all.equal(as.numeric(filter_ed[-(1:11)]), as.numeric(weight_ed[-(1:11)]))
 
 # compare Rcpp with RcppArmadillo: agrees for filter wei_ghts <- c(1, rep(1e-5, 10))
 #  but different for exponentially decaying weights
-filter_ed <- roll_wsum_armaa(vec_tor, rev(wei_ghts))
+filter_ed <- roll_wsum_armaa(vectorv, rev(wei_ghts))
 all.equal(as.numeric(filter_ed), as.numeric(weight_ed))
 round(as.numeric(tail(weight_ed, 22)), 2)
 round(as.numeric(tail(filter_ed, 22)), 2)
 
 library(microbenchmark)
 summary(microbenchmark(
-  rcpp=HighFreq::roll_wsum(vec_tor=vec_tor, wei_ghts=rev(wei_ghts)),
-  r_code=filter(x=vec_tor, filter=wei_ghts, method="convolution", sides=1, circular=TRUE),
+  rcpp=HighFreq::roll_wsum(vectorv=vectorv, wei_ghts=rev(wei_ghts)),
+  rcode=filter(x=vectorv, filter=wei_ghts, method="convolution", sides=1, circular=TRUE),
   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 
 
@@ -260,26 +260,26 @@ summary(microbenchmark(
 # and about 5 times faster than filter() in vectorized R
 #     expr     mean  median
 # 1   rcpp  91.4411  76.975
-# 2 r_code 513.0144 459.646
+# 2 rcode 513.0144 459.646
 
 
 
-## calculate the lag of a vector
+## Calculate the lag of a vector
 
 Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_var.cpp")
 
-vec_tor <- rnorm(1e6)
+vectorv <- rnorm(1e6)
 
-all.equal(drop(lagvec_arma(vec_tor, lagg=11)),
-          lagvec_rcpp(vec_tor, lagg=11))
-all.equal(drop(lagvec_arma(vec_tor, lagg=11)),
-          rutils::lag_it(vec_tor, lagg=11))
+all.equal(drop(lagvec_arma(vectorv, lagg=11)),
+          lagvec_rcpp(vectorv, lagg=11))
+all.equal(drop(lagvec_arma(vectorv, lagg=11)),
+          rutils::lag_it(vectorv, lagg=11))
 
 library(microbenchmark)
 summary(microbenchmark(
-  rcpp=lagvec_rcpp(vec_tor, lagg=11),
-  arma=lagvec_arma(vec_tor, lagg=11),
-  lag_it=rutils::lag_it(vec_tor, lagg=11),
+  rcpp=lagvec_rcpp(vectorv, lagg=11),
+  arma=lagvec_arma(vectorv, lagg=11),
+  lag_it=rutils::lag_it(vectorv, lagg=11),
   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -291,17 +291,17 @@ summary(microbenchmark(
 # 3 lag_it 12.56096 10.60035
 
 
-## calculate the variance of a vector
+## Calculate the variance of a vector
 
 
-all.equal(variance_rcpp(vec_tor),
-          variance_arma(vec_tor))
+all.equal(variance_rcpp(vectorv),
+          variance_arma(vectorv))
 
 library(microbenchmark)
 summary(microbenchmark(
-  arma=variance_arma(vec_tor),
-  rcpp=variance_rcpp(vec_tor),
-  r_code=var(vec_tor),
+  arma=variance_arma(vectorv),
+  rcpp=variance_rcpp(vectorv),
+  rcode=var(vectorv),
   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -311,25 +311,25 @@ summary(microbenchmark(
 #     expr     mean   median
 # 1   arma 1.767471 1.747152
 # 2   rcpp 2.262741 2.273301
-# 3 r_code 4.944931 4.780251
+# 3 rcode 4.944931 4.780251
 
 
-## calculate the rolling variance over a vector
+## Calculate the rolling variance over a vector
 
 Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_var.cpp")
 
-vec_tor <- rnorm(1e6)
-all.equal(roll_var_rcpp(vec_tor, look_back=21),
-          drop(roll_var_arma(vec_tor, look_back=21)))
-all.equal(drop(roll_var_arma(vec_tor, look_back=21))[-(1:20)],
-          RcppRoll::roll_var(vec_tor, n=21))
+vectorv <- rnorm(1e6)
+all.equal(roll_var_rcpp(vectorv, look_back=21),
+          drop(roll_var_arma(vectorv, look_back=21)))
+all.equal(drop(roll_var_arma(vectorv, look_back=21))[-(1:20)],
+          RcppRoll::roll_var(vectorv, n=21))
 
 library(microbenchmark)
 summary(microbenchmark(
-  arma=roll_var_arma(vec_tor, look_back=21),
-  rcpp=roll_var_rcpp(vec_tor, look_back=21),
-  RcppRoll=RcppRoll::roll_var(vec_tor, n=21),
-  # r_code=var(vec_tor),
+  arma=roll_var_arma(vectorv, look_back=21),
+  rcpp=roll_var_rcpp(vectorv, look_back=21),
+  RcppRoll=RcppRoll::roll_var(vectorv, n=21),
+  # rcode=var(vectorv),
   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -344,7 +344,7 @@ summary(microbenchmark(
 
 
 
-## calculate the variance of OHLC
+## Calculate the variance of OHLC
 
 oh_lc <- rutils::etf_env$VTI
 all.equal(variance_ohlc(oh_lc),
@@ -354,7 +354,7 @@ library(microbenchmark)
 summary(microbenchmark(
   arma=variance_arma(oh_lc),
   rcpp=variance_rcpp(oh_lc),
-  r_code=var(oh_lc),
+  rcode=var(oh_lc),
   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -364,9 +364,7 @@ summary(microbenchmark(
 #     expr     mean   median
 # 1   arma 1.767471 1.747152
 # 2   rcpp 2.262741 2.273301
-# 3 r_code 4.944931 4.780251
-
-
+# 3 rcode 4.944931 4.780251
 
 
 
@@ -376,9 +374,9 @@ summary(microbenchmark(
 ## de-mean the columns of a matrix
 
 summary(microbenchmark(
-  demean_mat=demean_mat(mat_rix),
-  demean_arma=demean_arma(mat_rix),
-  apply=(apply(mat_rix, 2, mean)),
+  demean_mat=demean_mat(matrixv),
+  demean_arma=demean_arma(matrixv),
+  apply=(apply(matrixv, 2, mean)),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -392,15 +390,15 @@ summary(microbenchmark(
 
 ## bind the columns of two matrices
 
-mat_rix1 <- matrix(runif(1e6), nc=1e3)
-mat_rix2 <- matrix(runif(1e6), nc=1e3)
-# cbind(mat_rix1, mat_rix2)
-all.equal(cbind_rcpp(mat_rix1, mat_rix2), cbind_arma(mat_rix1, mat_rix2))
+matrixv1 <- matrix(runif(1e6), nc=1e3)
+matrixv2 <- matrix(runif(1e6), nc=1e3)
+# cbind(matrixv1, matrixv2)
+all.equal(cbind_rcpp(matrixv1, matrixv2), cbind_arma(matrixv1, matrixv2))
 
 summary(microbenchmark(
-  cbind_arma=cbind_arma(mat_rix1, mat_rix2),
-  cbind_rcpp=cbind_rcpp(mat_rix1, mat_rix2),
-  cbind=cbind(mat_rix1, mat_rix2),
+  cbind_arma=cbind_arma(matrixv1, matrixv2),
+  cbind_rcpp=cbind_rcpp(matrixv1, matrixv2),
+  cbind=cbind(matrixv1, matrixv2),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -412,7 +410,16 @@ summary(microbenchmark(
 # 3      cbind  5.829133  4.906573
 
 
-## calculate the inner (dot) product of two vectors.
+
+## Calculate the outer product of two vectors.
+
+summary(microbenchmark(
+  Rcpp=outer_vec(bar, bar),
+  Rcode=outer(bar, bar),
+  times=10))[, c(1, 4, 5)]  # end microbenchmark summary
+
+
+## Calculate the inner (dot) product of two vectors.
 
 vec1 <- runif(1e5)
 vec2 <- runif(1e5)
@@ -422,89 +429,89 @@ vec1 %*% vec2
 
 summary(microbenchmark(
   vec_prod=vec_prod(vec1, vec2),
-  r_code=(vec1 %*% vec2),
+  rcode=(vec1 %*% vec2),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
 # vec_prod() is several times faster than %*%, especially for longer vectors.
 #       expr     mean   median
 # 1   vec_prod 110.7067 110.4530
-# 2   r_code 585.5127 591.3575
+# 2   rcode 585.5127 591.3575
 
 
-## calculate the product of a matrix times a vector.
+## Calculate the product of a matrix times a vector.
 
-mat_rix <- matrix(runif(1e7), nc=1e5)
+matrixv <- matrix(runif(1e7), nc=1e5)
 vec1 <- runif(1e5)
-all.equal(mat_rix %*% vec1, mat_vec_prod(vec_tor=vec1, mat_rix=mat_rix))
+all.equal(matrixv %*% vec1, mat_vec_prod(vectorv=vec1, matrixv=matrixv))
 
 summary(microbenchmark(
-  mat_vec_prod=mat_vec_prod(vec_tor=vec1, mat_rix=mat_rix),
-  r_code=(mat_rix %*% vec1),
+  mat_vec_prod=mat_vec_prod(vectorv=vec1, matrixv=matrixv),
+  rcode=(matrixv %*% vec1),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
 # mat_vec_prod() is 3 times faster than %*%, for matrix with 100,000 columns.
 #        expr      mean    median
 # 1 mat_vec_prod  7.299448  7.180375
-# 2    r_code 21.133891 21.048730
+# 2    rcode 21.133891 21.048730
 
 
 vec2 <- runif(1e2)
-all.equal(drop(vec2 %*% (mat_rix %*% vec1)), mat_2vec_prod(vec2, mat_rix, vec1))
+all.equal(drop(vec2 %*% (matrixv %*% vec1)), mat_2vec_prod(vec2, matrixv, vec1))
 
 summary(microbenchmark(
-  mat_2vec_prod=mat_2vec_prod(vec2, mat_rix, vec1),
-  r_code=(vec2 %*% (mat_rix %*% vec1)),
+  mat_2vec_prod=mat_2vec_prod(vec2, matrixv, vec1),
+  rcode=(vec2 %*% (matrixv %*% vec1)),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
 # mat_2vec_prod() is 3 times faster than %*%, for matrix with 100,000 columns.
 #            expr      mean    median
 # 1   mat_2vec_prod  7.138696  7.071877
-# 2        r_code 20.826379 20.678520
+# 2        rcode 20.826379 20.678520
 
 
-## calculate product of matrix and vectors
+## Calculate product of matrix and vectors
 # multiply the matrix elements *by* the vector elements
 
 # Multiply matrix columns
-mat_rix <- matrix(round(runif(25e4), 2), nc=5e2)
-vec_tor <- round(runif(5e2), 2)
-prod_uct <- vec_tor*mat_rix
-mult_vec_mat(vec_tor, mat_rix)
-all.equal(prod_uct, mat_rix)
+matrixv <- matrix(round(runif(25e4), 2), nc=5e2)
+vectorv <- round(runif(5e2), 2)
+prod_uct <- vectorv*matrixv
+mult_vec_mat(vectorv, matrixv)
+all.equal(prod_uct, matrixv)
 summary(microbenchmark(
-    r_cpp=mult_vec_mat(vec_tor, mat_rix),
-    r_code=vec_tor*mat_rix,
+    r_cpp=mult_vec_mat(vectorv, matrixv),
+    rcode=vectorv*matrixv,
     times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # Multiply matrix rows
-mat_rix <- matrix(round(runif(25e4), 2), nc=5e2)
-vec_tor <- round(runif(5e2), 2)
-prod_uct <- t(vec_tor*t(mat_rix))
-mult_vec_mat(vec_tor, mat_rix, by_col=FALSE)
-all.equal(prod_uct, mat_rix)
+matrixv <- matrix(round(runif(25e4), 2), nc=5e2)
+vectorv <- round(runif(5e2), 2)
+prod_uct <- t(vectorv*t(matrixv))
+mult_vec_mat(vectorv, matrixv, by_col=FALSE)
+all.equal(prod_uct, matrixv)
 library(microbenchmark)
 summary(microbenchmark(
-    r_cpp=mult_vec_mat(vec_tor, mat_rix, by_col=FALSE),
-    r_code=t(vec_tor*t(mat_rix)),
+    r_cpp=mult_vec_mat(vectorv, matrixv, by_col=FALSE),
+    rcode=t(vectorv*t(matrixv)),
     times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # multiply the matrix elements *by* the elements of two vectors
 
-mat_rix <- matrix(runif(1e7), nc=1e5)
-vec1 <- runif(NCOL(mat_rix))
-vec2 <- runif(NROW(mat_rix))
-prod_uct <- t(t(vec2*mat_rix)*vec1)
-mult_vec2_mat_copy(vec2, mat_rix, vec1)
-all.equal(mat_rix, prod_uct)
+matrixv <- matrix(runif(1e7), nc=1e5)
+vec1 <- runif(NCOL(matrixv))
+vec2 <- runif(NROW(matrixv))
+prod_uct <- t(t(vec2*matrixv)*vec1)
+mult_vec2_mat_copy(vec2, matrixv, vec1)
+all.equal(matrixv, prod_uct)
 
 summary(microbenchmark(
-  mult_vec2_mat_copy=mult_vec2_mat_copy(vec2, mat_rix, vec1),
-  mult_vec2_mat_rcpp=mult_vec2_mat_rcpp(vec2, mat_rix, vec1),
-  mult_vec2_mat_rcpp2=mult_vec2_mat_rcpp2(vec2, mat_rix, vec1),
-  r_code=(t(t(vec2*mat_rix)*vec1)),
+  mult_vec2_mat_copy=mult_vec2_mat_copy(vec2, matrixv, vec1),
+  mult_vec2_mat_rcpp=mult_vec2_mat_rcpp(vec2, matrixv, vec1),
+  mult_vec2_mat_rcpp2=mult_vec2_mat_rcpp2(vec2, matrixv, vec1),
+  rcode=(t(t(vec2*matrixv)*vec1)),
   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -514,22 +521,22 @@ summary(microbenchmark(
 # 1 mult_vec2_mat_copy  73.65367  73.50842
 # 2  mult_vec2_mat_rcpp 101.39165 100.44875
 # 3 mult_vec2_mat_rcpp2 612.48159 612.98899
-# 4            r_code 182.74140 174.80584
+# 4            rcode 182.74140 174.80584
 
 
 
 ## matrix inversion correlation PCA
 
 # create random matrix
-mat_rix <- matrix(rnorm(500), nc=5)
+matrixv <- matrix(rnorm(500), nc=5)
 # calculate correlation matrix
-matrix_cor <- cor(mat_rix)
-matrix_cor <- get_cor(mat_rix)
+matrix_cor <- cor(matrixv)
+matrix_cor <- get_cor(matrixv)
 
 library(microbenchmark)
 summary(microbenchmark(
-  cor_mat=cor(mat_rix),
-  cor_arma=get_cor(mat_rix),
+  cor_mat=cor(matrixv),
+  cor_arma=get_cor(matrixv),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -540,15 +547,15 @@ summary(microbenchmark(
 
 
 # calculate eigen matrix
-eigen_r <- eigen(cor(mat_rix))
-ei_gen <- calc_eigen(mat_rix)
+eigen_r <- eigen(cor(matrixv))
+ei_gen <- calc_eigen(matrixv)
 all.equal(eigen_r$values, sort(drop(ei_gen$values), decreasing=TRUE))
 all.equal(abs(eigen_r$vectors), 
           abs(ei_gen$vectors)[, match(round(abs(eigen_r$vectors[1, ]), 3), round(abs(ei_gen$vectors[1, ]), 3))])
 
 summary(microbenchmark(
-  eigen_r=eigen(cor(mat_rix)),
-  eigen_arma=calc_eigen(mat_rix),
+  eigen_r=eigen(cor(matrixv)),
+  eigen_arma=calc_eigen(matrixv),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -558,16 +565,16 @@ summary(microbenchmark(
 # 2 eigen_arma  39.67553  23.9480
 
 
-# de-mean (center) and scale the mat_rix columns
-mat_rix <- t(t(mat_rix) - colMeans(mat_rix))
-mat_rix <- t(t(mat_rix) / sqrt(colSums(mat_rix^2)/(NROW(mat_rix)-1)))
+# de-mean (center) and scale the matrixv columns
+matrixv <- t(t(matrixv) - colMeans(matrixv))
+matrixv <- t(t(matrixv) / sqrt(colSums(matrixv^2)/(NROW(matrixv)-1)))
 # calculate PCA
-pc_a <- get_pca(mat_rix)
+pc_a <- get_pca(matrixv)
 
 summary(microbenchmark(
-  eigen_r=eigen(cor(mat_rix)),
-  eigen_arma=calc_eigen(mat_rix),
-  pc_a=get_pca(mat_rix),
+  eigen_r=eigen(cor(matrixv)),
+  eigen_arma=calc_eigen(matrixv),
+  pc_a=get_pca(matrixv),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -580,19 +587,19 @@ summary(microbenchmark(
 
 
 # create random positive semi-definite matrix
-mat_rix <- matrix(runif(25), nc=5)
-mat_rix <- t(mat_rix) %*% mat_rix
+matrixv <- matrix(runif(25), nc=5)
+matrixv <- t(matrixv) %*% matrixv
 # perform matrix inversion
-matrix_inv <- solve(mat_rix)
-matrix_inv <- invspd_arma(mat_rix)
-matrix_inv <- invspd_rcpp(mat_rix)
+matrix_inv <- solve(matrixv)
+matrix_inv <- invspd_arma(matrixv)
+matrix_inv <- invspd_rcpp(matrixv)
 
 library(microbenchmark)
 summary(microbenchmark(
-  inv_mat=inv_mat(mat_rix),
-  invspd_arma=invspd_arma(mat_rix),
-  invspd_rcpp=invspd_rcpp(mat_rix),
-  solve=solve(mat_rix),
+  inv_mat=inv_mat(matrixv),
+  invspd_arma=invspd_arma(matrixv),
+  invspd_rcpp=invspd_rcpp(matrixv),
+  solve=solve(matrixv),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -668,7 +675,7 @@ summary(microbenchmark(
 # 3      lm 1070.44432 1036.8345
 
 
-## calculate Z-scores from rolling multivariate regression using RcppArmadillo
+## Calculate Z-scores from rolling multivariate regression using RcppArmadillo
 
 # calculate Z-scores from rolling time series regression using RcppArmadillo
 look_back <- 11
@@ -725,22 +732,22 @@ summary(microbenchmark(
 ## split-apply-combine procedure
 
 # Create synthetic data
-vec_tor <- sample(1:5, 1e3, replace=TRUE)
+vectorv <- sample(1:5, 1e3, replace=TRUE)
 fac_tor <- sample(1:5, 1e3, replace=TRUE)
-mat_rix <- matrix(runif(2e3), nc=2)
-mat_rix <- cbind(vec_tor, mat_rix)
+matrixv <- matrix(runif(2e3), nc=2)
+matrixv <- cbind(vectorv, matrixv)
 
 # The function tapply_arma() performs aggregations over a vector using a factor.
 # It produces the same result as the R code: 
-#   tapply(X=vec_tor, INDEX=fac_tor, FUN=NROW)
+#   tapply(X=vectorv, INDEX=fac_tor, FUN=NROW)
 
-tapply_arma(vec_tor, fac_tor)
-tapply(X=vec_tor, INDEX=fac_tor, FUN=NROW)
-all.equal(drop(tapply_arma(vec_tor, fac_tor)), as.numeric(tapply(X=vec_tor, INDEX=fac_tor, FUN=NROW)))
+tapply_arma(vectorv, fac_tor)
+tapply(X=vectorv, INDEX=fac_tor, FUN=NROW)
+all.equal(drop(tapply_arma(vectorv, fac_tor)), as.numeric(tapply(X=vectorv, INDEX=fac_tor, FUN=NROW)))
 
 summary(microbenchmark(
-  tapply_arma=tapply_arma(vec_tor, fac_tor),
-  tapply=tapply(X=vec_tor, INDEX=fac_tor, FUN=NROW),
+  tapply_arma=tapply_arma(vectorv, fac_tor),
+  tapply=tapply(X=vectorv, INDEX=fac_tor, FUN=NROW),
   times=100))[, c(1, 4, 5)]  # end microbenchmark summary
 
 # microbenchmark shows: 
@@ -755,21 +762,21 @@ summary(microbenchmark(
 # The function apply_agg() performs aggregations over a matrix using its
 # first column as a factor.
 # It produces the same result as the R code: 
-#     sapply(X=unique(mat_rix[, 1]), FUN=function(mat_rix[, -1]))
+#     sapply(X=unique(matrixv[, 1]), FUN=function(matrixv[, -1]))
 
-tapply(X=mat_rix[, 2], INDEX=mat_rix[, 1], FUN=mean)
+tapply(X=matrixv[, 2], INDEX=matrixv[, 1], FUN=mean)
 
-all.equal(sort(apply_agg(mat_rix)), 
-          sort(sapply(X=unique(mat_rix[, 1]), FUN=function(x) {
-            foo <- mat_rix[which(mat_rix[, 1] == x), -1,  drop=FALSE]
+all.equal(sort(apply_agg(matrixv)), 
+          sort(sapply(X=unique(matrixv[, 1]), FUN=function(x) {
+            foo <- matrixv[which(matrixv[, 1] == x), -1,  drop=FALSE]
             sum(apply(foo, 1, prod))
             # sum(foo)
           })))
 
 summary(microbenchmark(
-  apply_agg=apply_agg(mat_rix),
-  sapply=sapply(X=unique(mat_rix[, 1]), FUN=function(x) {
-    foo <- mat_rix[which(mat_rix[, 1] == x), -1,  drop=FALSE]
+  apply_agg=apply_agg(matrixv),
+  sapply=sapply(X=unique(matrixv[, 1]), FUN=function(x) {
+    foo <- matrixv[which(matrixv[, 1] == x), -1,  drop=FALSE]
     sum(apply(foo, 1, prod))
     # sum(foo)
   }),

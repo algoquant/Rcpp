@@ -5,6 +5,10 @@
 
 // Compile this file in R by running this command:
 // Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_dots.cpp")
+// Run in R:
+// paramv <- list(first=1, second=2, third="blah")
+// back_test(paramv)
+
 
 // Compiler instructions
 // #include <Rcpp.h>
@@ -22,14 +26,14 @@ using namespace std;
 
 // calc_weights is the worker function 
 // calc_weights is not exported to R
-void calc_weights(Rcpp::List param_s) {
-  // if (!param_s.inherits("lm")) stop("Input must be a linear model");
-  int first = param_s["first"];
-  int second = param_s["second"];
-  std::string third = param_s["third"];
+void calc_weights(Rcpp::List paramv) {
+  // if (!paramv.inherits("lm")) stop("Input must be a linear model");
+  int first = paramv["first"];
+  int second = paramv["second"];
+  std::string third = paramv["third"];
   
-  // NumericVector resid = as<NumericVector>(param_s["first"]);
-  // NumericVector fitted = as<NumericVector>(param_s["second"]);
+  // NumericVector resid = as<NumericVector>(paramv["first"]);
+  // NumericVector fitted = as<NumericVector>(paramv["second"]);
   std::cout << "Parameters passed into calc_weights" << endl;
   std::cout << "first = " << first << endl;
   std::cout << "second = " << second << endl;
@@ -42,13 +46,13 @@ void calc_weights(Rcpp::List param_s) {
 // back_test is exported to R
 //' @export
 // [[Rcpp::export]]
-void back_test(Rcpp::List param_s) {
+void back_test(Rcpp::List paramv) {
   
   // Perform back_test loop
   for (arma::uword it=1; it < 3; it++) {
     std::cout << "Loop number: " << it << endl;
     // Calculate portfolio weights
-    calc_weights(param_s);
+    calc_weights(paramv);
   }  // end for
   
 }  // end back_test
@@ -79,6 +83,7 @@ void back_test(Rcpp::List param_s) {
 
 
 // The Dots object is not recognized by compiler
+// https://stackoverflow.com/questions/24590946/passing-many-argumentes-by-ellipsis-in-rcpp
 // List force_dots(const Dots& dots) {
 //   List out(n);
 //   for(int i = 0; i < n; i++){

@@ -12,6 +12,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <numeric>
 // #include <assert.h>
 
 // A function that adds two numbers.
