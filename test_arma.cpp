@@ -176,7 +176,7 @@ arma::vec calc_quant(const arma::mat& returns,
 arma::vec calc_top_bottom(const arma::vec& returns, 
                           const double& probv = 0.1) {
   
-  // arma::uword num_elem = returns.n_elem;
+  // arma::uword ndataem = returns.n_elem;
   arma::vec weights = zeros(returns.n_elem);
   arma::vec probs = {probv, 1-probv};
   arma::vec quantiles = arma::quantile(returns, probs);

@@ -9,7 +9,7 @@
 library(HighFreq)
 
 # Compile Rcpp functions
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/test_temp.cpp")
+Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_temp.cpp")
 
 
 
@@ -155,7 +155,7 @@ rank_s <- sor_t[sor_t]
 ### Scripts for calling RcppArmadillo functions for manipulating vectors and matrices
 
 # Compile Rcpp functions
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/armadillo_functions.cpp")
+Rcpp::sourceCpp(file="Users/jerzy/Develop/Rcpp/armadillo_functions.cpp")
 
 
 ## sum_na() sum_if() conditional sums Rcpp functions
@@ -317,7 +317,7 @@ which_col(mat_rix=mat_rix, 0.5)
 
 ## Calculate the rolling sum over a vector
 
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_sum.cpp")
+Rcpp::sourceCpp(file="Users/jerzy/Develop/Rcpp/roll_sum.cpp")
 
 vec_tor <- rnorm(1e6)
 all.equal(HighFreq::roll_sum(vec_tor, look_back=11)[-(1:10)],
@@ -349,7 +349,7 @@ summary(microbenchmark(
 
 ## Calculate the rolling weighted sum over a vector
 
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_wsum.cpp")
+Rcpp::sourceCpp(file="Users/jerzy/Develop/Rcpp/roll_wsum.cpp")
 
 
 vec_tor <- as.numeric(rutils::env_etf$VTI[, 6])
@@ -385,7 +385,7 @@ summary(microbenchmark(
 
 ## Calculate the lag of a vector
 
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_var.cpp")
+Rcpp::sourceCpp(file="Users/jerzy/Develop/Rcpp/roll_var.cpp")
 
 vec_tor <- rnorm(1e6)
 
@@ -435,7 +435,7 @@ summary(microbenchmark(
 
 ## Calculate the rolling variance over a vector
 
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_var.cpp")
+Rcpp::sourceCpp(file="Users/jerzy/Develop/Rcpp/roll_var.cpp")
 
 re_turns <- rnorm(1e3)
 

@@ -7,7 +7,7 @@
 ### Scripts for ad-hoc tests
 
 # Compile Rcpp functions
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/test_arma.cpp")
+Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_arma.cpp")
 
 
 
@@ -36,7 +36,7 @@ rank_s <- sor_t[sor_t]
 ### Scripts for calling RcppArmadillo functions for manipulating vectors and matrices
 
 # Compile Rcpp functions
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/armadillo_functions.cpp")
+Rcpp::sourceCpp(file="Users/jerzy/Develop/Rcpp/armadillo_functions.cpp")
 
 
 ## sum_na() sum_if() conditional sums Rcpp functions
@@ -198,7 +198,7 @@ which_col(matrixv=matrixv, 0.5)
 
 ## Calculate the rolling sum over a vector
 
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_sum.cpp")
+Rcpp::sourceCpp(file="Users/jerzy/Develop/Rcpp/roll_sum.cpp")
 
 vectorv <- rnorm(1e6)
 all.equal(HighFreq::roll_sum(vectorv, look_back=11)[-(1:10)],
@@ -230,7 +230,7 @@ summary(microbenchmark(
 
 ## Calculate the rolling weighted sum over a vector
 
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_wsum.cpp")
+Rcpp::sourceCpp(file="Users/jerzy/Develop/Rcpp/roll_wsum.cpp")
 
 
 vectorv <- as.numeric(rutils::env_etf$VTI[, 6])
@@ -266,7 +266,7 @@ summary(microbenchmark(
 
 ## Calculate the lag of a vector
 
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_var.cpp")
+Rcpp::sourceCpp(file="Users/jerzy/Develop/Rcpp/roll_var.cpp")
 
 vectorv <- rnorm(1e6)
 
@@ -316,7 +316,7 @@ summary(microbenchmark(
 
 ## Calculate the rolling variance over a vector
 
-Rcpp::sourceCpp(file="C:/Develop/R/Rcpp/roll_var.cpp")
+Rcpp::sourceCpp(file="Users/jerzy/Develop/Rcpp/roll_var.cpp")
 
 vectorv <- rnorm(1e6)
 all.equal(roll_var_rcpp(vectorv, look_back=21),

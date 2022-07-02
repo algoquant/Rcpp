@@ -3,7 +3,7 @@
 ////////////////////////////
 
 // Compile this C++ file using MinGW:
-// C:\Rtools\mingw_64\bin\g++ -std=c++11 C:\Develop\R\Rcpp\test_stl_functor.cpp -o test
+// C:\Rtools\mingw_64\bin\g++ -std=c++11 C:\Develop\R\Rcpp\fun_stl_functor.cpp -o test
 
 
 // Read more:
@@ -77,7 +77,7 @@ public:
 int main() {
   
 	// int input;
-	size_t num_el = 7;
+	size_t ndata = 7;
   // std::string stri_ng;
   // std::vector<double> vectorv;
   // std::vector<int> vectorv = {7, 5, 16, 8, 16, 8};
@@ -102,29 +102,29 @@ int main() {
   // assert(x == (ratio*va_r));
   std::cout << "mult_it = " << x << std::endl;
   
-  std::vector<double> vectorv(num_el);
+  std::vector<double> vectorv(ndata);
   // Fill vectorv with a sequence of consecutive integers.
   // The function std::iota() is simiar to the R function seq_along()
   std::iota(vectorv.begin(), vectorv.end(), 0);
   // Fill vectorv with an integers using pointer
-  // for (auto &ele_ment: vectorv) {
-  //   ele_ment = 4;
+  // for (auto &elemv: vectorv) {
+  //   elemv = 4;
   // }  // end for
   // Old-style loop
-  // for (auto ele_ment = 0; ele_ment < num_el; ele_ment++) {
-  //   vectorv[ele_ment] = ele_ment;
+  // for (auto elemv = 0; elemv < ndata; elemv++) {
+  //   vectorv[elemv] = elemv;
   // }  // end for
   std::cout << "These are the vector elements before mult:" << std::endl;
-  for (auto ele_ment: vectorv) {
-    std::cout << ele_ment << " ";
+  for (auto elemv: vectorv) {
+    std::cout << elemv << " ";
   }  // end for
   std::cout << std::endl;
-  // std::iota(vectorv.begin(), vectorv.begin() + num_el, 0);
-  std::vector<double> output(num_el);
+  // std::iota(vectorv.begin(), vectorv.begin() + ndata, 0);
+  std::vector<double> output(ndata);
   std::transform(vectorv.begin(), vectorv.end(), output.begin(), mult_it);
   std::cout << "These are the vector elements after mult:" << std::endl;
-  for (auto ele_ment: output) {
-    std::cout << ele_ment << " ";
+  for (auto elemv: output) {
+    std::cout << elemv << " ";
   }  // end for
   std::cout << std::endl;
   

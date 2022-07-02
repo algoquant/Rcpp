@@ -36,30 +36,6 @@ void which_method(const std::string& calc_method = "yang_zhang") {
 
 
 
-// The function countfun() counts the number of times it was called.
-// It creates a static integer variable countv, and advances it every 
-// time it is called.
-// countv is static so it remains alive outside the scope of countfun(),
-// between calls to countfun().
-// The function countfun() can also be defined as a static function as 
-// an illustration - it doesn't have to be static.
-// A static function in C is only visible to those functions in the same source file. 
-// Making a function static limits its scope to functions from the same source file. 
-// https://www.cprogramming.com/tutorial/statickeyword.html
-// [[Rcpp::export]]
-void countfun(int initv=1) {
-  
-  // countv is static so it's initialized only once the first time countfun() is called.
-  static int countv = initv;
-  
-  countv++;
-  
-  std::cout << "The function countfun() was called " << countv << " times." << std::endl;
-  
-}  // end countfun
-
-
-
 // First sort the datav and then unsort it back to original
 //' @export
 // [[Rcpp::export]]
