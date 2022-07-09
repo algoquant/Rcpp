@@ -3,7 +3,7 @@
 ////////////////////////////
 
 // Compile this file in R by running this command:
-// Rcpp::sourceCpp(file="/Users/jerzy/Develop/HighFreq/src/util_fun.cpp")
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/util_fun.cpp")
 
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>

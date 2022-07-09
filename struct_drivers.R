@@ -4,7 +4,7 @@
 
 library(microbenchmark)
 # Compile Rcpp functions
-Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_struct.cpp")
+# Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_struct.cpp")
 
 datav <- sample(1001)
 all.equal(sort_index(datav)+1, order(datav))

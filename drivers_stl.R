@@ -1,10 +1,10 @@
 ########################
-### C++ STL driver scripts for testing functions
+### Driver scripts for testing C++ STL functions
 ########################
 
 library(microbenchmark)
 # Compile Rcpp functions
-# Rcpp::sourceCpp(file="/Users/jerzy/Develop/HighFreq/src/util_fun.cpp")
+# Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/util_fun.cpp")
 
 
 datav <- sample(1001)

@@ -6,12 +6,18 @@
 // Compile this file in R by running this command:
 // Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_rcpp_stl_functor.cpp")
 
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
 using namespace Rcpp;
+using namespace arma;
 // Use STL
 using namespace std;
 // [[Rcpp::plugins(cpp11)]]
 
+// [[Rcpp::depends(RcppArmadillo)]]
 
 // Function for multiplying a number by 2.
 // [[Rcpp::export]]
@@ -21,27 +27,29 @@ double double_it(double x) {
 
 
 // Function for multiplying a number by 2.
-double mult_two(double ratio, double x) {
-  return (ratio * x);
+// [[Rcpp::export]]
+double mult_two(double factorv, double x) {
+  return (factorv * x);
 }  // end mult_two
 
 
-// Define a functor for multiplying a number by a ratio.
+// Define a functor for multiplying a number by a factorv.
 class mult_class {
   
-  double ratio = 2.0;
+private:
+  double factorv;
   
 public:
   // Constructor
-  mult_class(double input) : ratio(input) {}
+  mult_class(double input) : factorv(input) {}
   
-  // Overloaded operator - actual function
-  double operator()(double x) {return (ratio*x);}
+  // Overloaded operator - the actual function
+  double operator()(double x) {return (factorv*x);}
   
 };  // end mult_class
 
 
-// Call function pointer.
+// Call function inside transform.
 // [[Rcpp::export]]
 std::vector<double> double_vec(std::vector<double> vectorv) {
   std::vector<double> output(vectorv.size());
@@ -52,30 +60,31 @@ std::vector<double> double_vec(std::vector<double> vectorv) {
 
 // Call functor.
 // [[Rcpp::export]]
-std::vector<double> mult_vec2(std::vector<double> vectorv, double ratio) {
+std::vector<double> mult_vec(std::vector<double> vectorv, double factorv) {
   
   // Create the instance mult_it of the functor class mult_class
-  mult_class mult_it(ratio);
+  mult_class mult_it(factorv);
   // Define output vector
   std::vector<double> output(vectorv.size());
   
   std::transform(vectorv.begin(), vectorv.end(), output.begin(), 
+                 // Call functor
                  mult_it
                    // Or pass a lambda function - similar speed
-                   // [&ratio](double x) {return (ratio*x);}
+                   // [&factorv](double x) {return (factorv*x);}
   );
   // Or simply
-  // std::transform(vectorv.begin(), vectorv.end(), output.begin(), mult_class(ratio));
+  // std::transform(vectorv.begin(), vectorv.end(), output.begin(), mult_class(factorv));
   return output;
-}  // end mult_vec2
+}  // end mult_vec
 
 
 // Call lambda function.
 // [[Rcpp::export]]
-std::vector<double> mult_vec_lambda(std::vector<double> vectorv, double ratio) {
+std::vector<double> mult_vec_lambda(std::vector<double> vectorv, double factorv) {
   std::vector<double> output(vectorv.size());
   std::transform(vectorv.begin(), vectorv.end(), output.begin(), 
-                 [&ratio](double x) {return (ratio*x);}
+                 [&factorv](double x) {return (factorv*x);}
   );
   return output;
 }  // end mult_vec_lambda
@@ -89,44 +98,28 @@ std::vector<double> mult_vec_lambda(std::vector<double> vectorv, double ratio) {
 //   return output;
 // }  // end double_vec_funcpt
 
-
 //////////////////////////////
 
-// Below is copied from:
-// https://gallery.rcpp.org/articles/passing-cpp-function-pointers-rcppxptrutils/
-
-template <typename T>
-NumericVector core_processing(T func, double l) {
-  double accum = 0;
-  for (int i = 0; i < 10; i++)
-    accum += sum(as<NumericVector>(func(3, l)));
-  return NumericVector(1, accum);
-}
-
+// Some functions below
 // [[Rcpp::export]]
-NumericVector execute_r(Function func, double l) {
-  return core_processing<Function>(func, l);
-}
-
-typedef SEXP (*ptr_func2arg)(int, double);
-
-// [[Rcpp::export]]
-NumericVector execute_cpp(SEXP func_, double l) {
-  ptr_func2arg func = *XPtr<ptr_func2arg>(func_);
-  return core_processing<ptr_func2arg>(func, l);
-}
-
-typedef double (*ptr_func1arg)(double, double);
-// [[Rcpp::export]]
-NumericVector run_cpp(SEXP func_, double ratio, NumericVector vec_) {
-  ptr_func1arg func = *XPtr<ptr_func1arg>(func_);
+arma::mat run_mean(const arma::mat tseries, double lambda) {
   
-  Rcpp::NumericVector output(vec_.size());
-  // These two lines produce C++ warnings but they compile fine anyway
-  for (int i = 0; i < output.size(); i++){
-    output[i] = func(ratio, vec_[i]);
-  }
-  // Rcpp::NumericVector output = Rcpp::NumericVector::create(1.0, 2.0, 3.0);
-  return output;
-}  // end run_cpp
+  arma::uword nrows = tseries.n_rows;
+  arma::mat means = arma::zeros<mat>(nrows, tseries.n_cols);
+  double lambda1 = 1-lambda;
+  
+  means.row(0) = tseries.row(0);
+  // Calculate means without weights
+  for (arma::uword it = 1; it < nrows; it++) {
+    // Calculate the means using the decay factor
+    means.row(it) = lambda1*tseries.row(it) + lambda*means.row(it-1);
+  }  // end for
+  
+  return means;
+  
+}  // end run_mean
+
+// The functional run_fun2() accepts a pointer to a function of two variables (numeric and vector), and executes it.
+
+
 

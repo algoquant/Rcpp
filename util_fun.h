@@ -1,5 +1,5 @@
 ////////////////////////////
-// Utility functions using Armadillo and the Standard Template Library (STL)
+// Utility functions using the Armadillo library
 ////////////////////////////
 
 // [[Rcpp::depends(RcppArmadillo)]]
@@ -14,6 +14,7 @@ using namespace arma;
 // #include <map>
 // #include <iostream>
 // [[Rcpp::plugins(cpp11)]]
+
 
 arma::vec lag_vec(const arma::vec& tseries, arma::sword lagg = 1, bool pad_zeros = true);
 

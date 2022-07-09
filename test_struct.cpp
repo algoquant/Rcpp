@@ -1,11 +1,11 @@
 ////////////////////////////
-// Functions to test C++ syntax for Structures
+// Code for testing C++ structures
 ////////////////////////////
 
-// Compile this file in R by running this command:
-// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_struct.cpp")
 // Compile this C++ file in Mac terminal using g++:
 // g++ -std=c++11 /Users/jerzy/Develop/Rcpp/test_struct.cpp -o test
+// Compile this file in R by running this command:
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/test_struct.cpp")
 
 ////////////////////////////
 // C++ Structures (struct)
@@ -22,6 +22,8 @@ struct car {
   int year;
 };
 
+
+// main Functions a car structure and store it in myCar1;
 int main() {
   // Create a car structure and store it in myCar1;
   car myCar1; 
