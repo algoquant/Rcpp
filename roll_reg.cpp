@@ -58,6 +58,37 @@ arma::uvec calc_startpoints(arma::uvec endp, arma::uword look_back) {
 }  // end calc_startpoints
 
 
+// [[Rcpp::export]]
+arma::mat calc_inv(const arma::mat& tseries,
+                   double eigen_thresh = 0.01, 
+                   arma::uword dimax = 0) {
+  
+  // Allocate SVD variables
+  arma::vec svdval;  // Singular values
+  arma::mat svdu, svdv;  // Singular matrices
+  // Calculate the SVD
+  arma::svd(svdu, svdval, svdv, tseries);
+  // Calculate the number of non-small singular values
+  arma::uword svdnum = arma::sum(svdval > eigen_thresh*arma::sum(svdval));
+  
+  if (dimax == 0) {
+    // Set dimax
+    dimax = svdnum - 1;
+  } else {
+    // Adjust dimax
+    dimax = std::min(dimax - 1, svdnum - 1);
+  }  // end if
+  
+  // Remove all small singular values
+  svdval = svdval.subvec(0, dimax);
+  svdu = svdu.cols(0, dimax);
+  svdv = svdv.cols(0, dimax);
+  
+  // Calculate the regularized inverse from the SVD decomposition
+  return svdv*arma::diagmat(1/svdval)*svdu.t();
+  
+}  // end calc_inv
+
 
 
 // Performs the same regression calculations as the
@@ -130,157 +161,191 @@ arma::vec calc_lm_vec(arma::vec response, arma::mat design) {
 
 
 ////////////////////////////////////////////////////////////
-// Define C++ enum type for the different methods for regularization,
-// calculating variance, skewness, kurtosis, covariance, regression, 
+// Define C++ enum type for different methods of regularization,
+// methodsfor calculating variance, skewness, kurtosis, covariance, regression, 
 // and matrix inverse.
-enum method {moment, least_squares, quantile, nonparametric, ranksharpe, 
-              max_sharpe, max_sharpe_median, min_var, min_varpca, rank, rankrob};
+enum methodenum {moment, least_squares, quantile, nonparametric, regular, sharpem, 
+                 maxsharpe, maxsharpemed, minvarlin, minvarquad, kellym, robustm, 
+                 sumsq, sumone, voltarget, voleqw};
 
 // Map string to C++ enum type for switch statement.
 // This is needed because Rcpp can't map C++ enum type to R variable SEXP.
-method calc_method(std::string method) {
+methodenum calc_method(std::string method) {
   if (method == "moment" || method == "m") 
-    return method::moment;
+    return methodenum::moment;
   else if (method == "least_squares" || method == "l")
-    return method::least_squares;
+    return methodenum::least_squares;
   else if (method == "quantile" || method == "q")
-    return method::quantile;
+    return methodenum::quantile;
   else if (method == "nonparametric" || method == "n")
-    return method::nonparametric;
-  else if (method == "ranksharpe")
-    return method::ranksharpe;
-  else if (method == "max_sharpe")
-    return method::max_sharpe;
-  else if (method == "max_sharpe_median")
-    return method::max_sharpe_median;
-  else if (method == "min_var")
-    return method::min_var;
-  else if (method == "min_varpca")
-    return method::min_varpca;
-  else if (method == "rank")
-    return method::rank;
-  else if (method == "rankrob")
-    return method::rankrob;
+    return methodenum::nonparametric;
+  else if (method == "regular")
+    return methodenum::regular;
+  else if (method == "sharpem")
+    return methodenum::sharpem;
+  else if (method == "maxsharpe")
+    return methodenum::maxsharpe;
+  else if (method == "maxsharpemed")
+    return methodenum::maxsharpemed;
+  else if (method == "minvarlin")
+    return methodenum::minvarlin;
+  else if (method == "minvarquad")
+    return methodenum::minvarquad;
+  else if (method == "kellym")
+    return methodenum::kellym;
+  else if (method == "robustm")
+    return methodenum::robustm;
+  else if (method == "sumsq")
+    return methodenum::sumsq;
+  else if (method == "voltarget")
+    return methodenum::voltarget;
   else 
-    return method::moment;
+    return methodenum::moment;
 }  // end calc_method
-
 
 
 
 ////////////////////////////////////////////////////////////
 //' Perform multivariate regression using different methods, and return a vector
-//' of regression coefficients, t-values, and the last residual z-score.
+//' of regression coefficients, their t-values, and the last residual z-score.
 //' 
 //' @param \code{response} A single-column \emph{time series} or a \emph{vector}
 //'   of response data.
 //' 
-//' @param \code{design} A \emph{time series} or a \emph{matrix} of design data
-//'   (predictor or explanatory data).
+//' @param \code{predictor} A \emph{time series} or a \emph{matrix} of predictor
+//'   data.
 //' 
-//' @param \code{method} A \emph{string} specifying the type of regression model
-//'   (see Details).  (The default is \code{method = "least_squares"})
+//' @param \code{intercept} A \emph{Boolean} specifying whether an intercept
+//'   term should be added to the predictor (the default is \code{intercept =
+//'   TRUE}).
+//'
+//' @param \code{method} A \emph{character string} specifying the type of the
+//'   regression model the default is \code{method = "least_squares"} - see
+//'   Details).
 //'   
 //' @param \code{eigen_thresh} A \emph{numeric} threshold level for discarding
-//'   small eigenvalues in order to regularize the matrix inverse.  (The default
-//'   is \code{0.001})
+//'   small singular values in order to regularize the inverse of the
+//'   \code{predictor} matrix (the default is \code{1e-5}).
 //'   
-//' @param \code{eigen_max} An \emph{integer} equal to the number of
-//'   eigenvectors used for calculating the regularized inverse of the
-//'   covariance \emph{matrix} (the default is the number of columns of
-//'   \code{returns}).
+//' @param \code{dimax} An \emph{integer} equal to the number of singular
+//'   values used for calculating the regularized inverse of the \code{predictor}
+//'   matrix (the default is \code{0} - equivalent to \code{dimax} equal to
+//'   the number of columns of \code{predictor}).
 //'   
-//' @param \code{confi_level} The confidence level for calculating the
-//'   quantiles. (the default is \code{confi_level = 0.75}).
+//' @param \code{confl} The confidence level for calculating the
+//'   quantiles of returns (the default is \code{confl = 0.75}).
 //'
 //' @param \code{alpha} The shrinkage intensity between \code{0} and \code{1}.
 //'   (the default is \code{0}).
 //' 
-//' @return A vector of regression coefficients, t-values, and the last
-//'   residual z-score.
-//'   For example, if the design matrix has \code{2} columns of data, then
-//'   \code{calc_reg()} returns a vector with \code{7} elements: \code{3}
-//'   regression coefficients (including the intercept coefficient), \code{3}
-//'   corresponding t-values, and \code{1} z-score.
+//' @return A single-row matrix with
+//' A vector with the regression coefficients, their t-values, and the
+//'   last residual z-score.
 //'
-//' @details 
+//' @details
 //'   The function \code{calc_reg()} performs multivariate regression using
 //'   different methods, and returns a vector of regression coefficients, their
 //'   t-values, and the last residual z-score.
-//' 
+//'
 //'   If \code{method = "least_squares"} (the default) then it performs the
 //'   standard least squares regression, the same as the function
-//'   \code{calc_reg()}, and the function \code{lm()} from package \emph{stats}.
-//'   It uses \code{RcppArmadillo} \code{C++} code so it's several times faster
-//'   than \code{lm()}.
+//'   \code{calc_lm()}, and the function \code{lm()} from the \code{R} package
+//'   \emph{stats}.
+//'   But it uses \code{RcppArmadillo} \code{C++} code so it's several times
+//'   faster than \code{lm()}.
 //'
+//'   If \code{method = "regular"} then it performs shrinkage regression.  It
+//'   calculates the regularized inverse of the \code{predictor} matrix from its
+//'   singular value decomposition.  It performs regularization by selecting
+//'   only the largest singular values equal in number to \code{dimax}.
+//'   
 //'   If \code{method = "quantile"} then it performs quantile regression (not
 //'   implemented yet).
-//'
-//'   \code{calc_weights()} applies dimension regularization to calculate the
-//'   inverse of the covariance \emph{matrix} of returns from its eigen
-//'   decomposition, using the function \code{arma::eig_sym()}.
-//'   
-//'   In addition, it applies shrinkage to the \emph{vector} of mean column
-//'   returns, by shrinking it to its common mean value.
-//'   The shrinkage intensity \code{alpha} determines the amount of shrinkage 
-//'   that is applied, with \code{alpha = 0} representing no shrinkage (with 
-//'   the estimator of mean returns equal to the means of the columns of 
-//'   \code{returns}), and \code{alpha = 1} representing complete shrinkage 
-//'   (with the estimator of mean returns equal to the single mean of all the
-//'   columns of \code{returns})
 //' 
+//'   If \code{intercept = TRUE} then an extra intercept column (unit column) is
+//'   added to the predictor matrix (the default is \code{intercept = FALSE}).
+//'   
+//'   The length of the return vector depends on the number of columns of the
+//'   \code{predictor} matrix (including the intercept column, if it's added).
+//'   The length of the return vector is equal to the number of regression
+//'   coefficients, plus their t-values, plus the z-score.
+//'   The number of regression coefficients is equal to the number of columns of
+//'   the \code{predictor} matrix (including the intercept column, if it's
+//'   added).
+//'   The number of t-values is equal to the number of coefficients.
+//' 
+//'   For example, if the number of columns of the \code{predictor} matrix is
+//'   equal to \code{n}, and if \code{intercept = TRUE} (the default), then
+//'   \code{calc_reg()} returns a vector with \code{2n+3} elements: \code{n+1}
+//'   regression coefficients (including the intercept coefficient), \code{n+1}
+//'   corresponding t-values, and \code{1} z-score value.
+//'
+//'   If \code{intercept = FALSE}, then \code{calc_reg()} returns a vector with
+//'   \code{2n+1} elements: \code{n} regression coefficients (without the
+//'   intercept coefficient), \code{n} corresponding t-values, and \code{1}
+//'   z-score value.
+//'   
 //' @examples
 //' \dontrun{
 //' # Calculate historical returns
-//' returns <- na.omit(rutils::etfenv$returns[, c("IEF", "VTI", "XLF")])
-//' # Response equals IEF returns
+//' returns <- na.omit(rutils::etfenv$returns[, c("XLF", "VTI", "IEF")])
+//' # Response equals XLF returns
 //' response <- returns[, 1]
-//' # Design matrix equals VTI and XLF returns
-//' design <- returns[, -1]
+//' # Predictor matrix equals VTI and IEF returns
+//' predictor <- returns[, -1]
 //' # Perform multivariate regression using lm()
-//' reg_model <- lm(response ~ design)
-//' sum_mary <- summary(reg_model)
-//' coeff <- sum_mary$coefficients
+//' lmod <- lm(response ~ predictor)
+//' lmodsum <- summary(lmod)
+//' coeff <- lmodsum$coefficients
 //' # Perform multivariate regression using calc_reg()
-//' reg_arma <- drop(HighFreq::calc_reg(response=response, design=design))
+//' reg_arma <- drop(HighFreq::calc_reg(response=response, predictor=predictor))
 //' # Compare the outputs of both functions
-//' all.equal(reg_arma[1:(2*(1+NCOL(design)))], 
+//' all.equal(reg_arma[1:(2*(1+NCOL(predictor)))], 
 //'   c(coeff[, "Estimate"], coeff[, "t value"]), check.attributes=FALSE)
 //' # Compare the speed of RcppArmadillo with R code
 //' library(microbenchmark)
 //' summary(microbenchmark(
-//'   Rcpp=HighFreq::calc_reg(response=response, design=design),
-//'   Rcode=lm(response ~ design),
+//'   Rcpp=HighFreq::calc_reg(response=response, predictor=predictor),
+//'   Rcode=lm(response ~ predictor),
 //'   times=10))[, c(1, 4, 5)]  # end microbenchmark summary
 //' }
 //' 
 //' @export
 // [[Rcpp::export]]
-arma::colvec calc_reg(arma::vec response, 
-                      arma::mat design,
-                      std::string method = "least_squares",
-                      double eigen_thresh = 0.001,
-                      int eigen_max = 0,
-                      double confi_level = 0.1,
-                      double alpha = 0.0) {
+arma::mat calc_reg(const arma::mat& response, 
+                   const arma::mat& predictor,
+                   bool intercept = true,
+                   std::string method = "least_squares",
+                   double eigen_thresh = 1e-5, // Threshold level for discarding small singular values
+                   arma::uword dimax = 0, // Regularization intensity
+                   double confl = 0.1, // Confidence level for calculating the quantiles of returns
+                   double alpha = 0.0) {
   
-  // Add column for intercept to explanatory matrix
-  int nrows = design.n_rows;
-  arma::mat designp = join_rows(ones(nrows), design);
-  int ncols = designp.n_cols;
-  int deg_free = (nrows - ncols);
-  arma::colvec coeff(ncols, fill::zeros);
-  arma::colvec reg_data(2*ncols+1, fill::zeros);
+  // Add column for intercept to predictor matrix
+  arma::uword nrows = predictor.n_rows;
+  arma::mat predictori = predictor;
+  if (intercept)
+    predictori = join_rows(ones(nrows), predictor);
   
-  // Switch for the different methods for weights
+  arma::uword ncols = predictori.n_cols;
+  arma::uword deg_free = (nrows - ncols);
+  arma::vec coeff;
+  arma::vec tvals;
+  arma::mat reg_data = arma::zeros<mat>(2*ncols+1, 1);
+  
+  // Apply different calculation methods for weights
   switch(calc_method(method)) {
-  case method::least_squares: {
-    // Calculate alpha and beta coefficients for the model response ~ design
-    coeff = arma::solve(designp, response);
+  case methodenum::least_squares: {
+    // Calculate regression coefficients for the model response ~ predictor
+    coeff = arma::solve(predictori, response);
     break;
   }  // end least_squares
-  case method::quantile: {
+  case methodenum::regular: {
+    // Calculate shrinkage regression coefficients
+    coeff = calc_inv(predictori, eigen_thresh, dimax)*response;
+    break;
+  }  // end regular
+  case methodenum::quantile: {
     // Not implemented yet
     break;
   }  // end quantile
@@ -291,27 +356,27 @@ arma::colvec calc_reg(arma::vec response,
   }  // end switch
   
   // Calculate residuals
-  arma::colvec residuals = response - designp*coeff;
+  arma::mat residuals = response - predictori*coeff;
   
   // Calculate TSS, RSS, and ESS
   // double tot_sumsq = (nrows-1)*arma::var(response);
   double res_sumsq = arma::dot(residuals, residuals);
   // double exp_sumsq = tot_sumsq - res_sumsq;
   
-  // Calculate standard errors of beta coefficients
-  arma::colvec stderr = arma::sqrt(res_sumsq/deg_free*arma::diagvec(arma::pinv(arma::trans(designp)*designp)));
-  // Calculate t-values and p-values of beta coefficients
-  arma::colvec t_vals = coeff/stderr;
+  // Calculate standard errors of the beta coefficients
+  arma::mat stderrv = arma::sqrt(res_sumsq/deg_free*arma::diagvec(arma::pinv(arma::trans(predictori)*predictori)));
+  // Calculate t-values of the beta coefficients
+  tvals = coeff/stderrv;
   
   // Calculate z-score
-  double z_score = residuals(nrows-1)/arma::stddev(residuals);
+  mat zscore = residuals(nrows-1, 0)/arma::stddev(residuals);
   
   // Combine regression data
-  reg_data.subvec(0, ncols-1) = coeff;
-  reg_data.subvec(ncols, 2*ncols-1) = t_vals;
-  reg_data(2*ncols) = z_score;
+  reg_data.rows(0, ncols-1) = coeff;
+  reg_data.rows(ncols, 2*ncols-1) = tvals;
+  reg_data.row(2*ncols) = zscore;
   
-  return reg_data;
+  return reg_data.t();
   
 }  // end calc_reg
 

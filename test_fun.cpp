@@ -7,8 +7,8 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
-#include <Rcpp.h>
-#include "util_fun.h"
+#include <vector>
+using namespace std;
 using namespace Rcpp;
 using namespace arma;
 // Use STL
@@ -18,6 +18,179 @@ using namespace arma;
 // #include <map>
 // #include <iostream>
 // [[Rcpp::plugins(cpp11)]]
+
+
+////////////////////////////
+// Misc functions
+
+// [[Rcpp::export]]
+std::vector<double> decode_it(Rcpp::List encodel) {
+  
+  // Extract vector of encoded data
+  std::vector<double> codev = encodel["data"];
+  // Extract vector of data counts (repeats)
+  std::vector<int> countv = encodel["counts"];
+  // Define the output decoded vector
+  std::vector<double> decodev;
+  decodev.reserve(std::accumulate(countv.begin(), countv.end(), 0));
+  
+  // Perform loop over the codev and countv vectors
+  for (std::size_t it = 0; it < codev.size(); it++) {
+    for (int j = 0; j < countv[it]; j++) {
+      decodev.push_back(codev[it]);
+    }  // end for
+  }  // end for
+  
+  return decodev;
+  
+}  // end decode_it
+
+arma::uvec calc_endpoints(arma::uword length,  // The length of the sequence
+                          arma::uword step = 1,  // The number of periods between neighboring end points
+                          arma::uword stub = 0,  // The first non-zero end point
+                          bool stubs = true) {  // Include stub intervals?
+  
+  // Number of initial end points
+  arma::uword numpts = length / step + 3;
+  // Define the end points
+  arma::uvec endp;
+  endp.zeros(numpts);
+  // Define the last end point
+  arma::uword lastp = length - 1;
+  
+  // Calculate the initial end points - including extra end points at the end
+  if (stub == 0) {
+    for (arma::uword it = 0; it < numpts; ++it) {
+      endp[it] = it*step;
+    }  // end for
+  } else if ((stub > 0) & (stubs)) {
+    for (arma::uword it = 1; it < numpts; ++it) {
+      endp[it] = stub + (it-1)*step;
+    }  // end for
+  } else {
+    for (arma::uword it = 0; it < numpts; ++it) {
+      endp[it] = stub + it*step;
+    }  // end for
+  }  // end if
+  // std::cout << "endp = " << arma::conv_to<rowvec>::from(endp) << std::endl;
+  
+  // arma::uvec endp = arma::regspace<uvec>(stub, step, lastp + step);
+  // Find the index of the largest element of endp which is less than lastp
+  arma::uword endpp = 0;
+  for (arma::uword it = 0; endp[it] < lastp; ++it) {
+    endpp++;
+  }  // end for
+  // std::cout << "endpp = " << endpp << std::endl;
+  
+  // Trim the initial end points at the end - remove extra end points at the end
+  // Subset endp to include the smallest element of endp which is equal to or greater than lastp
+  endp = endp.subvec(0, endpp);
+  
+  // Set the stub intervals at the end
+  if (stubs) {
+    // Include stub intervals
+    // Set the last end point to lastp - last element of endp
+    endp[endpp] = lastp;
+  } else {
+    // Do not include the last end point - no stub interval at the end
+    // Exclude the last element greater than lastp
+    if (endp[endpp] > lastp) {
+      endp = endp.subvec(0, endpp-1);
+    }  // end if
+  }  // end if
+  
+  return endp;
+  
+}  // end calc_endpoints
+
+
+arma::mat diffit(const arma::mat& tseries, arma::sword lagg = 1, bool pad_zeros = true) {
+  
+  arma::uword nrows = (tseries.n_rows-1);
+  arma::uword ncols = tseries.n_cols;
+  
+  if (lagg > 0) {
+    // Positive lag
+    // Matrix difference without padding
+    arma::mat diffmat = (tseries.rows(lagg, nrows) - tseries.rows(0, nrows - lagg));
+    if (pad_zeros) {
+      // Pad diffmat with zeros at the front
+      return arma::join_cols(arma::zeros<mat>(lagg, ncols), diffmat);
+    } else {
+      // Don't pad the output
+      return diffmat;
+    }  // end if pad_zeros
+  } else {
+    // Negative lag
+    // Matrix difference without padding
+    arma::mat diffmat = (tseries.rows(0, nrows + lagg) - tseries.rows(-lagg, nrows));
+    if (pad_zeros) {
+      // Pad diffmat with zeros at the back
+      return arma::join_cols(diffmat, arma::zeros<mat>(-lagg, ncols));
+    } else {
+      // Don't pad the output
+      return diffmat;
+    }  // end if pad_zeros
+  }  // end if lagg
+  
+}  // end diffit
+
+
+
+arma::mat calc_var_ag(const arma::mat& tseries, 
+                      arma::uword step = 1) {
+  
+  if (step == 1)
+    // Calculate the variance without aggregations.
+    return arma::var(diffit(tseries, 1, false));
+  else {
+    // Allocate aggregations, end points, and variance.
+    arma::uword nrows = tseries.n_rows;
+    arma::mat aggs;
+    arma::uvec endp;
+    // The number of rows is equal to step so that loop works for stub=0
+    arma::mat vars(step, tseries.n_cols);
+    // Perform loop over the stubs
+    for (arma::uword stub = 0; stub < step; stub++) {
+      endp = calc_endpoints(nrows, step, stub, false);
+      // endp = arma::regspace<uvec>(stub, step, nrows + step);
+      // endp = endp.elem(find(endp < nrows));
+      aggs = tseries.rows(endp);
+      vars.row(stub) = arma::var(diffit(aggs, 1, false));
+    }  // end for
+    return mean(vars);
+  }  // end if
+  
+}  // end calc_var_ag
+
+
+// [[Rcpp::export]]
+arma::mat calc_hurst(const arma::mat& tseries, 
+                     const arma::vec& aggv) {
+
+  // If only single agg value then calculate the Hurst exponents from a single data point
+  if (aggv.n_rows == 1) {
+    return 0.5*arma::log(calc_var_ag(tseries, aggv[0])/calc_var_ag(tseries, 1))/log(aggv[0]);
+  }  // end if
+  
+  // Allocate the objects
+  arma::uword nrows = aggv.n_rows;
+  arma::mat volv(nrows, tseries.n_cols, fill::zeros);
+  
+  // Calculate the log volatility at the agg points
+  for (arma::uword it=0; it < nrows; it++) {
+    volv.row(it) = 0.5*arma::log(calc_var_ag(tseries, aggv[it]));
+  }  // end for
+  
+  // Calculate the log of the agg points
+  arma::mat agglog = arma::log(aggv);
+  
+  // Calculate the Hurst exponents from the regression slopes
+  arma::mat varagg = arma::var(agglog);
+  return (arma::cov(volv, agglog).t())/varagg[0];
+  
+}  // end calc_hurst
+
 
 
 ////////////////////////////

@@ -306,7 +306,7 @@ std::vector<std::string> calc_unique_str(std::vector<std::string> stringv) {
   // Define unordered_set of strings
   std::unordered_set<std::string> setv;
   // Define unordered_set iterator
-  // std::unordered_set<std::string>::iterator uniqu_e;
+  // std::unordered_set<std::string>::iterator uniquev;
   
   // Copy the elements of the input vector into a set
   for (auto stringit: stringv) {
@@ -317,10 +317,10 @@ std::vector<std::string> calc_unique_str(std::vector<std::string> stringv) {
   // Iterate through all the elements in a set and display the value.
   // std::cout << "These are the unique strings in the set:" << std::endl;
   // Copy the elements of the set to the output vector
-  for (auto uniqu_e: setv) {
-    // for (auto uniqu_e=setv.begin(); uniqu_e!=setv.end(); ++uniqu_e) {
-    //   std::cout << *uniqu_e << std::endl;
-    outv.push_back(uniqu_e);
+  for (auto uniquev: setv) {
+    // for (auto uniquev=setv.begin(); uniquev!=setv.end(); ++uniquev) {
+    //   std::cout << *uniquev << std::endl;
+    outv.push_back(uniquev);
   }  // end for
   
   return outv;

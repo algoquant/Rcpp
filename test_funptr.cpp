@@ -22,27 +22,27 @@ using namespace std;
 // Add two numbers.
 // [[Rcpp::export]]
 double add2(double x1, double x2) {
-  return x1 + x2;
+  return (x1 + x2);
 }  // end add2
 
 // Multiply two numbers.
 // [[Rcpp::export]]
 double mult2(double x1, double x2) {
-  return x1*x2;
+  return (x1*x2);
 }  // end mult2
 
 // Subtract 2 from vector
 // [[Rcpp::export]]
 arma::vec fun1(const arma::vec& tseries) {
   arma::vec y = tseries - 2;
-  return (y);
+  return y;
 }  // end fun1
 
 // Multiply the vector by 2
 // [[Rcpp::export]]
 arma::vec fun2(const arma::vec& tseries) {
   arma::vec y = 2*tseries;
-  return (y);
+  return y;
 }  // end fun2
 
 
@@ -90,9 +90,9 @@ funptr getfunptr(std::string funname) {
 // [[Rcpp::export]]
 double runfun(std::string funname, double x1, double x2) {
   funptr funptrv = getfunptr(funname);
-  funptr fun = *funptrv;
-  double y = fun(x1, x2);
-  return (y);
+  // funptr fun = *funptrv;
+  double y = funptrv(x1, x2);
+  return y;
 }  // end runfun
 
 
@@ -119,8 +119,8 @@ funptrvec getfunptrvec(std::string funname) {
 // [[Rcpp::export]]
 arma::vec runfunvec(std::string funname, arma::vec& tseries) {
   funptrvec funptrv = getfunptrvec(funname);
-  funptrvec fun = *funptrv;
-  arma::vec y = fun(tseries);
-  return (y);
+  // funptrvec fun = *funptrv;
+  arma::vec y = funptrv(tseries);
+  return y;
 }  // end runfunvec
 
