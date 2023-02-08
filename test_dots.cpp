@@ -21,6 +21,21 @@ using namespace std;
 // [[Rcpp::plugins(cpp11)]]
 
 
+// [[Rcpp::export]]
+void make_diag(arma::uword length, double diagv) {
+  
+  arma::mat matv = arma::mat(length, length, arma::fill::zeros);
+  matv.diag().fill(diagv);
+
+  // NumericVector resid = as<NumericVector>(paramv["first"]);
+  // NumericVector fitted = as<NumericVector>(paramv["second"]);
+  // std::cout << "Parameters passed into calc_weights" << endl;
+  std::cout << "diag mat: " << endl;
+  std::cout << matv << endl;
+  
+}  // end make_diag
+
+
 // Below is an example of passing parameters to 
 // a worker function through a list.
 
@@ -44,7 +59,6 @@ void calc_weights(Rcpp::List paramv) {
 
 // back_test passes the list of parameters to calc_weights
 // back_test is exported to R
-//' @export
 // [[Rcpp::export]]
 void back_test(Rcpp::List paramv) {
   

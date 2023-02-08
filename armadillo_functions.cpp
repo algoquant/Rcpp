@@ -1,17 +1,63 @@
-// #include <Rcpp.h>
-#include <RcppArmadillo.h>
-#include <vector>
-using namespace std;
-using namespace Rcpp;
-using namespace arma;
-// [[Rcpp::depends(RcppArmadillo)]]
+////////////////////////////
+// Functions demonstrating C++ Armadillo syntax
+////////////////////////////
 
 // Compile this file in R by running this command:
 // Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/armadillo_functions.cpp")
 
+// [[Rcpp::depends(RcppArmadillo)]]
+#include <RcppArmadillo.h>
+#include <vector>
+using namespace Rcpp;
+using namespace arma;
+// Use STL
+using namespace std;
+
+
 ////////////////////////////
-// RcppArmadillo functions miscellaneous
+// Miscellaneous functions
 ////////////////////////////
+
+// [[Rcpp::export]]
+arma::mat calc_invmat(arma::mat& matrixv) {
+  
+  return arma::inv(matrixv);
+  
+}  // end calc_invmat
+
+
+// The functions outprodvec, outprodvec2, and outprodvec3 all perform the same operation, but in slightly different ways.
+// The operation is to calculate an outer product of a vector with itself, to produce a matrix.
+// If the vector are returns, then the matrix is the covariance for a single time period.
+// The functions all have similar speed, with outprodvec3 slightly faster because it doesn't perform a transpose.
+
+// [[Rcpp::export]]
+void outprodvec(arma::vec& vecv, arma::mat& matv) {
+  
+  matv = vecv*arma::trans(vecv);
+  
+}  // end outprodvec
+
+// [[Rcpp::export]]
+void outprodvec2(arma::vec& vecv, arma::mat& matv) {
+  
+  matv.each_col() = vecv;
+  matv.each_row() %= arma::trans(vecv);
+  
+}  // end outprodvec2
+
+// [[Rcpp::export]]
+void outprodvec3(arma::vec& vecv, arma::mat& matv) {
+  
+  for (arma::uword ci = 0; ci < matv.n_cols; ++ci) {
+    for (arma::uword ri = 0; ri < matv.n_rows; ++ri) {
+      matv(ri, ci) = vecv(ri)*vecv(ci);
+    }  // end for
+  }  // end for
+  
+}  // end outprodvec3
+
+
 
 // The function which_method() switches through options
 //' @export
@@ -53,8 +99,7 @@ arma::vec sort_back(const arma::vec& datav) {
 
 
 
-
-// Calculates the ranks of a vector of data
+// Calculate the ranks of a vector of data
 //' @export
 // [[Rcpp::export]]
 arma::uvec calc_ranks(const arma::vec& datav) {
@@ -63,14 +108,47 @@ arma::uvec calc_ranks(const arma::vec& datav) {
 
 
 
-// Calculates the de-meaned ranks of a vector of data
+// Calculate the de-meaned ranks of a vector of data
 //' @export
 // [[Rcpp::export]]
 arma::vec calc_ranksm(const arma::vec& datav) {
-  // Ranks
-  arma::vec ranks = conv_to< vec >::from(arma::sort_index(arma::sort_index(datav)));
+// Ranks
+arma::vec ranks = conv_to< vec >::from(arma::sort_index(arma::sort_index(datav)));
   return (ranks - arma::mean(ranks));
 }  // end calc_ranksm
+
+
+
+// Example of transform
+//' @export
+// [[Rcpp::export]]
+arma::mat floor_it(arma::mat& data, double minval) {
+  
+  arma::mat mydata = data;
+  mydata.transform([&minval](double x) {return max(x, minval);});
+  return mydata;
+  
+}  // end floor_it
+
+
+
+// Calculate the maximum of two vectors
+//' @export
+ // [[Rcpp::export]]
+ arma::colvec max2(arma::colvec tseries, arma::colvec tseries2) {
+   
+   arma::uword nrows = tseries.n_rows;
+   arma::colvec maxs = tseries;
+   
+   // Perform loop over rows
+   for (arma::uword it = 0; it < nrows; it++) {
+     maxs.row(it) = arma::max(tseries.row(it), tseries2.row(it));
+   }  // end for
+   
+   return maxs;
+   
+ }  // end max2
+
 
 
 
@@ -86,10 +164,10 @@ arma::vec calc_ranksm(const arma::vec& datav) {
 // https://stackoverflow.com/questions/46892399/fast-checking-of-missing-values-in-rcpp
 //' @export
 // [[Rcpp::export]]
-int sum_na(const NumericVector& vectorv) {
+int sum_na(const Rcpp::NumericVector& vectorv) {
   int count_ = 0;
   for (int i = 0; i < vectorv.size(); i++)
-    count_ += NumericVector::is_na(vectorv[i]);
+    count_ += Rcpp::NumericVector::is_na(vectorv[i]);
   return count_;
 }  // end sum_na
 
@@ -97,15 +175,15 @@ int sum_na(const NumericVector& vectorv) {
 // The function sum_na_stl() performs sum(is.na(vectorv)) using Rcpp and STL.
 //' @export
 // [[Rcpp::export]]
-int sum_na_stl(const NumericVector& vectorv) {
-  return std::count_if(vectorv.begin(), vectorv.end(), NumericVector::is_na);
+int sum_na_stl(const Rcpp::NumericVector& vectorv) {
+  return std::count_if(vectorv.begin(), vectorv.end(), Rcpp::NumericVector::is_na);
 }  // end sum_na_stl
 
 
 // The function sum_if_cpp() performs sum(ivectorv<findv) using Rcpp.
 //' @export
 // [[Rcpp::export]]
-int sum_if_cpp(NumericVector& vectorv, double findv) {
+int sum_if_cpp(Rcpp::NumericVector& vectorv, double findv) {
   int count_ = 0;
   for (int i = 0; i < vectorv.size(); i++)
     count_ += (vectorv[i]<findv);
@@ -116,9 +194,9 @@ int sum_if_cpp(NumericVector& vectorv, double findv) {
 // The function sum_if() performs sum(ivectorv<findv) using Rcpp.
 //' @export
 // [[Rcpp::export]]
-int sum_if(NumericVector& vectorv, double findv) {
+int sum_if(Rcpp::NumericVector& vectorv, double findv) {
   int count_ = 0;
-  NumericVector::iterator it;
+  Rcpp::NumericVector::iterator it;
   for (it = vectorv.begin(); it != vectorv.end(); it++) {
     if (*it < findv) count_++;
   }  // end for
@@ -130,7 +208,7 @@ int sum_if(NumericVector& vectorv, double findv) {
 // Warning: bind2nd is deprecated 
 //' @export
 // [[Rcpp::export]]
-int sum_if_stl(const NumericVector& vectorv, double findv) {
+int sum_if_stl(const Rcpp::NumericVector& vectorv, double findv) {
   return std::count_if(vectorv.begin(), vectorv.end(), bind2nd(std::less<double>(), findv));
 }  // end sum_if_stl
 
@@ -149,7 +227,7 @@ arma::uvec whichv(arma::uvec logicalv) {
 // RcppArmadillo
 //' @export
 // [[Rcpp::export]]
-arma::uvec whichv2(LogicalVector& vectorv) {
+arma::uvec whichv2(Rcpp::LogicalVector& vectorv) {
   arma::uvec logicalv;
   logicalv = arma::find(Rcpp::as<uvec>(vectorv));
   return logicalv+1;
@@ -159,7 +237,7 @@ arma::uvec whichv2(LogicalVector& vectorv) {
 // The function whichv3() performs which() using Rcpp and STL
 //' @export
 // [[Rcpp::export]]
-Rcpp::IntegerVector whichv3(const LogicalVector& vectorv) {
+Rcpp::IntegerVector whichv3(const Rcpp::LogicalVector& vectorv) {
   // arma::uvec logicalv;
   // logicalv = arma::find(Rcpp::as<uvec>(vectorv));
   int nrow = vectorv.size();
@@ -176,7 +254,7 @@ Rcpp::IntegerVector whichv3(const LogicalVector& vectorv) {
 // The function whichv32() performs which() using Rcpp.
 //' @export
 // [[Rcpp::export]]
-Rcpp::IntegerVector whichv32(const LogicalVector& vectorv) {
+Rcpp::IntegerVector whichv32(const Rcpp::LogicalVector& vectorv) {
   int nrow = vectorv.size();
   IntegerVector indeks(sum(vectorv));
   int j = 0;
@@ -191,11 +269,11 @@ Rcpp::IntegerVector whichv32(const LogicalVector& vectorv) {
 // The function whichv34() performs which() using Rcpp.
 //' @export
 // [[Rcpp::export]]
-Rcpp::IntegerVector whichv34(LogicalVector& vectorv) {
+Rcpp::IntegerVector whichv34(Rcpp::LogicalVector& vectorv) {
   // int nrow = vectorv.size();
   IntegerVector indeks(sum(vectorv));
   int i=0, j=0;
-  LogicalVector::iterator it;
+  Rcpp::LogicalVector::iterator it;
   for (it = vectorv.begin(); it != vectorv.end(); it++, i++) {
     if (*it) 
       indeks(j++) = i+1;
@@ -206,7 +284,7 @@ Rcpp::IntegerVector whichv34(LogicalVector& vectorv) {
 
 // The function whichv35() performs which() using Rcpp and STL.
 // Currently it doesn't work.
-// int whichv35(LogicalVector& vectorv) {
+// int whichv35(Rcpp::LogicalVector& vectorv) {
 //   return std::find(std::begin(vectorv), std::end(vectorv), TRUE);
 // }  // end whichv35
 
@@ -229,7 +307,7 @@ arma::uvec whichv33(arma::uvec& vectorv) {
 // The function whichv4() performs which() using Rcpp
 //' @export
 // [[Rcpp::export]]
-Rcpp::IntegerVector whichv4(LogicalVector& vectorv) {
+Rcpp::IntegerVector whichv4(Rcpp::LogicalVector& vectorv) {
   // arma::uvec logicalv;
   // logicalv = arma::find(Rcpp::as<uvec>(vectorv));
   int nrow = vectorv.size();
@@ -251,7 +329,7 @@ Rcpp::IntegerVector whichv4(LogicalVector& vectorv) {
 // It's very slow.
 //' @export
 // [[Rcpp::export]]
-Rcpp::IntegerVector whichv5(LogicalVector& vectorv) {
+Rcpp::IntegerVector whichv5(Rcpp::LogicalVector& vectorv) {
   // Obtain environment containing the function
   Rcpp::Environment base("package:base"); 
   // Define function which() callable from Rcpp
@@ -400,9 +478,9 @@ arma::mat find_assign_mat(arma::mat matrixv, double findv, double datav) {
 // to an input value, using Rcpp with Sugar.
 //' @export
 // [[Rcpp::export]]
-LogicalVector compare_col(NumericMatrix& matrixv, double findv, int col_num=0) {
-  // NumericVector colnum = matrixv(_, col_num);
-  // LogicalVector bar;
+Rcpp::LogicalVector compare_col(NumericMatrix& matrixv, double findv, int col_num=0) {
+  // Rcpp::NumericVector colnum = matrixv(_, col_num);
+  // Rcpp::LogicalVector bar;
   // bar = (colnum > findv);
   return (matrixv(_, col_num) > findv);
 }  // end compare_col
@@ -413,8 +491,8 @@ LogicalVector compare_col(NumericMatrix& matrixv, double findv, int col_num=0) {
 //' @export
 // [[Rcpp::export]]
 arma::uvec compare_col_arma(NumericMatrix& matrixv, double findv, int col_num=0) {
-  NumericVector colnum = matrixv(_, col_num);
-  LogicalVector bar;
+  Rcpp::NumericVector colnum = matrixv(_, col_num);
+  Rcpp::LogicalVector bar;
   bar = (colnum > findv);
   return Rcpp::as<uvec>(bar);
 }  // end compare_col_arma
@@ -426,8 +504,8 @@ arma::uvec compare_col_arma(NumericMatrix& matrixv, double findv, int col_num=0)
 // [[Rcpp::export]]
 arma::uvec compare_col_armaa(const arma::mat& matrixv, double findv, int col_num=0) {
   arma::vec colnum = matrixv.cols(as<uvec>(wrap(col_num)));
-  // NumericVector colnum = matrixv(_, col_num);
-  // LogicalVector bar;
+  // Rcpp::NumericVector colnum = matrixv(_, col_num);
+  // Rcpp::LogicalVector bar;
   // arma::uvec bar;
   // bar = (colnum > findv);
   // for (int i=0; i<colnum.n_rows; i++) {
@@ -443,8 +521,8 @@ arma::uvec compare_col_armaa(const arma::mat& matrixv, double findv, int col_num
 //' @export
 // [[Rcpp::export]]
 arma::uvec which_col(NumericMatrix& matrixv, double findv, int col_num=0) {
-  NumericVector colnum = matrixv(_, col_num);
-  LogicalVector vectorv = (colnum > findv);
+  Rcpp::NumericVector colnum = matrixv(_, col_num);
+  Rcpp::LogicalVector vectorv = (colnum > findv);
   arma::uvec whichv;
   whichv = arma::find(Rcpp::as<uvec>(vectorv));
   return whichv;
@@ -468,8 +546,8 @@ arma::vec find_extract_mat(arma::mat matrixv, double findv) {
 //' @export
 // [[Rcpp::export]]
 NumericMatrix find_sub_mat(NumericMatrix& matrixv, double findv, int col_num=0) {
-  NumericVector colnum = matrixv(_, col_num);
-  LogicalVector vectorv = (colnum > findv);
+  Rcpp::NumericVector colnum = matrixv(_, col_num);
+  Rcpp::LogicalVector vectorv = (colnum > findv);
   arma::uvec whichv;
   whichv = arma::find(Rcpp::as<uvec>(vectorv));
   arma::mat sub_matrix = as<mat>(matrixv);
@@ -484,8 +562,8 @@ NumericMatrix find_sub_mat(NumericMatrix& matrixv, double findv, int col_num=0) 
 //' @export
 // [[Rcpp::export]]
 NumericMatrix select_sub_mat(NumericMatrix& matrixv, double findv, int col_num=0) {
-  NumericVector colnum = matrixv(_, col_num);
-  LogicalVector vectorv = (colnum > findv);
+  Rcpp::NumericVector colnum = matrixv(_, col_num);
+  Rcpp::LogicalVector vectorv = (colnum > findv);
   int nrow = vectorv.size();
   // perform which
   std::vector<int> indeks;
@@ -536,7 +614,7 @@ double  agg_mat(const arma::mat& matrixv) {
 // The function variance() calculates the variance of a vector using Rcpp
 //' @export
 // [[Rcpp::export]]
-double variance(NumericVector vectorv) {
+double variance(Rcpp::NumericVector vectorv) {
   return sum(pow(vectorv - sum(vectorv)/vectorv.size(), 2));
 }  // end variance
 
@@ -1029,7 +1107,7 @@ int mult_vec2_mat_copy(arma::vec& vectorv2, arma::mat& matrixv, arma::vec& vecto
 // It uses Rcpp.
 //' @export
 // [[Rcpp::export]]
-int mult_vec2_mat_rcpp(NumericVector& vectorv2, NumericMatrix& matrixv, NumericVector& vectorv1) {
+int mult_vec2_mat_rcpp(Rcpp::NumericVector& vectorv2, NumericMatrix& matrixv, Rcpp::NumericVector& vectorv1) {
   uword nrows = matrixv.nrow();
   uword ncols = matrixv.ncol();
   if (!(nrows == vectorv2.size())) stop("vectorv2 length not equal to number of rows of matrixv");
@@ -1048,7 +1126,7 @@ int mult_vec2_mat_rcpp(NumericVector& vectorv2, NumericMatrix& matrixv, NumericV
 // but uses a simple loop without Rcpp, and is much slower.
 //' @export
 // [[Rcpp::export]]
-int mult_vec2_mat_rcpp2(NumericVector& vectorv2, NumericMatrix& matrixv, NumericVector& vectorv1) {
+int mult_vec2_mat_rcpp2(Rcpp::NumericVector& vectorv2, NumericMatrix& matrixv, Rcpp::NumericVector& vectorv1) {
   for (int i = 0; i < matrixv.nrow(); i++) {
     for (int j = 0; j < matrixv.ncol(); j++) {
       matrixv(i, j) = vectorv1(j) * vectorv2(i) * matrixv(i, j);
@@ -1081,11 +1159,11 @@ arma::vec get_eigenvals(const arma::mat& covmat) {
 // of the matrix returns.
 //' @export
 // [[Rcpp::export]]
-List get_eigen(const arma::mat& returns) {
+Rcpp::List get_eigen(const arma::mat& returns) {
   arma::mat eigen_vec;
   arma::vec eigen_val;
   arma::eig_sym(eigen_val, eigen_vec, cor(returns));
-  return List::create(Named("eigval") = eigen_val,
+  return Rcpp::List::create(Named("eigval") = eigen_val,
                       Named("eigvec") = eigen_vec);
 }  // end get_eigen
 
@@ -1095,7 +1173,7 @@ List get_eigen(const arma::mat& returns) {
 // of the matrix returns.
 //' @export
 // [[Rcpp::export]]
-List get_pca(const arma::mat& returns) {
+Rcpp::List get_pca(const arma::mat& returns) {
   arma::mat coeff;
   arma::mat sco_re;
   arma::vec la_tent;
@@ -1103,7 +1181,7 @@ List get_pca(const arma::mat& returns) {
   
   arma::princomp(coeff, sco_re, la_tent, t_squared, returns);
   
-  return List::create(Named("coefficients") = coeff,
+  return Rcpp::List::create(Named("coefficients") = coeff,
                       Named("score") = sco_re,
                       Named("latent") = la_tent,
                       Named("tsquared") = t_squared);
@@ -1204,7 +1282,7 @@ Rcpp::List lm_arma(const arma::colvec& response, const arma::mat& design) {
 // The function test_rcpp() is for testing some Rcpp code snippets.
 //' @export
 // [[Rcpp::export]]
-LogicalVector test_rcpp(NumericVector& vectorv2, NumericMatrix& matrixv, NumericVector& vectorv1) {
+Rcpp::LogicalVector test_rcpp(NumericVector& vectorv2, NumericMatrix& matrixv, NumericVector& vectorv1) {
   Rcpp::IntegerVector stats(4);
   stats(0) = matrixv.nrow();
   stats(1) = matrixv.ncol();
@@ -1223,7 +1301,7 @@ LogicalVector test_rcpp(NumericVector& vectorv2, NumericMatrix& matrixv, Numeric
 // The function test_arma() is for testing some RcppArmadillo code snippets.
 //' @export
 // [[Rcpp::export]]
-LogicalVector test_arma(arma::mat& matrixv) {
+Rcpp::LogicalVector test_arma(arma::mat& matrixv) {
   // Rcout << "Num rows: " << matrixv.n_rows << std::endl;
   // Rcout << "Num cols: " << matrixv.n_cols << std::endl;
   matrixv.print("This is the input matrix:");
@@ -1235,7 +1313,7 @@ LogicalVector test_arma(arma::mat& matrixv) {
 
 //' @export
 // [[Rcpp::export]]
-arma::uvec test_more_arma(const LogicalVector& vectorv) {
+arma::uvec test_more_arma(const Rcpp::LogicalVector& vectorv) {
   Function whichv3("whichv3");
   // Rcout << "Num rows: " << matrixv.n_rows << std::endl;
   // Rcout << "Num cols: " << matrixv.n_cols << std::endl;
