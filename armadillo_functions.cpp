@@ -680,37 +680,37 @@ arma::vec roll_cols(arma::mat& ohlc,
 ////////////////////////////
 
 
-// The function demean_arma() calculates a matrix with de-meaned columns.
+// The function demeand() calculates a matrix with de-meaned columns.
 // It accepts a pointer to a matrix and returns a copy of the de-meaned matrix.
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-arma::mat demean_arma(const arma::mat& matrixv) {
+arma::mat demeand(const arma::mat& matrixv) {
   // de-mean response and explanatory variables
-  arma::mat mat_demean(matrixv.n_rows, matrixv.n_cols);
+  arma::mat matrixd(matrixv.n_rows, matrixv.n_cols);
   for (uword i = 0; i < matrixv.n_cols; i++) {
-    mat_demean.col(i) = matrixv.col(i) - arma::mean(matrixv.col(i));
-    // mat_demean(i) = arma::mean(matrixv.col(i));
+    matrixd.col(i) = matrixv.col(i) - arma::mean(matrixv.col(i));
+    // matrixd(i) = arma::mean(matrixv.col(i));
   }  // end for
-  return mat_demean;
-}  // end demean_arma
+  return matrixd;
+}  // end demeand
 
 
-// The function demean_mat() calculates a matrix with de-meaned columns.
+// The function demeanr() calculates a matrix with de-meaned columns.
 // It accepts a pointer to a matrix and operates on the matrix in place.
 // It returns the number of columns of the input matrix.
 // It uses RcppArmadillo.
 //' @export
 // [[Rcpp::export]]
-int demean_mat(arma::mat& matrixv) {
+int demeanr(arma::mat& matrixv) {
   // de-mean response and explanatory variables
-  // arma::mat mat_demean(matrixv.n_cols);
+  // arma::mat matrixd(matrixv.n_cols);
   for (uword i = 0; i < matrixv.n_cols; i++) {
     matrixv.col(i) -= arma::mean(matrixv.col(i));
-    // mat_demean(i) = arma::mean(matrixv.col(i));
+    // matrixd(i) = arma::mean(matrixv.col(i));
   }  // end for
   return matrixv.n_cols;
-}  // end demean_mat
+}  // end demeanr
 
 
 // The function outer_vec() calculates the outer product of two vectors.
