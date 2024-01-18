@@ -2,6 +2,9 @@
 // Test C++ random number code using Standard Template Library (STL)
 ////////////////////////////
 
+// Compile this file in R by running this command:
+// Rcpp::sourceCpp(file="/Users/jerzy/Develop/Rcpp/random.cpp")
+
 using namespace std;
 #include "random.h"
 #include <iostream>
@@ -24,8 +27,8 @@ using namespace std;
 std::uint32_t calc_seed(int ndata) {
   
   // Produce random seeds using random_device - but random_device doesn't work under Windows.
-  // std::random_device de_vice;
-  // std::seed_seq seq_uence{de_vice()};
+  // std::random_device devicer;
+  // std::seed_seq sequencer{devicer()};
   // 
   // Or produce a single random seed
   // Get time in seconds.
@@ -49,6 +52,8 @@ std::uint32_t calc_seed(int ndata) {
 // std::generate() only calls functions which return a value, while 
 // std::transform() can also call functions which perform an operation.
 // https://www.cprogramming.com/tutorial/statickeyword.html
+// In R, run (example):
+// calc_random_int(11, 1705352332, 0, 10)
 // [[Rcpp::export]]
 std::vector<int> calc_random_int(size_t ndata, unsigned int seedv, int minv, int maxv) {
   
@@ -82,6 +87,8 @@ std::vector<int> calc_random_int(size_t ndata, unsigned int seedv, int minv, int
 // It uses the STL algorithm std::generate().
 // The STL algorithm std::generate() is similar to the R functional apply().
 // https://www.cprogramming.com/tutorial/statickeyword.html
+// In R, run (example):
+// calc_random_int2(11, 1705352332, 0, 10)
 // [[Rcpp::export]]
 std::vector<int> calc_random_int2(size_t ndata, int seedv, int minv, int maxv) {
   
@@ -108,6 +115,8 @@ std::vector<int> calc_random_int2(size_t ndata, int seedv, int minv, int maxv) {
 // between the values minv and maxv.
 // It uses the STL algorithm std::generate().
 // https://www.cprogramming.com/tutorial/statickeyword.html
+// In R, run (example):
+// calc_random_double(11, 1705352332, 0, 10)
 // [[Rcpp::export]]
 std::vector<double> calc_random_double(size_t ndata, unsigned int seedv, double minv, double maxv) {
   
@@ -134,9 +143,4 @@ std::vector<double> calc_random_double(size_t ndata, unsigned int seedv, double 
   return datav;
   
 }  // end calc_random_double
-
-
-
-
-
 

@@ -13,6 +13,18 @@
 using namespace Rcpp;
 using namespace RcppParallel;
 
+
+// Calculate the sum of a numeric vector - not parallel
+//' @export
+// [[Rcpp::export]]
+double vectorSum(NumericVector x) {
+  return std::accumulate(x.begin(), x.end(), 0.0);
+}  // end vectorSum
+
+
+
+// Structure for calculating the sum of a numeric vector in parallel
+
 struct Sum : public Worker
 {   
    // source vector
@@ -48,4 +60,5 @@ double parallelVectorSum(NumericVector x) {
    
    // return the computed sum
    return sum.value;
-}
+   
+}  // end parallelVectorSum

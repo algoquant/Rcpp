@@ -18,12 +18,23 @@ using namespace std;
 // Miscellaneous functions
 ////////////////////////////
 
+// The function calc_invmat() calculates the inverse of a matrix.
 // [[Rcpp::export]]
 arma::mat calc_invmat(arma::mat& matrixv) {
   
   return arma::inv(matrixv);
   
 }  // end calc_invmat
+
+
+// The function calc_covmat() calculates the covariance matrix of a matrix of returns.
+//' @export
+// [[Rcpp::export]]
+arma::mat calc_covmat(arma::mat& returns) {
+  
+  return returns.t()*returns;
+ 
+}  // end calc_covmat
 
 
 // The functions outprodvec, outprodvec2, and outprodvec3 all perform the same operation, but in slightly different ways.
@@ -468,9 +479,12 @@ double find_assign_vec_point(arma::rowvec& vectorv, double findv, double datav) 
 //' @export
 // [[Rcpp::export]]
 arma::mat find_assign_mat(arma::mat matrixv, double findv, double datav) {
+  
   arma::uvec indeks = find(matrixv >= findv);
   matrixv.elem(indeks).fill(datav);
+  
   return matrixv;
+  
 }  // end find_assign_mat
 
 
@@ -678,6 +692,19 @@ arma::vec roll_cols(arma::mat& ohlc,
 ////////////////////////////
 // RcppArmadillo functions for matrix algebra
 ////////////////////////////
+
+
+// The function matmeans() calculates the means of either the rows (dim=1) 
+// or the columns (dim=0) of a matrix.
+//' @export
+// [[Rcpp::export]]
+arma::mat matmeans(arma::mat returns, arma::uword dim) {
+  
+  return arma::mean(returns, dim);
+ 
+}  // end matmeans
+
+
 
 
 // The function demeand() calculates a matrix with de-meaned columns.
