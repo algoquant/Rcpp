@@ -22,12 +22,12 @@ using namespace arma;
 //' @export
  // [[Rcpp::export]]
  arma::mat bollinger_strat(const arma::mat& pricev, // Time series of prices
-                           double lambdav, // Decay factor which multiplies the past values
+                           double lambdaf, // Decay factor which multiplies the past values
                            double threshv = 1.0, // Threshold level
                            double varin = 100.0) { // Initial variance
    
    arma::uword nrows = pricev.n_rows;
-   double lambda1 = 1-lambdav;
+   double lambda1 = 1-lambdaf;
    double vars = varin;
    double pricefill = pricev(0);
    double pricema = pricev(0);
@@ -46,10 +46,10 @@ using namespace arma;
      // zscores(it) = (pricev(it) - pricefill) / sqrt(vars);
      zscores(it) = (pricev(it) - pricema) / sqrt(vars);
      // Update the variance
-     // vars = lambdav*vars + lambda1*pow(pricev(it) - pricema, 2);
-     vars = lambdav*vars + lambda1*pow(retv, 2);
+     // vars = lambdaf*vars + lambda1*pow(pricev(it) - pricema, 2);
+     vars = lambdaf*vars + lambda1*pow(retv, 2);
      // Update the EMA price
-     pricema = lambdav*pricema + lambda1*pricev(it);
+     pricema = lambdaf*pricema + lambda1*pricev(it);
      if ((zscores(it) > threshv) && (true)) {
        // Sell 1 share
        posv(it+1) = posv(it) - 1;
@@ -89,7 +89,7 @@ using namespace arma;
 //' @export
  // [[Rcpp::export]]
  arma::mat contrastrat(const arma::mat& pricev, // Time series of prices
-                       double lambdav, // Decay factor which multiplies the past values
+                       double lambdaf, // Decay factor which multiplies the past values
                        double threshv = 1.0, // Threshold level
                        double threshd = 1.0, // Threshold double down
                        double threshbad = 10.0, // Threshold bad
@@ -97,7 +97,7 @@ using namespace arma;
    
    bool isvalid;
    arma::uword nrows = pricev.n_rows;
-   double lambda1 = 1-lambdav;
+   double lambda1 = 1-lambdaf;
    double vars = varin;
    double pricefill = pricev(0);
    double pricema = pricev(0);
@@ -123,10 +123,10 @@ using namespace arma;
        // Calculate the z-score using the EMA price
        zscores(it) = (pricev(it) - pricema) / sqrt(vars);
        // Update the variance
-       vars = lambdav*vars + lambda1*pow(pricev(it) - pricema, 2);
-       // vars = lambdav*vars + lambda1*pow(retv, 2);
+       vars = lambdaf*vars + lambda1*pow(pricev(it) - pricema, 2);
+       // vars = lambdaf*vars + lambda1*pow(retv, 2);
        // Update the EMA price
-       pricema = lambdav*pricema + lambda1*pricev(it);
+       pricema = lambdaf*pricema + lambda1*pricev(it);
        // if (isvalid && (((zscores(it) > threshv) && (posv(it) >= 0)) || (zscores(it) > threshd))) {
        if (zscores(it) > threshv) {
          // Sell 1 share
@@ -167,7 +167,7 @@ using namespace arma;
 //' @export
  // [[Rcpp::export]]
  arma::mat bollinger_brackets(const arma::mat& retv, // Time series of returns
-                              double lambdav, // Decay factor which multiplies the past values 
+                              double lambdaf, // Decay factor which multiplies the past values 
                               double varf, // Variance factor
                               double varin) { // Initial variance
    
@@ -176,7 +176,7 @@ using namespace arma;
    arma::mat vars = arma::zeros(nrows, 1);
    arma::mat posv = arma::zeros(nrows, 1);
    // arma::mat pnlv = arma::zeros(nrows, 1);
-   double lambda1 = 1-lambdav;
+   double lambda1 = 1-lambdaf;
    double volv = sqrt(varin);
    double pricesell = volv;
    double pricebuy = -volv;
@@ -191,7 +191,7 @@ using namespace arma;
      // Update the prices
      pricec(it) = pricec(it-1) + retv(it);
      // Update the variance
-     vars(it) = lambdav*vars(it-1) + varf*lambda1*pow(retv(it) - retv(it-1), 2);
+     vars(it) = lambdaf*vars(it-1) + varf*lambda1*pow(retv(it) - retv(it-1), 2);
      volv = sqrt(vars(it));
      if ((pricec(it) > pricesell) && (pricec(it-1) > pricesell)) {
        // Sell 1 share
@@ -222,7 +222,7 @@ using namespace arma;
 //' @export
  // [[Rcpp::export]]
  arma::mat revert_to_open(const arma::mat& pricev, // Time series of prices
-                          double lambdav, // Decay factor which multiplies the past values 
+                          double lambdaf, // Decay factor which multiplies the past values 
                           double varf, // Variance factor
                           double varin) { // Initial variance
    
@@ -233,7 +233,7 @@ using namespace arma;
    // arma::mat vars = arma::zeros(nrows, 1);
    arma::mat posv = arma::zeros(nrows, 1);
    // arma::mat pnlv = arma::zeros(nrows, 1);
-   // double lambda1 = 1-lambdav;
+   // double lambda1 = 1-lambdaf;
    // double volv = sqrt(varin);
    double pricinit = pricev(0);
    // double pricesell = volv;
@@ -250,7 +250,7 @@ using namespace arma;
      // Update the returns
      retv(it) = pricev(it) - pricev(it-1);
      // Update the variance
-     // vars(it) = lambdav*vars(it-1) + varf*lambda1*pow(retv(it) - retv(it-1), 2);
+     // vars(it) = lambdaf*vars(it-1) + varf*lambda1*pow(retv(it) - retv(it-1), 2);
      // volv = sqrt(vars(it));
      if (pricev(it) > pricinit) {
        // Unwind positive position
