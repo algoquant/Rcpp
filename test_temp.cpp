@@ -102,7 +102,7 @@ void do_scrub(arma::mat& pricev, double tolv=0.1) {
 //' Given two vectors of dates, ts1 and ts2, find the closest 
 //' dates in ts2 that match those in ts1.
 //' The lengths of ts1 and ts2 don't have to be equal.
-//' In practice it's better to select ts1 to be the longer series.
+//' In practice it's better to select ts1 to be the shorter series.
 //' @export
 // [[Rcpp::export]]
 arma::mat calc_nearest(const arma::mat& ts1, const arma::mat& ts2) {
@@ -122,7 +122,8 @@ arma::mat calc_nearest(const arma::mat& ts1, const arma::mat& ts2) {
   // Perform loop over the end points
   for (int it = 0; it < nrows1; it++) {
     startp = max(posi - npts, 0);
-    endp = min(posi + npts, nrows2);
+    // endp = min(posi + npts, nrows2);
+    endp = nrows2;
     diffm = 10;
     for (int jt = startp; jt < endp; jt++) {
       diffv = abs(ts1(it) - ts2(jt));
