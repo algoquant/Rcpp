@@ -28,7 +28,7 @@ using namespace arma;
 // than the threshold level threshbad.
 // It uses the Boolean variable isvalid to prevent scrubbing 
 // more than one isolated price spike at a time.
-// It uses Rcpp.
+// It's written in Rcpp.
 //' @export
 // [[Rcpp::export]]
 arma::mat trend_flip(const arma::mat& pricev, // Time series of prices
@@ -50,8 +50,8 @@ arma::mat trend_flip(const arma::mat& pricev, // Time series of prices
   double zerov = 0; // Zero value to make max and min work
   // double pricefill = pricec;
   double pricema = pricec; // Moving average price
-  arma::mat vars = arma::zeros(nrows, 1);
-  vars(0) = pow(pricev(1) - pricec, 2);
+  arma::mat varv = arma::zeros(nrows, 1); // Price variance
+  varv(0) = pow(pricev(1) - pricec, 2);
   double volv;
   double retv;
   // arma::mat zscores = arma::zeros(nrows, 1);
@@ -72,12 +72,12 @@ arma::mat trend_flip(const arma::mat& pricev, // Time series of prices
       // Update the pnls
       pnlv(it) = posv(it)*retv;
       // Update the z-score
-      volv = std::max(sqrt(vars(it)), volf);
+      volv = std::max(sqrt(varv(it)), volf);
       // zscores(it) = (pricec - pricefill) / volv;
       // zscores(it) = (pricec - pricema) / volv;
       // Update the variance
-      vars(it+1) = lambdaf*vars(it) + lambda1*pow(pricec - pricema, 2);
-      // vars = lambdaf*vars + lambda1*pow(retv, 2);
+      varv(it+1) = lambdaf*varv(it) + lambda1*pow(pricec - pricema, 2);
+      // varv = lambdaf*varv + lambda1*pow(retv, 2);
       // Update the EMA price
       pricema = lambdaf*pricema + lambda1*pricec;
       // Update the prices
@@ -104,7 +104,7 @@ arma::mat trend_flip(const arma::mat& pricev, // Time series of prices
     }  // end if the price is valid
   }  // end for
   
-  return arma::join_rows(pnlv, posv, vars);
+  return arma::join_rows(pnlv, posv, varv);
   
 }  // end trend_flip
 
@@ -115,8 +115,8 @@ arma::mat trend_flip(const arma::mat& pricev, // Time series of prices
 // The strategy sells short 1 share if the z-score is greater than 
 // the threshold, and buys 1 share if the z-score is less than minus 
 // the threshold.
-// The strategy doubles down - it keeps buying stocks as prices continue 
-// dropping, and it keeps selling as prices continue rising. 
+// The strategy doubles down - it continues buying stocks as prices keep 
+// dropping, and it continues selling as prices keep rising. 
 // But it applies a brake on consecutive trades in the same direction 
 // (consecutive buys or sells).  
 // It submits consecutive buys or sells only under two conditions.  
@@ -128,7 +128,7 @@ arma::mat trend_flip(const arma::mat& pricev, // Time series of prices
 // The reference price can be chosen as the EMA price or the trade 
 // fill price.
 // It returns the strategy PnLs, positions, and z-scores.
-// It uses Rcpp.
+// It's written in Rcpp.
 //' @export
 // [[Rcpp::export]]
 arma::mat bollinger_double(const arma::mat& pricev, // Time series of prices
@@ -141,7 +141,7 @@ arma::mat bollinger_double(const arma::mat& pricev, // Time series of prices
   // bool isvalid;
   arma::uword nrows = pricev.n_rows;
   double lambda1 = 1-lambdaf;
-  double vars = pow(volf, 2); // Variance
+  double varv = pow(volf, 2); // Variance
   double volv; // Volatility
   double pricefill = pricev(0);
   double pricema = pricev(0); // Moving average price
@@ -160,18 +160,18 @@ arma::mat bollinger_double(const arma::mat& pricev, // Time series of prices
     // Update the pnls
     pnlv(it) = posv(it)*retv(it);
     // Calculate the z-score using the EMA price
-    // zscores(it) = (pricev(it) - pricema) / sqrt(vars);
+    // zscores(it) = (pricev(it) - pricema)/sqrt(varv);
     // Check if the price is valid
     // isvalid = (fabs(zscores(it)) < threshbad);
     // if (fabs(zscores(it)) < threshbad) {
     // Calculate the z-score using the fill price
-    volv = std::max(sqrt(vars), volf);
-    zscores(it) = (pricev(it) - pricefill) / sqrt(vars);
+    volv = std::max(sqrt(varv), volf);
+    zscores(it) = (pricev(it) - pricefill)/sqrt(varv);
     // Calculate the z-score using the EMA price
-    // zscores(it) = (pricev(it) - pricema) / sqrt(vars);
+    // zscores(it) = (pricev(it) - pricema)/sqrt(varv);
     // Update the variance
-    vars = lambdaf*vars + lambda1*pow(pricev(it) - pricema, 2);
-    // vars = lambdaf*vars + lambda1*pow(retv, 2);
+    varv = lambdaf*varv + lambda1*pow(pricev(it) - pricema, 2);
+    // varv = lambdaf*varv + lambda1*pow(retv, 2);
     // Update the EMA price
     pricema = lambdaf*pricema + lambda1*pricev(it);
     // if ((((zscores(it) > threshv) && (posv(it) >= 0)) || (zscores(it) > threshd))) {
@@ -216,7 +216,7 @@ arma::mat bollinger_double(const arma::mat& pricev, // Time series of prices
 // The Bollinger brackets strategy buys shares at the buy price and sells at the sell price.
 // The buy price is equal to the previous trade fill price minus the standard deviation of returns.
 // The sell price is equal to the previous fill price plus the standard deviation.
-// It uses Rcpp.
+// It's written in Rcpp.
 //' @export
  // [[Rcpp::export]]
  arma::mat bollinger_brackets(const arma::mat& retv, // Time series of returns
@@ -226,7 +226,7 @@ arma::mat bollinger_double(const arma::mat& pricev, // Time series of prices
      
    arma::uword nrows = retv.n_rows;
    arma::mat pricec = arma::zeros(nrows, 1);
-   arma::mat vars = arma::zeros(nrows, 1);
+   arma::mat varv = arma::zeros(nrows, 1);
    arma::mat posv = arma::zeros(nrows, 1);
    // arma::mat pnlv = arma::zeros(nrows, 1);
    double lambda1 = 1-lambdaf;
@@ -235,7 +235,7 @@ arma::mat bollinger_double(const arma::mat& pricev, // Time series of prices
    double pricebuy = -volv;
    
    pricec(0) = retv(0);
-   vars(0) = pow(volf, 2);
+   varv(0) = pow(volf, 2);
    
    // Calculate the positions in a loop
    for (arma::uword it = 1; it < (nrows-1); it++) {
@@ -244,8 +244,8 @@ arma::mat bollinger_double(const arma::mat& pricev, // Time series of prices
      // Update the prices
      pricec(it) = pricec(it-1) + retv(it);
      // Update the variance
-     vars(it) = lambdaf*vars(it-1) + varf*lambda1*pow(retv(it) - retv(it-1), 2);
-     volv = sqrt(vars(it));
+     varv(it) = lambdaf*varv(it-1) + varf*lambda1*pow(retv(it) - retv(it-1), 2);
+     volv = sqrt(varv(it));
      if ((pricec(it) > pricesell) && (pricec(it-1) > pricesell)) {
        // Sell 1 share
        posv(it+1) = posv(it) - 1;
@@ -270,49 +270,59 @@ arma::mat bollinger_double(const arma::mat& pricev, // Time series of prices
 
 
 
-// The function revert_to_open() calculates the positions of a mean-reversion strategy.
-// It bets on prices reverting to the open price.
-// It uses Rcpp.
+// The function sim_ratchet() simulates a mean-reversion 
+// ratchet strategy.
+// It bets on prices reverting to the moving average price.
+// The strategy calculates the z-score equal to the difference 
+// between the current price minus the moving average price, 
+// divided by the price volatility.
+// If the z-score is positive, the strategy sells shares short, 
+// proportional to the z-score.
+// If the z-score is negative, the strategy buys shares, 
+// proportional to the z-score.
+// The strategy accumulates an inventory of shares. 
+// It continues selling shares as the z-score keeps rising,
+// and it continues buying as the z-score keeps dropping.
+// The strategy waits to sell its inventory only after the 
+// z-score has changed its sign, but not before that.
+// It's written in Rcpp.
 //' @export
 // [[Rcpp::export]]
-arma::mat revert_to_open(const arma::mat& pricev, // Time series of prices
-                         double volv = 0.1) { // Volatility
+arma::mat sim_ratchet(const arma::mat& pricev, // Time series of prices
+                      double lambdaf) { // Decay factor which multiplies the past values
 
   arma::uword nrows = pricev.n_rows;
-  double zscore = 0.0;
-  double zscorep = 0.0; // Previous z-score
-  double zscorem = 0.0; // Extreme z-score
-  double pricinit = pricev(0);
-  arma::mat pnlv = arma::zeros(nrows, 1);
-  arma::mat posv = arma::zeros(nrows, 1);
-
+  double lambda1 = 1-lambdaf;
+  double pricema = pricev(0); // Moving average price
+  double zscore = pricev(0); // Price z-score
+  double varv = pow(pricev(1) - pricema, 2); // Price variance
+  // double volv = sqrt(varv(0)); // Price volatility
+  // double posl = 0.0; // Position to trade
+  arma::mat posv = arma::zeros(nrows, 1); // Stock position
+  arma::mat pnlv = arma::zeros(nrows, 1); // PnLs
+  
   // Calculate the positions in a loop
   for (arma::uword it = 1; it < nrows; it++) {
-    // Calculate the z-scores
-    zscorep = zscore;
-    zscore = (pricev(it) - pricinit)/volv;
-    // zscore = sign(zscore)*pow(zscore, 0.1);
-    // zscore = pow(zscore, 3);
-    // Check if z-score has changed sign
-    if ((zscore*zscorep) > 0) {
-      // The z-score has not changed sign
-      // Update the extreme z-score
-      if (zscore > 0) {
-        zscorem = std::max(zscore, zscorem);
-      } else {
-        zscorem = std::min(zscore, zscorem);
-      }  // end if
-    } else {
-      // The z-score has changed sign
-      zscorem = 0.0;
-    }  // end if
-    posv(it) = -zscorem;
-    // Update the pnls
+    // Calculate the pnl as the past position times the price change
     pnlv(it) = posv(it-1)*(pricev(it) - pricev(it-1));
+    // Update the position using the past z-score
+    if (zscore > 0) {
+      // Z-score is positive - increase the short position
+      posv(it) = std::min(-zscore, posv(it-1));
+    } else {
+      // Z-score is negative - increase the long position
+      posv(it) = std::max(-zscore, posv(it-1));
+    }  // end if
+    // Calculate the new z-score using the past EMA price and variance
+    zscore = (pricev(it) - pricema)/sqrt(varv);
+    // Update the variance
+    varv = lambdaf*varv + lambda1*pow(pricev(it) - pricema, 2);
+    // Update the EMA price
+    pricema = lambdaf*pricema + lambda1*pricev(it);
   }  // end for
   
   return arma::join_rows(pnlv, posv);
   
-}  // end revert_to_open
+}  // end sim_ratchet
 
 
