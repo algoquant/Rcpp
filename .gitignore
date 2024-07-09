@@ -3,3 +3,4 @@
 # RStudio project files
 .Rproj.user/
 .Rproj.user
+.DS_Store
