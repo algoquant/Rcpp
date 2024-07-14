@@ -52,7 +52,7 @@ arma::mat trend_flip(const arma::mat& pricev, // Time series of prices
   double pricema = pricec; // Moving average price
   arma::mat varv = arma::zeros(nrows, 1); // Price variance
   varv(0) = pow(pricev(1) - pricec, 2);
-  double volv;
+  double volv; // Price volatility
   double retv;
   // arma::mat zscores = arma::zeros(nrows, 1);
   arma::mat posv = arma::zeros(nrows, 1);
@@ -270,7 +270,7 @@ arma::mat bollinger_double(const arma::mat& pricev, // Time series of prices
 
 
 
-// The function sim_ratchet() simulates a mean-reversion 
+// The function ratchet_greedy() simulates a mean-reversion 
 // ratchet strategy.
 // It bets on prices reverting to the moving average price.
 // The strategy calculates the z-score equal to the difference 
@@ -283,18 +283,18 @@ arma::mat bollinger_double(const arma::mat& pricev, // Time series of prices
 // The strategy accumulates an inventory of shares. 
 // It continues selling shares as the z-score keeps rising,
 // and it continues buying as the z-score keeps dropping.
-// The strategy waits to sell its inventory only after the 
-// z-score has changed its sign, but not before that.
+// The strategy waits to sell its whole inventory only after 
+// the z-score has changed its sign, but not before that.
 // It's written in Rcpp.
 //' @export
 // [[Rcpp::export]]
-arma::mat sim_ratchet(const arma::mat& pricev, // Time series of prices
-                      double lambdaf) { // Decay factor which multiplies the past values
+arma::mat ratchet_greedy(const arma::mat& pricev, // Time series of prices
+                      double lambdaf = 0.9) { // Decay factor which multiplies the past values
 
   arma::uword nrows = pricev.n_rows;
   double lambda1 = 1-lambdaf;
   double pricema = pricev(0); // Moving average price
-  double zscore = pricev(0); // Price z-score
+  double zscore = 0; // Price z-score
   double varv = pow(pricev(1) - pricema, 2); // Price variance
   // double volv = sqrt(varv(0)); // Price volatility
   // double posl = 0.0; // Position to trade
@@ -303,8 +303,10 @@ arma::mat sim_ratchet(const arma::mat& pricev, // Time series of prices
   
   // Calculate the positions in a loop
   for (arma::uword it = 1; it < nrows; it++) {
+    
     // Calculate the pnl as the past position times the price change
     pnlv(it) = posv(it-1)*(pricev(it) - pricev(it-1));
+    
     // Update the position using the past z-score
     if (zscore > 0) {
       // Z-score is positive - increase the short position
@@ -313,6 +315,7 @@ arma::mat sim_ratchet(const arma::mat& pricev, // Time series of prices
       // Z-score is negative - increase the long position
       posv(it) = std::max(-zscore, posv(it-1));
     }  // end if
+    
     // Calculate the new z-score using the past EMA price and variance
     zscore = (pricev(it) - pricema)/sqrt(varv);
     // Update the variance
@@ -323,6 +326,91 @@ arma::mat sim_ratchet(const arma::mat& pricev, // Time series of prices
   
   return arma::join_rows(pnlv, posv);
   
-}  // end sim_ratchet
+}  // end ratchet_greedy
+
+
+
+// The function ratchet_patient() simulates a mean-reversion 
+// ratchet strategy.
+// It bets on prices reverting to the moving average price.
+// The strategy calculates the z-score equal to the difference 
+// between the current price minus the moving average price, 
+// divided by the price volatility.
+// If the z-score is positive, the strategy sells shares short, 
+// proportional to the z-score.
+// If the z-score is negative, the strategy buys shares, 
+// proportional to the z-score.
+// The strategy accumulates an inventory of shares. 
+// It continues selling shares as the z-score keeps rising,
+// and it continues buying as the z-score keeps dropping.
+// The strategy doesn't sell its whole inventory all at once, 
+// in a single trade order.
+// It's patient because it sells its inventory one pair at a 
+// time, instead of selling the whole inventory in a single 
+// trade order.
+// This has the advantage of potentially accumulating more profits, 
+// because it takes longer to unwind its inventory.  
+// So if the pair price moves in the right direction, more profits 
+// are accumulated.
+
+// The strategy waits to sell its whole inventory only after 
+// the z-score has changed its sign, but not before that.
+// It's written in Rcpp.
+//' @export
+// [[Rcpp::export]]
+arma::mat ratchet_patient(const arma::mat& pricev, // Time series of prices
+                          double lambdaf = 0.9, // Decay factor which multiplies the past values
+                          double volf = 0.2, // Volatility floor in dollars
+                          double zfact = 1.0) { // Z-score factor
+ 
+  arma::uword nrows = pricev.n_rows;
+  double lambda1 = 1-lambdaf;
+  double pricema = pricev(0); // Moving average price
+  double zscore = 0; // Price z-score
+  double varv = pow(pricev(1) - pricema, 2); // Price variance
+  double volv; // Price volatility
+  double posp = 0; // Previous position
+  // double volv = sqrt(varv(0)); // Price volatility
+  // double posl = 0.0; // Position to trade
+  arma::mat posv = arma::zeros(nrows, 1); // Stock position
+  arma::mat pnlv = arma::zeros(nrows, 1); // PnLs
+  
+  // Calculate the positions in a loop
+  for (arma::uword it = 1; it < nrows; it++) {
+    
+    // Calculate the pnl as the past position times the price change
+    posp = posv(it-1);
+    pnlv(it) = posp*(pricev(it) - pricev(it-1));
+    
+    // Update the position using the past z-score
+    if ((zscore > -posp) && (posp <= 0)) {
+      // Price is overbought so add to short position
+      posv(it) = posp - 1;
+    } else if ((zscore > 0) && (posp > 0)) {
+      // Unwind one pair from long position
+      posv(it) = posp - 1;
+    } else if ((zscore < -posp) && (posp >= 0)) {
+      // Price is oversold so add to long position
+      posv(it) = posp + 1;
+    } else if ((zscore < 0) && (posp < 0)) {
+      // Unwind one pair from short position
+      posv(it) = posp + 1;
+    } else {
+      // Do nothing
+      posv(it) = posp;
+    }  // end if
+    
+    // Calculate the new z-score using the past EMA price and variance
+    volv = std::max(sqrt(varv), volf);
+    zscore = trunc(zfact*(pricev(it) - pricema)/volv);
+    // Update the variance
+    varv = lambdaf*varv + lambda1*pow(pricev(it) - pricema, 2);
+    // Update the EMA price
+    pricema = lambdaf*pricema + lambda1*pricev(it);
+  }  // end for
+  
+  return arma::join_rows(pnlv, posv);
+ 
+}  // end ratchet_patient
 
 
