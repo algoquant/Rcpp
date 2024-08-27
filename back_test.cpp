@@ -361,10 +361,13 @@ arma::mat ratchet_greedy(const arma::mat& pricev, // Time series of prices
 arma::mat ratchet_patient(const arma::mat& pricev, // Time series of prices
                           double lambdaf = 0.9, // Decay factor which multiplies the past values
                           double volf = 0.2, // Volatility floor in dollars
-                          double zfact = 1.0) { // Z-score factor
- 
+                          double zfact = 1.0, // Z-score factor
+                          int poslimit = 100) { // Position limit
+  // const arma::mat& pricop, // Daily opening prices
+  
   arma::uword nrows = pricev.n_rows;
   double lambda1 = 1-lambdaf;
+  double prici = pricev(0); // Initial price
   double pricema = pricev(0); // Moving average price
   double zscore = 0; // Price z-score
   double varv = pow(pricev(1) - pricema, 2); // Price variance
@@ -383,13 +386,13 @@ arma::mat ratchet_patient(const arma::mat& pricev, // Time series of prices
     pnlv(it) = posp*(pricev(it) - pricev(it-1));
     
     // Update the position using the past z-score
-    if ((zscore > -posp) && (posp <= 0)) {
+    if ((zscore > -posp) && (posp <= 0) && (abs(posp) < poslimit)) {
       // Price is overbought so add to short position
       posv(it) = posp - 1;
     } else if ((zscore > 0) && (posp > 0)) {
       // Unwind one pair from long position
       posv(it) = posp - 1;
-    } else if ((zscore < -posp) && (posp >= 0)) {
+    } else if ((zscore < -posp) && (posp >= 0) && (abs(posp) < poslimit)) {
       // Price is oversold so add to long position
       posv(it) = posp + 1;
     } else if ((zscore < 0) && (posp < 0)) {
@@ -402,7 +405,12 @@ arma::mat ratchet_patient(const arma::mat& pricev, // Time series of prices
     
     // Calculate the new z-score using the past EMA price and variance
     volv = std::max(sqrt(varv), volf);
-    zscore = trunc(zfact*(pricev(it) - pricema)/volv);
+    // Calculate the z-score for the Patient Ratchet strategy
+    // zscore = trunc(zfact*(pricev(it) - pricema)/volv);
+    // Calculate the z-score for the modified Patient Ratchet strategy
+    zscore = trunc(zfact*(pricev(it) - pricema));
+    // zscore = trunc(zfact*(pricev(it) - prici));
+    // zscore = trunc(zfact*(pricev(it) - pricop(it)));
     // Update the variance
     varv = lambdaf*varv + lambda1*pow(pricev(it) - pricema, 2);
     // Update the EMA price
@@ -410,7 +418,77 @@ arma::mat ratchet_patient(const arma::mat& pricev, // Time series of prices
   }  // end for
   
   return arma::join_rows(pnlv, posv);
- 
+  
 }  // end ratchet_patient
 
+
+// [[Rcpp::export]]
+arma::mat ratchet_patientx(const arma::mat& pricev, // Time series of prices
+                          double lambdaf = 0.9, // Decay factor which multiplies the past values
+                          double volf = 0.2, // Volatility floor in dollars
+                          double zfact = 1.0, // Z-score factor
+                          int poslimit = 100) { // Position limit
+  // const arma::mat& pricop, // Daily opening prices
+  
+  arma::uword nrows = pricev.n_rows;
+  double lambda1 = 1-lambdaf;
+  double prici = pricev(0); // Initial price
+  arma::mat pricema = arma::zeros(nrows, 1); // Moving average price
+  pricema(0) = pricev(0); // Moving average price
+  arma::mat zscore = arma::zeros(nrows, 1); // Price z-score
+  zscore(0) = 0; // Price z-score
+  double varv = pow(pricev(1) - pricema(0), 2); // Price variance
+  double volv; // Price volatility
+  double posp = 0; // Previous position
+  double foo = 0;
+  // double volv = sqrt(varv(0)); // Price volatility
+  // double posl = 0.0; // Position to trade
+  arma::mat posv = arma::zeros(nrows, 1); // Stock position
+  arma::mat pnlv = arma::zeros(nrows, 1); // PnLs
+  
+  // Calculate the positions in a loop
+  for (arma::uword it = 1; it < nrows; it++) {
+    
+    // Calculate the pnl as the past position times the price change
+    posp = posv(it-1);
+    pnlv(it) = posp*(pricev(it) - pricev(it-1));
+    
+    // Update the position using the past z-score
+    if ((zscore(it-1) > -posp) && (posp <= 0) && (abs(posp) < poslimit)) {
+      // Price is overbought so add to short position
+      posv(it) = posp - 1;
+    } else if ((zscore(it-1) > 0) && (posp > 0)) {
+      // Unwind one pair from long position
+      posv(it) = posp - 1;
+    } else if ((zscore(it-1) < -posp) && (posp >= 0) && (abs(posp) < poslimit)) {
+      // Price is oversold so add to long position
+      posv(it) = posp + 1;
+    } else if ((zscore(it-1) < 0) && (posp < 0)) {
+      // Unwind one pair from short position
+      posv(it) = posp + 1;
+    } else {
+      // Do nothing
+      posv(it) = posp;
+    }  // end if
+    
+    // Calculate the new z-score using the past EMA price and variance
+    volv = std::max(sqrt(varv), volf);
+    // Calculate the z-score for the Patient Ratchet strategy
+    // zscore = trunc(zfact*(pricev(it) - pricema)/volv);
+    // Calculate the z-score for the modified Patient Ratchet strategy
+    foo = (pricev(it) - pricema(it-1));
+    zscore(it) = trunc(zfact*foo);
+    // zscore(it) = trunc(sqrt(zfact*abs(foo))*sign(foo));
+    // zscore = trunc(zfact*(pricev(it) - prici));
+    // zscore = trunc(zfact*(pricev(it) - pricop(it)));
+    // Update the variance
+    // varv = lambdaf*varv + lambda1*pow(pricev(it) - pricema(it), 2);
+    // Update the EMA price
+    pricema(it) = lambdaf*pricema(it-1) + lambda1*pricev(it);
+    
+  }  // end for
+  
+  return arma::join_rows(pnlv, posv, pricema, zscore);
+  
+}  // end ratchet_patientx
 
