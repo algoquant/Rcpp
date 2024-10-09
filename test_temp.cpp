@@ -139,3 +139,39 @@ arma::mat calc_nearest(const arma::mat& ts1, const arma::mat& ts2) {
   
 }  // end calc_nearest
 
+
+// [[Rcpp::export]]
+arma::mat is_na(arma::mat& pricev) {
+  
+  // Allocate output matrix
+  int nrows = pricev.n_rows;
+  arma::mat posv = arma::zeros(nrows, 1);
+  
+  // cout << "pricev(0): " << pricev(0) << endl;
+  // Perform loop over the end points
+  for (int it = 0; it < nrows; it++) {
+    if (std::isnan(pricev(it)) || std::isinf(pricev(it))) {
+    // if (pricev(it).has_nan() || pricev(it).has_inf()) {
+      posv(it) = 1;
+    }  // end if
+  }  // end for
+  
+  return posv;
+  
+}  // end is_na
+
+
+// [[Rcpp::export]]
+bool has_na(arma::mat& pricev) {
+  
+  if (pricev.has_nan() || pricev.has_inf()) {
+    return true;
+  } else {
+    return false;
+  }  // end if
+    
+}  // end has_na
+
+
+
+
