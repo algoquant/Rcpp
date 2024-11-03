@@ -9,7 +9,7 @@
 // Create hooks for RcppArmadillo
 // [[Rcpp::depends(RcppArmadillo)]]
 
-using namespace Rcpp;
+// using namespace Rcpp;
 using namespace arma;
 // Use STL
 using namespace std;
