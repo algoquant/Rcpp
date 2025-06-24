@@ -93,19 +93,20 @@ void which_method(const std::string& calc_method = "yang_zhang") {
 
 
 
-// First sort the datav and then unsort it back to original
+// First sort the datin and then unsort it back to original
 //' @export
 // [[Rcpp::export]]
-arma::vec sort_back(const arma::vec& datav) {
+arma::vec sort_back(const arma::vec& datin) {
   
   // Reverse sort index
-  arma::uvec indeks = arma::sort_index(arma::sort_index(datav));
-  // Sort the datav
-  arma::vec sortedv = arma::sort(datav);
-  // Reverse sort the datav
+  arma::uvec indeks = arma::sort_index(arma::sort_index(datin));
+  // Sort the datin
+  arma::vec sortedv = arma::sort(datin);
+  // Reverse sort the datin
   sortedv = sortedv.elem(indeks);
   
   return sortedv;
+  
 }  // end sort_back
 
 
@@ -113,8 +114,10 @@ arma::vec sort_back(const arma::vec& datav) {
 // Calculate the ranks of a vector of data
 //' @export
 // [[Rcpp::export]]
-arma::uvec calc_ranks(const arma::vec& datav) {
-  return (arma::sort_index(arma::sort_index(datav)) + 1);
+arma::uvec calc_ranks(const arma::vec& datin) {
+  
+  return (arma::sort_index(arma::sort_index(datin)) + 1);
+  
 }  // end calc_ranks
 
 
@@ -122,10 +125,12 @@ arma::uvec calc_ranks(const arma::vec& datav) {
 // Calculate the de-meaned ranks of a vector of data
 //' @export
 // [[Rcpp::export]]
-arma::vec calc_ranksm(const arma::vec& datav) {
-// Ranks
-arma::vec ranks = conv_to< vec >::from(arma::sort_index(arma::sort_index(datav)));
+arma::vec calc_ranksm(const arma::vec& datin) {
+  
+  // Ranks
+  arma::vec ranks = conv_to< vec >::from(arma::sort_index(arma::sort_index(datin)));
   return (ranks - arma::mean(ranks));
+  
 }  // end calc_ranksm
 
 
@@ -133,11 +138,11 @@ arma::vec ranks = conv_to< vec >::from(arma::sort_index(arma::sort_index(datav))
 // Example of transform
 //' @export
 // [[Rcpp::export]]
-arma::mat floor_it(arma::mat& data, double minval) {
+arma::mat floor_it(arma::mat& datin, double minval) {
   
-  arma::mat mydata = data;
-  mydata.transform([&minval](double x) {return max(x, minval);});
-  return mydata;
+  arma::mat datout = datin;
+  datout.transform([&minval](double x) {return max(x, minval);});
+  return datout;
   
 }  // end floor_it
 
@@ -437,9 +442,11 @@ arma::mat sub_mat_cast(NumericMatrix& matrixv, IntegerVector& row_num, IntegerVe
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-arma::rowvec sub_assign(arma::rowvec vectorv, arma::uvec indeks, arma::vec datav) {
-  vectorv.elem(indeks) = datav;
+arma::rowvec sub_assign(arma::rowvec vectorv, arma::uvec indeks, arma::vec datin) {
+  
+  vectorv.elem(indeks) = datin;
   return vectorv;
+  
 }  // end sub_assign
 
 
@@ -449,10 +456,12 @@ arma::rowvec sub_assign(arma::rowvec vectorv, arma::uvec indeks, arma::vec datav
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-arma::rowvec find_assign_vec(arma::rowvec& vectorv, double findv, double datav) {
+arma::rowvec find_assign_vec(arma::rowvec& vectorv, double findv, double datin) {
+  
   arma::uvec indeks = find(vectorv == findv);
-  vectorv(indeks).fill(datav);
+  vectorv(indeks).fill(datin);
   return vectorv;
+  
 }  // end find_assign_vec
 
 
@@ -465,10 +474,12 @@ arma::rowvec find_assign_vec(arma::rowvec& vectorv, double findv, double datav) 
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-double find_assign_vec_point(arma::rowvec& vectorv, double findv, double datav) {
+double find_assign_vec_point(arma::rowvec& vectorv, double findv, double datin) {
+  
   arma::uvec indeks = find(vectorv > findv);
-  vectorv(indeks).fill(datav);
+  vectorv(indeks).fill(datin);
   return arma::accu(indeks);
+  
 }  // end find_assign_vec_point
 
 
@@ -478,10 +489,10 @@ double find_assign_vec_point(arma::rowvec& vectorv, double findv, double datav) 
 // http://gallery.rcpp.org/articles/armadillo-subsetting/index.html
 //' @export
 // [[Rcpp::export]]
-arma::mat find_assign_mat(arma::mat matrixv, double findv, double datav) {
+arma::mat find_assign_mat(arma::mat matrixv, double findv, double datin) {
   
   arma::uvec indeks = find(matrixv >= findv);
-  matrixv.elem(indeks).fill(datav);
+  matrixv.elem(indeks).fill(datin);
   
   return matrixv;
   
@@ -1040,12 +1051,15 @@ arma::uword mult_vec_mat31(arma::vec& vectorv,
 // [[Rcpp::export]]
 arma::uword mult_vec_mat32(arma::vec& vectorv, 
                            arma::mat& matrixv) {
+  
   for (uword it = 0; it < matrixv.n_cols; it++) {
     for (uword jt = 0; jt < matrixv.n_rows; jt++) {
       matrixv(jt, it) *= vectorv(it);
     }  // end for
   }  // end for
+  
   return matrixv.n_cols;
+  
 }  // end mult_vec_mat32
 
 
