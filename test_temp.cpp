@@ -16,10 +16,11 @@ using namespace std;
 
 
 ////////////////////////////////////////////////////////////
-//' Scrub the bad data in a \emph{time series} or a \emph{matrix}. 
+//' Scrub the isolated data spikes in place, in a streaming \emph{time series}
+//' of data.
 //' 
 //' @param \code{timeser} A single-column \emph{time series} or a
-//'   \emph{vector}.
+//'   \emph{matrix}.
 //'
 //' @param \code{lagg} An \emph{integer} equal to the number of periods to lag.
 //'   (The default is \code{lagg = 1}.)
@@ -67,7 +68,7 @@ using namespace std;
 //' 
 //' @export
 // [[Rcpp::export]]
-void do_scrub(arma::mat& timeser, double tolv=0.1) {
+void scrub_online(arma::mat& timeser, double threshv=0.1) {
   
   bool isvalid = true;
   int nrows = timeser.n_rows;
@@ -80,7 +81,7 @@ void do_scrub(arma::mat& timeser, double tolv=0.1) {
   // Perform loop over the end points
   for (int it = 1; it < nrows; it++) {
     diffv = abs(timeser(it) - timeser(it-1));
-    if ((diffv > tolv) && isvalid) {
+    if ((diffv > threshv) && isvalid) {
       timeser(it) = timeser(it-1);
       isvalid = false;
       nscrub++;
@@ -89,10 +90,45 @@ void do_scrub(arma::mat& timeser, double tolv=0.1) {
     }  // end if
   }  // end for
   
-  cout << "nscrub: " << nscrub << endl;
+  // cout << "nscrub: " << nscrub << endl;
   // return nscrub;
   
-}  // end do_scrub
+}  // end scrub_online
+
+
+////////////////////////////////////////////////////////////
+//' Scrub the isolated data spikes in place, in an offline \emph{time series}
+//' of data, using a centered median algorithm.
+//' 
+//' 
+//' @export
+// [[Rcpp::export]]
+void scrub_center(arma::mat& timeser, double threshv=2.0) {
+ 
+ // arma::mat timescrubbed = timeser;
+ bool isvalid = true;
+ int nrows = timeser.n_rows;
+ double medv = 0.0;
+ int nscrub = 0;
+ double diffv = 0;
+ 
+ // Allocate output matrix
+ arma::mat posv = arma::zeros(nrows, 1);
+ 
+ // Perform loop over the end points
+ for (int it = 1; it < (nrows-1); it++) {
+   medv = arma::conv_to<double>::from(arma::median(timeser.rows(it-1, it+1)));
+   diffv = abs(timeser(it) - medv);
+   if (diffv > threshv) {
+     timeser(it) = medv;
+     nscrub++;
+   }  // end if
+ }  // end for
+ 
+ // cout << "nscrub: " << nscrub << endl;
+ // return timescrubbed;
+ 
+}  // end scrub_center
 
 
 
