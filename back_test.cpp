@@ -380,11 +380,11 @@ arma::mat ratchet(const arma::mat& pricev, // Time series of prices
                           double volf = 0.2, // Volatility floor in dollars
                           double zfact = 1.0, // Z-score factor
                           int poslimit = 100) { // Position limit
-  // const arma::mat& pricop, // Daily opening prices
+  // const arma::mat& pricin, // Daily opening prices
   
   arma::uword nrows = pricev.n_rows;
   double lambda1 = 1-lambdaf;
-  // double prici = pricev(0); // Initial price
+  // double prici = pricev(0); // Initial (open) price
   double pricema = pricev(0); // Moving average price
   double zscore = 0; // Price z-score
   double varv = pow(pricev(1) - pricema, 2); // Price variance
@@ -427,7 +427,7 @@ arma::mat ratchet(const arma::mat& pricev, // Time series of prices
     // Calculate the z-score for the modified Patient Ratchet strategy
     zscore = trunc(zfact*(pricev(it) - pricema));
     // zscore = trunc(zfact*(pricev(it) - prici));
-    // zscore = trunc(zfact*(pricev(it) - pricop(it)));
+    // zscore = trunc(zfact*(pricev(it) - pricin(it)));
     // Update the variance
     varv = lambdaf*varv + lambda1*pow(pricev(it) - pricema, 2);
     // Update the EMA price
@@ -446,11 +446,11 @@ arma::mat ratchet(const arma::mat& pricev, // Time series of prices
 arma::mat ratchetx(const arma::mat& pricev, // Time series of prices
                           double zfact = 1.0, // Z-score factor
                           int poslimit = 1000) { // Position limit
-  // const arma::mat& pricop, // Daily opening prices
+  // const arma::mat& pricin, // Daily opening prices
   
   arma::uword nrows = pricev.n_rows;
   // double lambda1 = 1-lambdaf;
-  double pricop = pricev(0); // Initial price
+  double pricin = pricev(0); // Initial (open) price
   // arma::mat pricema = arma::zeros(nrows, 1); // Moving average price
   // pricema(0) = pricev(0); // Moving average price
   arma::mat zscore = arma::zeros(nrows, 1); // Price z-score
@@ -495,10 +495,10 @@ arma::mat ratchetx(const arma::mat& pricev, // Time series of prices
     // zscore = trunc(zfact*(pricev(it) - pricema)/volv);
     // Calculate the z-score for the modified Patient Ratchet strategy
     // foo = (pricev(it) - pricema(it-1));
-    zscore(it) = trunc(zfact*(pricev(it) - pricop));
+    zscore(it) = trunc(zfact*(pricev(it) - pricin));
     // zscore(it) = trunc(sqrt(zfact*abs(foo))*sign(foo));
-    // zscore = trunc(zfact*(pricev(it) - pricop));
-    // zscore = trunc(zfact*(pricev(it) - pricop(it)));
+    // zscore = trunc(zfact*(pricev(it) - pricin));
+    // zscore = trunc(zfact*(pricev(it) - pricin(it)));
     // Update the variance
     // varv = lambdaf*varv + lambda1*pow(pricev(it) - pricema(it), 2);
     // Update the EMA price
@@ -515,14 +515,14 @@ arma::mat ratchetx(const arma::mat& pricev, // Time series of prices
 ////////////////////////////////////////////////////////////
 // [[Rcpp::export]]
 arma::mat ratchetxx(const arma::mat& pricev, // Time series of prices
-                    const arma::mat& pricop, // Daily opening prices
+                    const arma::mat& pricin, // Daily opening prices
                     double zfact = 1.0, // Z-score factor
                     int poslimit = 1000) { // Position limit
-  // const arma::mat& pricop, // Daily opening prices
+  // const arma::mat& pricin, // Daily opening prices
   
   arma::uword nrows = pricev.n_rows;
   // double lambda1 = 1-lambdaf;
-  // double pricop = pricev(0); // Initial price
+  // double pricin = pricev(0); // Initial (open) price
   // arma::mat pricema = arma::zeros(nrows, 1); // Moving average price
   // pricema(0) = pricev(0); // Moving average price
   arma::mat zscore = arma::zeros(nrows, 1); // Price z-score
@@ -567,10 +567,10 @@ arma::mat ratchetxx(const arma::mat& pricev, // Time series of prices
     // zscore = trunc(zfact*(pricev(it) - pricema)/volv);
     // Calculate the z-score for the modified Patient Ratchet strategy
     // foo = (pricev(it) - pricema(it-1));
-    zscore(it) = trunc(zfact*(pricev(it) - pricop(it)));
+    zscore(it) = trunc(zfact*(pricev(it) - pricin(it)));
     // zscore(it) = trunc(sqrt(zfact*abs(foo))*sign(foo));
-    // zscore = trunc(zfact*(pricev(it) - pricop));
-    // zscore = trunc(zfact*(pricev(it) - pricop(it)));
+    // zscore = trunc(zfact*(pricev(it) - pricin));
+    // zscore = trunc(zfact*(pricev(it) - pricin(it)));
     // Update the variance
     // varv = lambdaf*varv + lambda1*pow(pricev(it) - pricema(it), 2);
     // Update the EMA price
@@ -594,7 +594,7 @@ arma::mat ratchetxxx(const arma::mat& pricev, // Time series of prices
   
   arma::uword nrows = pricev.n_rows;
   double lambda1 = 1-lambdaf;
-  // double prici = pricev(0); // Initial price
+  // double prici = pricev(0); // Initial (open) price
   arma::mat pricema = arma::zeros(nrows, 1); // Moving average price
   pricema(0) = pricev(0); // Moving average price
   // double zscore = 0; // Price z-score
@@ -633,7 +633,7 @@ arma::mat crossdual(const arma::mat& pricev, // Time series of prices
   arma::uword nrows = pricev.n_rows;
   double lambdaf1 = 1-lambdaf;
   double lambdas1 = 1-lambdasl;
-  // double prici = pricev(0); // Initial price
+  // double prici = pricev(0); // Initial (open) price
   arma::mat mafast = arma::zeros(nrows, 1); // Fast moving average price
   arma::mat maslow = arma::zeros(nrows, 1); // Slow moving average price
   mafast(0) = pricev(0);
