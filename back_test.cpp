@@ -13,6 +13,69 @@ using namespace arma;
 
 
 ////////////////////////////////////////////////////////////
+// The function trend_follow() simulates a trend-following 
+// strategy and returns its PnLs and positions.
+// The strategy follows the price trend, and reverses its 
+// position when the trend reverses.
+// The strategy buys one share if the price is above the 
+// reference price, or it sells one share short if the 
+// price is below the reference price.
+// The reference price is either the initial price or the 
+// EMA price. 
+// If the decay factor lambdaf is NULL (the default) then 
+// the reference price is the initial price.
+// If the decay factor lambdaf is not NULL then the 
+// reference price is the EMA price.
+// It's written in Rcpp.
+//' @export
+// [[Rcpp::export]]
+arma::mat trend_follow(const arma::mat& pricev, // Time series of prices
+                       Rcpp::Nullable<double> lambdaf = R_NilValue) { // Decay factor which multiplies the past values
+  
+  arma::uword nrows = pricev.n_rows;
+  double pricinit = pricev(0); // Initial price
+  double priceref = pricev(0); // Reference price
+  double pricema = pricev(0); // EMA price
+  bool use_ema = lambdaf.isNotNull();
+  double lambdafv = use_ema ? Rcpp::as<double>(lambdaf) : 0.0;
+  double lambda1 = use_ema ? (1.0 - lambdafv) : 0.0;
+  double pricec = pricinit; // Current price
+  // arma::mat varv = arma::zeros(nrows, 1); // Price variance
+  // varv(0) = pow(pricev(1) - pricec, 2);
+  // double volv; // Price volatility
+  double retp; // Stock return
+  // arma::mat zscores = arma::zeros(nrows, 1);
+  arma::mat posv = arma::zeros(nrows, 1);
+  arma::mat pnlv = arma::zeros(nrows, 1);
+  // arma::mat pnlv = arma::zeros(nrows, 1);
+  
+  // Calculate the PnLs in a loop
+  for (arma::uword it = 1; it < (nrows-1); it++) {
+    pricec = pricev(it);
+    retp = pricec - pricev(it-1);
+    pnlv(it) = posv(it-1) * retp;
+    
+    posv(it) = arma::sign(pricec - priceref);
+    
+    if (use_ema) {
+      priceref = lambdafv * priceref + lambda1 * pricec;
+    } // end if
+    
+    // varv(it) = lambda1 * varv(it-1) + lambdaf * pow(pricec - pricema, 2);
+    // volv = sqrt(varv(it));
+    // zscores(it) = (pricec - pricema) / volv;
+    
+  }  // end for
+  
+  // return arma::join_rows(pnlv, posv, varv);
+  return arma::join_rows(pnlv, posv);
+  
+}  // end trend_follow
+
+
+
+
+////////////////////////////////////////////////////////////
 // The function trend_flip() simulates a trending strategy 
 // and returns its PnLs, positions, and variance.
 // The strategy follows the price trend, and reverses its 
@@ -444,8 +507,8 @@ arma::mat ratchet(const arma::mat& pricev, // Time series of prices
 // Ratchet for reverse to the initial open price.
 // [[Rcpp::export]]
 arma::mat ratchetx(const arma::mat& pricev, // Time series of prices
-                          double zfact = 1.0, // Z-score factor
-                          int poslimit = 1000) { // Position limit
+                   double zfact = 1.0, // Z-score factor
+                   int poslimit = 1000) { // Position limit
   // const arma::mat& pricin, // Daily opening prices
   
   arma::uword nrows = pricev.n_rows;

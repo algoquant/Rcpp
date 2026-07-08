@@ -4,3 +4,5 @@
 .Rproj.user/
 .Rproj.user
 .DS_Store
+/parallel
+.DS_Store
