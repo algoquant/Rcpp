@@ -338,7 +338,7 @@ arma::mat bollinger_brackets(const arma::mat& retp, // Time series of returns
 
 
 ////////////////////////////////////////////////////////////
-// The function ratchets() simulates a mean-reversion 
+// The function ratchets() simulates a simple reverting 
 // ratchet strategy.
 // It bets on prices reverting to the moving average price.
 // The strategy calculates the z-score equal to the difference 
